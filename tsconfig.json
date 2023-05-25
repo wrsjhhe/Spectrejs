@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "esNext",
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "typeRoots": [
+      "./node_modules/@webgpu/types",
+      "./node_modules/@types"
+    ],
+    "allowSyntheticDefaultImports": true,
+  }
+}

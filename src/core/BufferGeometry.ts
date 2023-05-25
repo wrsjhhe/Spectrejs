@@ -1,0 +1,78 @@
+import BufferAttribute from "./BufferAttribute";
+import { GPUBufferWrapper } from "./GPUBufferWrapper";
+import WebGPURenderer from "./WebGPURenderer";
+
+export default class BufferGeometry{
+    
+    private _attributes : Map<string,BufferAttribute> = new Map();
+    private _indices : BufferAttribute = null;
+    private _drawBuffer:GPUBufferWrapper = null;
+    
+    constructor(){
+        
+    }
+
+    public update(renderer:WebGPURenderer){
+        this.updateDrawBuffer(renderer.device);
+        for(const attribute of this._attributes.values()){
+            attribute.update(renderer);
+        }
+
+        this._indices && this._indices.update(renderer);
+    }
+
+    public setIndices(attribute : BufferAttribute):BufferGeometry{
+        if(attribute.count !== this._indices?.count && this._drawBuffer){
+            this._drawBuffer.destroy();
+            this._drawBuffer = null;
+        }
+
+        this._indices = attribute;
+        attribute.Usage = GPUBufferUsage.INDEX;
+        return this;
+    }
+
+    public setAttribute(name : string,attribute : BufferAttribute ):BufferGeometry{
+        this._attributes.set(name,attribute);
+        return this;
+    }
+
+    public getAttribute ( name : string ) : BufferAttribute{
+        return this._attributes.get(name);
+    }
+
+    public updateDrawBuffer(device:GPUDevice){
+
+        if(!this._drawBuffer){
+            const bufferSize = this.indices?
+          
+            Uint32Array.BYTES_PER_ELEMENT*5:Uint32Array.BYTES_PER_ELEMENT*4;
+            const k = this.indices?5:4;
+            const parameters = new Uint32Array(k);
+            if(this.indices){
+                parameters[0] = this.indices.count; // The indexCount value
+                parameters[1] = 1; // The instanceCount value
+                parameters[2] = 0; // The firstIndex value
+                parameters[3] = 0; // The baseVertex value
+                parameters[4] = 0; // The firstInstance value
+            }else{
+                parameters[0] = this.getAttribute("position").count; // The vertexCount value
+                parameters[1] = 1; // The instanceCount value
+                parameters[2] = 0; // The firstVertex value
+                parameters[3] = 0; // The firstInstance value
+            }
+            this._drawBuffer = new GPUBufferWrapper(
+                GPUBufferUsage.COPY_DST | GPUBufferUsage.INDIRECT,
+                parameters); 
+        }
+        
+    }
+
+    public get indices():BufferAttribute{
+        return this._indices;
+    }
+
+    get drawBuffer():GPUBufferWrapper{
+        return this._drawBuffer;
+    }
+}
