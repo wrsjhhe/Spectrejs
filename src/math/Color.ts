@@ -1,7 +1,7 @@
-import { clamp, euclideanModulo, lerp } from './MathUtils.js';
-import { ColorManagement, SRGBToLinear, LinearToSRGB } from './ColorManagement.js';
-import { Vector3 } from './Vector3.js';
-import { Matrix3 } from './Matrix3.js';
+import { clamp, euclideanModulo, lerp } from './MathUtils';
+import { ColorManagement, SRGBToLinear, LinearToSRGB } from './ColorManagement';
+import { Vector3 } from './Vector3';
+import { Matrix3 } from './Matrix3';
 
 export const SRGBColorSpace = "srgb";
 const _colorKeywords:any = { 'aliceblue': 0xF0F8FF, 'antiquewhite': 0xFAEBD7, 'aqua': 0x00FFFF, 'aquamarine': 0x7FFFD4, 'azure': 0xF0FFFF,
@@ -556,7 +556,7 @@ class Color {
 
 	}
 
-	fromArray( array:Array<number>, offset = 0 ) {
+	fromArray( array:ArrayLike<number>, offset = 0 ) {
 
 		this.r = array[ offset ];
 		this.g = array[ offset + 1 ];
@@ -566,7 +566,7 @@ class Color {
 
 	}
 
-	toArray( array:Array<number> = [], offset = 0 ) {
+	toArray( array:Float32Array = new Float32Array(3), offset = 0 ) {
 
 		array[ offset ] = this.r;
 		array[ offset + 1 ] = this.g;

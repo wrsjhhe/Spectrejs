@@ -1,5 +1,5 @@
-import * as MathUtils from './MathUtils.js';
-import { Matrix3 } from './Matrix3.js';
+import * as MathUtils from './MathUtils';
+import { Matrix3 } from './Matrix3';
 
 class Vector2 {
 

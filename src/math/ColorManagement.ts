@@ -1,5 +1,5 @@
-import { Color } from './Color.js';
-import { Matrix3 } from './Matrix3.js';
+import { Color } from './Color';
+import { Matrix3 } from './Matrix3';
 
 export const SRGBColorSpace = 'srgb';
 export const LinearSRGBColorSpace = 'srgb-linear';

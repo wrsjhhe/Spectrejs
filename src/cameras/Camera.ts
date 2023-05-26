@@ -1,8 +1,13 @@
-import Object3D from '../core/Object3D.js';
-import { Matrix4 } from '../math/Matrix4.js';
-
+import { Object3D } from '../core/Object3D';
+import { Matrix4 } from '../math/Matrix4';
+import { Vector3 } from '../math/Vector3';
 
 class Camera extends Object3D {
+
+    public get type() {
+		return "Camera";
+    }
+
 	public matrixWorldInverse = new Matrix4();
 
 	public projectionMatrix = new Matrix4();
@@ -13,11 +18,9 @@ class Camera extends Object3D {
 
 		super();
 
-
-
 	}
 
-	copy( source, recursive ) {
+	override copy( source:Camera, recursive = false ) {
 
 		super.copy( source, recursive );
 
@@ -30,7 +33,7 @@ class Camera extends Object3D {
 
 	}
 
-	getWorldDirection( target ) {
+	getWorldDirection( target:Vector3 ) {
 
 		this.updateWorldMatrix( true, false );
 
@@ -40,7 +43,7 @@ class Camera extends Object3D {
 
 	}
 
-	updateMatrixWorld( force ) {
+	updateMatrixWorld( force = false ) {
 
 		super.updateMatrixWorld( force );
 
@@ -48,7 +51,7 @@ class Camera extends Object3D {
 
 	}
 
-	updateWorldMatrix( updateParents, updateChildren ) {
+	updateWorldMatrix( updateParents = false, updateChildren = false ) {
 
 		super.updateWorldMatrix( updateParents, updateChildren );
 
@@ -58,7 +61,7 @@ class Camera extends Object3D {
 
 	clone() {
 
-		return new this.constructor().copy( this );
+		return new Camera().copy( this );
 
 	}
 

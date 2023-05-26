@@ -5,6 +5,7 @@ import * as GPUConstances from './Constants'
 import Material from "./materials/Material";
 import Mesh from "./objects/Mesh";
 import Scene from "./core/Scene";
+import { Color } from "./math/Color";
 
 const _devicePixelRatio = window.devicePixelRatio || 1;
 const _sampleCount = 4;
@@ -36,7 +37,7 @@ class Example_Triangle {
         geometry.setAttribute('position',new BufferAttribute(vertex,GPUConstances.GPUVertexFormat.Float32x3));
         geometry.setIndices(new BufferAttribute(indices,GPUConstances.GPUVertexFormat.Uint32));
         const material = new Material();
-        material.color = new Float32Array([0.,1.,1.,0.3]);
+        material.color = new Color(1,0,0);
         this.mesh = new Mesh(geometry,material);
         
         this.scene.add(this.mesh);

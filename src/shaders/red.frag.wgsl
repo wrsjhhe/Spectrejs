@@ -1,6 +1,6 @@
-@group(0) @binding(0) var<uniform> color : vec4<f32>;
+@group(1) @binding(0) var<uniform> color : vec3<f32>;
 
 @fragment
 fn main() -> @location(0) vec4<f32> {
-  return color;
+  return vec4(color,1.0);
 }

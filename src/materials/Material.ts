@@ -1,18 +1,26 @@
-import triangleVertWGSL from "./shaders/triangle.vert.wgsl";
-import redFragWGSL from "./shaders/red.frag.wgsl";
+import triangleVertWGSL from "../shaders/triangle.vert.wgsl";
+import redFragWGSL from "../shaders/red.frag.wgsl";
 import WebGPURenderer from "../core/WebGPURenderer";
 import { Uniform } from "../core/Uniform";
+import { Color } from "../math/Color";
+import { Matrix4 } from "../math/Matrix4";
 export default class Material{
     private _vertexShader : string;
     private _fragmentShader :string;
     private _pipeline : GPURenderPipeline;
-    private _uniform : Array<Uniform> = [];
-    private _color = new Float32Array([1.0,1.0,1.0,1.0]);
+    private _uniform1 : Array<Uniform> = [];
+    private _uniform2 : Array<Uniform> = [];
+    private _color = new Color(1.0,1.0,1.0);
     private _needCompile = true;
-    private _bindGroup : GPUBindGroup;
-    private _bindGroupLayout : GPUBindGroupLayout;
-    get pipeline(){
+    private _bindGroups : Array<GPUBindGroup> = [];
+    private _bindGroupLayouts : Array<GPUBindGroupLayout> = [];
+
+    public get pipeline(){
         return this._pipeline;
+    }
+
+    public set needCompile(v:boolean){
+        this._needCompile = v;
     }
 
     constructor(){
@@ -25,8 +33,11 @@ export default class Material{
     }
 
     private _initInitialUniform(){
-        const colorUniform = new Uniform("color",0,this._color);
-        this._uniform.push(colorUniform);
+        const tranformUniform = new Uniform("tranform",0,new Matrix4().toArray(),GPUShaderStage.VERTEX);
+        this._uniform1.push(tranformUniform);
+
+        const colorUniform = new Uniform("color",0,this._color.toArray(),GPUShaderStage.FRAGMENT);
+        this._uniform2.push(colorUniform);
     } 
 
     public update(renderer:WebGPURenderer){
@@ -39,14 +50,17 @@ export default class Material{
     }
 
     public bindUniform(passEncoder:GPURenderPassEncoder){
-        passEncoder.setBindGroup(0, this._bindGroup)
+        for(let i = 0;i < this._bindGroups.length;++i){
+            passEncoder.setBindGroup(i, this._bindGroups[i])
+        }
+    
     }
 
     private _compilePipeline(renderer:WebGPURenderer){
         const device = renderer.device;
         this._pipeline = device.createRenderPipeline({
             layout: device.createPipelineLayout({
-                bindGroupLayouts: [this._bindGroupLayout],
+                bindGroupLayouts: [...this._bindGroupLayouts],
               }),
             vertex: {
                 module: device.createShaderModule({
@@ -101,9 +115,10 @@ export default class Material{
     }
 
     private _createBindGroup(device:GPUDevice){
-        const entriesGroup = new Array<GPUBindGroupEntry>;
-        for(const uniform of this._uniform){
-            entriesGroup.push({
+        const entriesGroup1 = new Array<GPUBindGroupEntry>;
+        const entriesGroup2 = new Array<GPUBindGroupEntry>;
+        for(const uniform of this._uniform1){
+            entriesGroup1.push({
                 binding:uniform.binding,
                 resource:{
                     buffer:uniform.buffer
@@ -111,18 +126,35 @@ export default class Material{
             });
         }
 
-        this._bindGroup = device.createBindGroup({
-            layout: this.pipeline.getBindGroupLayout(0),
-            entries:entriesGroup
-        });
+        this._bindGroups.push(device.createBindGroup({
+                layout: this.pipeline.getBindGroupLayout(0),
+                entries:entriesGroup1
+            })
+        );
+
+        for(const uniform of this._uniform2){
+            entriesGroup2.push({
+                binding:uniform.binding,
+                resource:{
+                    buffer:uniform.buffer
+                }
+            });
+        }
+
+        this._bindGroups.push(device.createBindGroup({
+                layout: this.pipeline.getBindGroupLayout(1),
+                entries:entriesGroup2
+            })
+        );
     }
 
     private _createBindLayout(device:GPUDevice){
-        const entriesLayout = new Array<GPUBindGroupLayoutEntry>;
-        for(const uniform of this._uniform){
-            entriesLayout.push({
+        const entriesLayout1 = new Array<GPUBindGroupLayoutEntry>;
+        const entriesLayout2 = new Array<GPUBindGroupLayoutEntry>;
+        for(const uniform of this._uniform1){
+            entriesLayout1.push({
                 binding:uniform.binding,
-                visibility: GPUShaderStage.FRAGMENT,
+                visibility: uniform.flags,
                 buffer:{
                     type: 'uniform',
                     minBindingSize:uniform.buffer.size
@@ -130,15 +162,34 @@ export default class Material{
             });
         }
 
-        this._bindGroupLayout = device.createBindGroupLayout({
-            entries:entriesLayout
-        });
+        this._bindGroupLayouts.push(device.createBindGroupLayout({
+                entries:entriesLayout1
+            })
+        );
+
+        for(const uniform of this._uniform2){
+            entriesLayout2.push({
+                binding:uniform.binding,
+                visibility: uniform.flags,
+                buffer:{
+                    type: 'uniform',
+                    minBindingSize:uniform.buffer.size
+                }
+            });
+        }
+
+        this._bindGroupLayouts.push(device.createBindGroupLayout({
+                entries:entriesLayout2
+            })
+        );
+        
     }
 
     public updateUniformValue(name:string,data:any){
-        for(const uniform of this._uniform){
+        const allUniforms = [...this._uniform1,...this._uniform2];
+        for(const uniform of allUniforms){
             if(uniform.name === name){
-                uniform.update(this._color);
+                uniform.update(this._color.toArray());
                 return;
             }
         }

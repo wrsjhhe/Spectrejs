@@ -4,11 +4,12 @@ export class Uniform{
     private _name : string;
     private _buffer : GPUBufferWrapper;
     private _binding : number;
-    constructor(name:string,binding:number,data:any){
+    private _flags : GPUShaderStageFlags;
+    constructor(name:string,binding:number,data:any,flags:GPUShaderStageFlags){
         this._name = name;
         this._binding = binding;
         this._buffer = new GPUBufferWrapper(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,data);
-
+        this._flags = flags;
     }
 
     public update(data:any){
@@ -25,6 +26,10 @@ export class Uniform{
 
     public get binding(){
         return this._binding;
+    }
+
+    public get flags(){
+        return this._flags;
     }
 
 }

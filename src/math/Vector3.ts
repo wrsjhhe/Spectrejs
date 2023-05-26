@@ -1,9 +1,9 @@
-import { Color } from './Color.js';
-import { Euler } from './Euler.js';
-import * as MathUtils from './MathUtils.js';
-import { Matrix3 } from './Matrix3.js';
-import { Matrix4 } from './Matrix4.js';
-import { Quaternion } from './Quaternion.js';
+import { Color } from './Color';
+import { Euler } from './Euler';
+import * as MathUtils from './MathUtils';
+import { Matrix3 } from './Matrix3';
+import { Matrix4 } from './Matrix4';
+import { Quaternion } from './Quaternion';
 
 class Vector3 {
 

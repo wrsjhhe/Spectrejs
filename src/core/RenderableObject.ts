@@ -1,8 +1,13 @@
-import Object3D from "./Object3D";
+
 import BufferGeometry from "./BufferGeometry";
 import Material from "../materials/Material";
+import { Object3D } from "./Object3D";
 
 export default class RenderableObject extends Object3D{
+
+    public get type() {
+		return "RenderableObject";
+    }
 
     protected _geometry : BufferGeometry;
     protected _material : Material;

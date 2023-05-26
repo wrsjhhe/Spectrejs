@@ -825,7 +825,7 @@ class Matrix4 {
 
 	}
 
-	toArray( array:Array<number> = [], offset = 0 ) {
+	toArray( array:Float32Array = new Float32Array(16), offset = 0 ) {
 
 		const te = this.elements;
 

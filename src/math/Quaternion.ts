@@ -1,7 +1,7 @@
-import { Euler } from './Euler.js';
-import * as MathUtils from './MathUtils.js';
-import { Matrix4 } from './Matrix4.js';
-import { Vector3 } from './Vector3.js';
+import { Euler } from './Euler';
+import * as MathUtils from './MathUtils';
+import { Matrix4 } from './Matrix4';
+import { Vector3 } from './Vector3';
 
 class Quaternion {
 

@@ -70,32 +70,16 @@ export default class WebGPURenderer {
     }
 
     _initGlobalData(){
-        GPUBufferWrapper.device = this.device;
-    }
-
-    get domElement() {
-        return this._canvas;
-    }
-
-    get device() {
-        return this._device;
-    }
-
-    get presentationFormat() {
-        return this._presentationFormat;
-    }
-
-    get sampleCount(){
-        return this._sampleCount;
+        GPUBufferWrapper.device = this._device;
     }
 
     public setSize(width:number,height:number){
         this._size = {
-            width: this._canvas.clientWidth,
-            height: this._canvas.clientHeight,
+            width: width,
+            height: height,
         };
-        this._canvas.width = this._size.width * this._pixelRatio;
-        this._canvas.height = this._size.height * this._pixelRatio;
+        this._canvas.width = width * this._pixelRatio;
+        this._canvas.height = height * this._pixelRatio;
         this._setupColorBuffer();
     }
 
@@ -161,5 +145,21 @@ export default class WebGPURenderer {
             });
             this._colorAttachmentView = this._colorBuffer.createView();
         }
+    }
+
+    get domElement() {
+        return this._canvas;
+    }
+
+    get device() {
+        return this._device;
+    }
+
+    get presentationFormat() {
+        return this._presentationFormat;
+    }
+
+    get sampleCount(){
+        return this._sampleCount;
     }
 }

@@ -1,7 +1,7 @@
-import { Quaternion } from './Quaternion.js';
-import { Matrix4 } from './Matrix4.js';
-import { clamp } from './MathUtils.js';
-import { Vector3 } from './Vector3.js';
+import { Quaternion } from './Quaternion';
+import { Matrix4 } from './Matrix4';
+import { clamp } from './MathUtils';
+import { Vector3 } from './Vector3';
 
 const _matrix = /*@__PURE__*/ new Matrix4();
 const _quaternion = /*@__PURE__*/ new Quaternion();

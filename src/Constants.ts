@@ -255,7 +255,7 @@ export const GPUInputStepMode = {
 
 export const GPUChunkSize = 16; // size of a chunk in bytes (STD140 layout)
 
-// @TODO: Move to src/constants.js
+// @TODO: Move to src/constants.ts
 
 export const BlendColorFactor = 211;
 export const OneMinusBlendColorFactor = 212;

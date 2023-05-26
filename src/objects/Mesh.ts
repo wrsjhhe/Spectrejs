@@ -5,17 +5,12 @@ import RenderableObject from "../core/RenderableObject";
 
 export default class Mesh extends RenderableObject{
 
-    private _matrix : Matrix4;
-    private _matrixWorld : Matrix4;
+    public get type(){
+        return "Mesh";
+    }
 
     constructor(geometry : BufferGeometry,material:Material){
         super(geometry,material);
     }
 
-
-
-
-    get type(){
-        return "Mesh";
-    }
 }
