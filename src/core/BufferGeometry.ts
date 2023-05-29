@@ -1,6 +1,6 @@
 import BufferAttribute from "./BufferAttribute";
 import { GPUBufferWrapper } from "./GPUBufferWrapper";
-import WebGPURenderer from "./WebGPURenderer";
+import WebGPURenderer from "../renderers/WebGPURenderer";
 
 export default class BufferGeometry{
     
@@ -15,10 +15,10 @@ export default class BufferGeometry{
     public update(renderer:WebGPURenderer){
         this.updateDrawBuffer(renderer.device);
         for(const attribute of this._attributes.values()){
-            attribute.update(renderer);
+            attribute.update();
         }
 
-        this._indices && this._indices.update(renderer);
+        this._indices && this._indices.update();
     }
 
     public setIndices(attribute : BufferAttribute):BufferGeometry{

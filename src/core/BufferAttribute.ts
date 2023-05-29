@@ -1,6 +1,6 @@
 import * as GPUConstances from '../Constants'
 import { GPUBufferWrapper } from './GPUBufferWrapper';
-import WebGPURenderer from './WebGPURenderer';
+import WebGPURenderer from '../renderers/WebGPURenderer';
 type NumberArrayType = Float32Array | Int8Array | Uint32Array;;
 export default class BufferAttribute{
     private _array : NumberArrayType;
@@ -46,8 +46,7 @@ export default class BufferAttribute{
         }
     }
 
-    public update(renderer:WebGPURenderer){
-        const device = renderer.device;
+    public update(){
         if(this._gpuBuffer === undefined){
             this._gpuBuffer = new GPUBufferWrapper(
                 this._usage | GPUBufferUsage.COPY_DST,

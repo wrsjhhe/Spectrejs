@@ -1,8 +1,7 @@
-import * as GPUConstances from '../Constants'
-import { GPUIndexFormat } from '../Constants';
-import { GPUBufferWrapper } from './GPUBufferWrapper';
-import RenderableObject from './RenderableObject';
-import Scene from './Scene';
+import { GPUIndexFormat, GPUTextureFormat } from '../Constants';
+import { GPUBufferWrapper } from '../core/GPUBufferWrapper';
+import RenderableObject from '../core/RenderableObject';
+import Scene from '../core/Scene';
 interface WebGPURendererParameters {
     canvas?: HTMLCanvasElement;
     powerPreference?: GPUPowerPreference;
@@ -21,7 +20,7 @@ export default class WebGPURenderer {
     private _powerPreference: GPUPowerPreference;
     private _adapter: GPUAdapter;
     private _device: GPUDevice;
-    private _presentationFormat: GPUTextureFormat = GPUConstances.GPUTextureFormat.BGRA8Unorm;
+    private _presentationFormat: GPUTextureFormat = GPUTextureFormat.BGRA8Unorm;
     private _context: GPUCanvasContext;
     private _alphaMode: GPUCanvasAlphaMode = "premultiplied";
     private _colorBuffer: GPUTexture;
@@ -111,10 +110,9 @@ export default class WebGPURenderer {
     }
 
     private _renderObject(passEncoder:GPURenderPassEncoder,object:RenderableObject){
-        const material = object.material;
-        material.update(this);
-        passEncoder.setPipeline(material.pipeline);
-        material.bindUniform(passEncoder);
+        object.update(this);
+        passEncoder.setPipeline(object.pipeline);
+        object.bindUniform(passEncoder);
         
         const geometry = object.geometry;
         geometry.update(this);

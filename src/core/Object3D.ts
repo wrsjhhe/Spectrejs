@@ -544,11 +544,11 @@ export class Object3D {
 
 	}
 
-	updateMatrixWorld( force = false ) {
+	updateMatrixWorld() {
 
 		if ( this.matrixAutoUpdate ) this.updateMatrix();
 
-		if ( this.matrixWorldNeedsUpdate || force ) {
+		if ( this.matrixWorldNeedsUpdate ) {
 
 			if ( this.parent === null ) {
 
@@ -562,8 +562,6 @@ export class Object3D {
 
 			this.matrixWorldNeedsUpdate = false;
 
-			force = true;
-
 		}
 
 		// update children
@@ -574,9 +572,9 @@ export class Object3D {
 
 			const child = children[ i ];
 
-			if ( child.matrixWorldAutoUpdate === true || force === true ) {
+			if ( child.matrixWorldAutoUpdate === true ) {
 
-				child.updateMatrixWorld( force );
+				child.updateMatrixWorld();
 
 			}
 

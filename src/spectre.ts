@@ -1,4 +1,4 @@
-import WebGPURenderer from "./core/WebGPURenderer";
+import WebGPURenderer from "./renderers/WebGPURenderer";
 import BufferAttribute from "./core/BufferAttribute";
 import BufferGeometry from "./core/BufferGeometry";
 import * as GPUConstances from './Constants'
@@ -6,9 +6,8 @@ import Material from "./materials/Material";
 import Mesh from "./objects/Mesh";
 import Scene from "./core/Scene";
 import { Color } from "./math/Color";
+import { Euler } from "./math/Euler";
 
-const _devicePixelRatio = window.devicePixelRatio || 1;
-const _sampleCount = 4;
 class Example_Triangle {
     private container: HTMLDivElement;
     private renderer : WebGPURenderer;
@@ -26,26 +25,30 @@ class Example_Triangle {
         this.scene = new Scene();
 
         const vertex = new Float32Array([
-            0, 0.5, 0,
-            -0.5, -0.5, 0,
-            0.5, -0.5, 0.0,
+            -0.5,0.5,0,
+            -0.5,-0.5,0,
+            0.5,-0.5,0,
+            0.5,0.5,0,
         ]);
         const indices = new Uint32Array([
-            0,1,2
+            0,1,2,0,2,3
         ]);
+
         const geometry = new BufferGeometry();
         geometry.setAttribute('position',new BufferAttribute(vertex,GPUConstances.GPUVertexFormat.Float32x3));
         geometry.setIndices(new BufferAttribute(indices,GPUConstances.GPUVertexFormat.Uint32));
         const material = new Material();
         material.color = new Color(1,0,0);
         this.mesh = new Mesh(geometry,material);
-        
         this.scene.add(this.mesh);
     }
 
     frame() {
         this.renderer.render(this.scene);
         this.render();
+        this.mesh.rotateZ(0.01);
+        this.mesh.matrixWorldNeedsUpdate = true;
+        this.mesh.updateMatrixWorld();
     }
 
     render() {

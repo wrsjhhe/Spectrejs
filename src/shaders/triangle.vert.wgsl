@@ -5,5 +5,5 @@ fn main(
   @location(0) position : vec3<f32>
 ) -> @builtin(position) vec4<f32> {
     var pos = transform * vec4<f32>(position, 1.0);
-    return vec4<f32>(position, 1.0);
+    return pos;
 }

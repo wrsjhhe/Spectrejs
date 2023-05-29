@@ -5,6 +5,9 @@ export class Uniform{
     private _buffer : GPUBufferWrapper;
     private _binding : number;
     private _flags : GPUShaderStageFlags;
+    
+    public data:any;
+
     constructor(name:string,binding:number,data:any,flags:GPUShaderStageFlags){
         this._name = name;
         this._binding = binding;
@@ -12,8 +15,11 @@ export class Uniform{
         this._flags = flags;
     }
 
-    public update(data:any){
-        this._buffer.update(data);
+    public update(){
+        if(this.data){
+            this._buffer.update(this.data);
+            this.data = null;
+        }
     }
 
     public get name(){
