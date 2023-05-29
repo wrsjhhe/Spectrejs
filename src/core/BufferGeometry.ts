@@ -1,8 +1,8 @@
-import BufferAttribute from "./BufferAttribute";
+import { BufferAttribute } from "./BufferAttribute";
 import { GPUBufferWrapper } from "./GPUBufferWrapper";
-import WebGPURenderer from "../renderers/WebGPURenderer";
+import { WebGPURenderer } from "../renderers/WebGPURenderer";
 
-export default class BufferGeometry{
+export class BufferGeometry{
     
     private _attributes : Map<string,BufferAttribute> = new Map();
     private _indices : BufferAttribute = null;
@@ -21,7 +21,15 @@ export default class BufferGeometry{
         this._indices && this._indices.update();
     }
 
-    public setIndices(attribute : BufferAttribute):BufferGeometry{
+    public setVertexBuffer(passEncoder:GPURenderPassEncoder){
+        let index = 0;
+        for(const attribute of this._attributes.values()){
+            passEncoder.setVertexBuffer(index, attribute.buffer.buffer);
+            ++index;
+        }
+    }
+
+    public setIndex(attribute : BufferAttribute):BufferGeometry{
         if(attribute.count !== this._indices?.count && this._drawBuffer){
             this._drawBuffer.destroy();
             this._drawBuffer = null;
@@ -44,9 +52,6 @@ export default class BufferGeometry{
     public updateDrawBuffer(device:GPUDevice){
 
         if(!this._drawBuffer){
-            const bufferSize = this.indices?
-          
-            Uint32Array.BYTES_PER_ELEMENT*5:Uint32Array.BYTES_PER_ELEMENT*4;
             const k = this.indices?5:4;
             const parameters = new Uint32Array(k);
             if(this.indices){
@@ -66,6 +71,10 @@ export default class BufferGeometry{
                 parameters); 
         }
         
+    }
+
+    public get attributes(){
+        return this._attributes;
     }
 
     public get indices():BufferAttribute{

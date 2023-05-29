@@ -5,7 +5,7 @@ export class Uniform{
     private _buffer : GPUBufferWrapper;
     private _binding : number;
     private _flags : GPUShaderStageFlags;
-    
+
     public data:any;
 
     constructor(name:string,binding:number,data:any,flags:GPUShaderStageFlags){

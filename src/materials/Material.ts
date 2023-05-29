@@ -1,16 +1,12 @@
 import triangleVertWGSL from "../shaders/triangle.vert.wgsl";
 import redFragWGSL from "../shaders/red.frag.wgsl";
-import WebGPURenderer from "../renderers/WebGPURenderer";
 import { Uniform } from "../core/Uniform";
 import { Color } from "../math/Color";
-import { Matrix4 } from "../math/Matrix4";
-export default class Material{
+export class Material{
     private _vertexShader : string;
     private _fragmentShader :string;
     private _uniforms : Map<string,Uniform> = new Map();
     private _color = new Color(1.0,1.0,1.0);
-
-
 
     constructor(){
         this._vertexShader = triangleVertWGSL;

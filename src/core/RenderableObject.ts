@@ -1,16 +1,22 @@
-
-import BufferGeometry from "./BufferGeometry";
-import Material from "../materials/Material";
+import { BufferGeometry } from "./BufferGeometry";
+import { Material } from "../materials/Material";
 import { Object3D } from "./Object3D";
 import { Uniform } from "./Uniform";
 import { Matrix4 } from "../math/Matrix4";
-import WebGPURenderer from "../renderers/WebGPURenderer";
+import { WebGPURenderer } from "../renderers/WebGPURenderer";
+import { Camera } from "../cameras/Camera";
 
-export default class RenderableObject extends Object3D{
+const u_projectionView = "projectionView"
+const u_tranform = "tranform";
+export class RenderableObject extends Object3D{
 
     public get type() {
 		return "RenderableObject";
     }
+
+	public static Is(object:Object3D){
+        return object instanceof RenderableObject;
+	}
 
     protected _geometry : BufferGeometry;
     protected _material : Material;
@@ -33,7 +39,7 @@ export default class RenderableObject extends Object3D{
         this._initInitialUniform();
     }
 
-    public update(renderer:WebGPURenderer){
+    public update(renderer:WebGPURenderer,camera:Camera){
         if(this._needCompile){
             this._createBindLayout(renderer.device);
             this._compilePipeline(renderer);
@@ -41,13 +47,13 @@ export default class RenderableObject extends Object3D{
             this._needCompile = false;
         }
 
-        this._updateUniformValue();
+        this._updateUniformValue(camera);
     }
 
 
     public bindUniform(passEncoder:GPURenderPassEncoder){
         for(let i = 0;i < this._bindGroups.length;++i){
-            passEncoder.setBindGroup(i, this._bindGroups[i])
+            passEncoder.setBindGroup(i, this._bindGroups[i]);
         }
     }
 
@@ -56,19 +62,48 @@ export default class RenderableObject extends Object3D{
         super.updateMatrixWorld();
 
         if(needsUpdate){
-            this._uniforms.get("tranform").data = this.matrixWorld.toArray();
+            this._uniforms.get(u_tranform).data = this.matrixWorld.toArray();
         }
 
     }
 
     private _initInitialUniform(){
-        const tranformUniform = new Uniform("tranform",0,new Matrix4().toArray(),GPUShaderStage.VERTEX);
-        this._uniforms.set("tranform",tranformUniform);
+        const projectionViewUniform = new Uniform(u_projectionView,0,new Matrix4().toArray(),GPUShaderStage.VERTEX); 
+        this._uniforms.set(u_projectionView,projectionViewUniform);
+
+        const tranformUniform = new Uniform(u_tranform,1,new Matrix4().toArray(),GPUShaderStage.VERTEX);
+        this._uniforms.set(u_tranform,tranformUniform);
     } 
 
+    private createVetexBuffers(){
+        const buffers : Array<GPUVertexBufferLayout> = [];
+        let index = 0;
+        for(const attr of this.geometry.attributes.values()){
+            const buffer = {
+                // 顶点长度，以字节为单位
+                arrayStride: attr.byteLength * attr.itemSize,
+                attributes: [
+                    {
+                        // 变量索引
+                        shaderLocation: index,
+                        // 偏移
+                        offset: 0,
+                        // 参数格式
+                        format: attr.format
+                    },
+                ]
+            }
+            ++index;
+            buffers.push(buffer);
+        }
+        return buffers;
+    }
 
     private _compilePipeline(renderer:WebGPURenderer){
         const device = renderer.device;
+
+        const buffers = this.createVetexBuffers();
+
         this._pipeline = device.createRenderPipeline({
             layout: device.createPipelineLayout({
                 bindGroupLayouts: [...this._bindGroupLayouts],
@@ -78,22 +113,7 @@ export default class RenderableObject extends Object3D{
                     code: this.material.vertexShader,
                 }),
                 entryPoint: "main",
-                buffers: [
-                    {
-                        // 顶点长度，以字节为单位
-                        arrayStride: 3 * 4,
-                        attributes: [
-                            {
-                                // 变量索引
-                                shaderLocation: 0,
-                                // 偏移
-                                offset: 0,
-                                // 参数格式
-                                format: "float32x3",
-                            },
-                        ],
-                    },
-                ],
+                buffers: buffers,
             },
             fragment: {
                 module: device.createShaderModule({
@@ -118,10 +138,16 @@ export default class RenderableObject extends Object3D{
             },
             primitive: {
                 topology: "triangle-list",
+                cullMode: 'back',
             },
             multisample: {
                 count: renderer.sampleCount,
             },
+            depthStencil: {
+                depthWriteEnabled: true,
+                depthCompare: 'less',
+                format: 'depth24plus',
+              },
         });
     }
 
@@ -196,8 +222,12 @@ export default class RenderableObject extends Object3D{
         
     }
 
-    public _updateUniformValue(){
+    public _updateUniformValue(camera:Camera){
         for(const uniform of this._uniforms.values()){
+            if(uniform.name === u_projectionView){
+                const matrix = new Matrix4().multiplyMatrices(camera.projectionMatrix,camera.matrixWorld);
+                uniform.data = matrix.toArray();
+            }
             uniform.update();
         }
         for(const uniform of this._material.uniforms.values()){

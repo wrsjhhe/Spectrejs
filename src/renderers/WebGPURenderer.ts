@@ -1,7 +1,10 @@
-import { GPUIndexFormat, GPUTextureFormat } from '../Constants';
-import { GPUBufferWrapper } from '../core/GPUBufferWrapper';
-import RenderableObject from '../core/RenderableObject';
-import Scene from '../core/Scene';
+import { Camera } from "../cameras/Camera";
+import { PerspectiveCamera } from "../cameras/PerspectiveCamera";
+import { GPUIndexFormat, GPUTextureFormat } from "../Constants";
+import { GPUBufferWrapper } from "../core/GPUBufferWrapper";
+import { RenderableObject } from "../core/RenderableObject";
+import { Scene } from "../core/Scene";
+import { Color } from "../math/Color";
 interface WebGPURendererParameters {
     canvas?: HTMLCanvasElement;
     powerPreference?: GPUPowerPreference;
@@ -14,7 +17,7 @@ interface RendererSize {
     height: number;
 }
 
-export default class WebGPURenderer {
+export class WebGPURenderer {
     private _parameters: WebGPURendererParameters;
     private _canvas: HTMLCanvasElement;
     private _powerPreference: GPUPowerPreference;
@@ -24,10 +27,13 @@ export default class WebGPURenderer {
     private _context: GPUCanvasContext;
     private _alphaMode: GPUCanvasAlphaMode = "premultiplied";
     private _colorBuffer: GPUTexture;
+    private _depthBuffer: GPUTexture;
     private _size: RendererSize;
     private _pixelRatio = window.devicePixelRatio || 1;
     private _colorAttachmentView: GPUTextureView;
-    private _sampleCount:number = 1;
+    private _sampleCount: number = 1;
+    private _clearColor = new Color(1, 1, 1);
+    private _sizeChanged = false;
 
     constructor(parameters: WebGPURendererParameters = {}) {
         this._parameters = parameters;
@@ -68,11 +74,11 @@ export default class WebGPURenderer {
         this._initGlobalData();
     }
 
-    _initGlobalData(){
+    _initGlobalData() {
         GPUBufferWrapper.device = this._device;
     }
 
-    public setSize(width:number,height:number){
+    public setSize(width: number, height: number) {
         this._size = {
             width: width,
             height: height,
@@ -80,11 +86,23 @@ export default class WebGPURenderer {
         this._canvas.width = width * this._pixelRatio;
         this._canvas.height = height * this._pixelRatio;
         this._setupColorBuffer();
+        this._setupDepthBuffer();
+        this._sizeChanged = true;
     }
 
-    public render(scene:Scene){
-        if(!this._colorAttachmentView){
-            this.setSize(this._canvas.clientWidth,this._canvas.clientHeight);
+    public render(scene: Scene, camera: Camera) {
+        if (!this._colorAttachmentView) {
+            this.setSize(this._canvas.clientWidth, this._canvas.clientHeight);
+        }
+
+        if (this._sizeChanged) {
+            if(PerspectiveCamera.Is(camera)){
+                const perspectiveCamera = camera as PerspectiveCamera;
+                perspectiveCamera.aspect = this._canvas.width / this._canvas.height;
+                perspectiveCamera.updateProjectionMatrix();
+            }
+
+            this._sizeChanged = false;
         }
 
         const commandEncoder = this.device.createCommandEncoder();
@@ -94,34 +112,43 @@ export default class WebGPURenderer {
                 {
                     view: this._colorAttachmentView,
                     resolveTarget: this._context.getCurrentTexture().createView(),
-                    clearValue: { r: 0.4, g: 0.4, b: 0.4, a: 1.0 },
+                    clearValue: { r: this._clearColor.r, g: this._clearColor.g, b: this._clearColor.b, a: 1.0 },
                     loadOp: "clear",
                     storeOp: "store",
                 },
             ],
+            depthStencilAttachment: {
+                view: this._depthBuffer.createView(),
+                depthClearValue: 1.0,
+                depthLoadOp: 'clear',
+                depthStoreOp: 'store',
+              },
         };
 
         const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-        this._renderObject(passEncoder,scene.children[0] as RenderableObject);
-  
+        for (let i = 0; i < scene.children.length; ++i) {
+            const child = scene.children[i] as RenderableObject;
+            this._renderObject(passEncoder, child, camera);
+        }
+
         passEncoder.end();
 
         this.device.queue.submit([commandEncoder.finish()]);
     }
 
-    private _renderObject(passEncoder:GPURenderPassEncoder,object:RenderableObject){
-        object.update(this);
+    private _renderObject(passEncoder: GPURenderPassEncoder, object: RenderableObject, camera: Camera) {
+        object.update(this, camera);
         passEncoder.setPipeline(object.pipeline);
         object.bindUniform(passEncoder);
-        
+
         const geometry = object.geometry;
         geometry.update(this);
-        passEncoder.setVertexBuffer(0, geometry.getAttribute("position").buffer.buffer);
-        if(geometry.indices){
+        geometry.setVertexBuffer(passEncoder);
+        if (geometry.indices) {
             passEncoder.setIndexBuffer(geometry.indices.buffer.buffer, GPUIndexFormat.Uint32);
-            passEncoder.drawIndexedIndirect(object.geometry.drawBuffer.buffer,0);
-        }else{
-            passEncoder.drawIndirect(object.geometry.drawBuffer.buffer,0);
+            passEncoder.drawIndexedIndirect(object.geometry.drawBuffer.buffer, 0);
+        } else {
+            passEncoder.drawIndirect(object.geometry.drawBuffer.buffer, 0);
         }
     }
 
@@ -145,6 +172,24 @@ export default class WebGPURenderer {
         }
     }
 
+    private _setupDepthBuffer() {
+
+		if ( this._depthBuffer ) this._depthBuffer.destroy();
+
+		this._depthBuffer = this.device.createTexture( {
+			label: 'depthBuffer',
+			size: {
+                width: Math.floor(this._size.width * this._pixelRatio),
+                height: Math.floor(this._size.height * this._pixelRatio),
+                depthOrArrayLayers: 1,
+            },
+			sampleCount: this._sampleCount,
+			format: GPUTextureFormat.Depth24Plus,
+			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC
+		} );
+
+	}
+
     get domElement() {
         return this._canvas;
     }
@@ -157,7 +202,7 @@ export default class WebGPURenderer {
         return this._presentationFormat;
     }
 
-    get sampleCount(){
+    get sampleCount() {
         return this._sampleCount;
     }
 }

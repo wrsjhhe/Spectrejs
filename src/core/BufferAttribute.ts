@@ -1,8 +1,8 @@
 import * as GPUConstances from '../Constants'
 import { GPUBufferWrapper } from './GPUBufferWrapper';
-import WebGPURenderer from '../renderers/WebGPURenderer';
+
 type NumberArrayType = Float32Array | Int8Array | Uint32Array;;
-export default class BufferAttribute{
+export class BufferAttribute{
     private _array : NumberArrayType;
     private _count : number = 0;
     private _itemSize : number = 0;
@@ -18,32 +18,12 @@ export default class BufferAttribute{
         return this._gpuBuffer;
     }
 
-    constructor( array : NumberArrayType, format:GPUVertexFormat, normalized? : boolean){
+    constructor( array : NumberArrayType, format:GPUVertexFormat,itemSize : number, normalized? : boolean){
         this._array = array;
         this._format = format;
+        this._itemSize = itemSize;
         this._parseFormat();
         this._normalized = normalized?normalized:this._normalized;
-    }
-
-
-    private _parseFormat(){
-        switch(this._format){
-            case GPUConstances.GPUVertexFormat.Float32x3:{
-                this._itemSize = 3;
-                this._byteLength = 4;
-                this._count = this._array.length / this._itemSize;
-                break;
-            }
-            case GPUConstances.GPUVertexFormat.Uint32:{
-                this._itemSize = 1;
-                this._byteLength = 4;
-                this._count = this._array.length / this._itemSize;
-                break;
-            }
-            default:{
-                throw new Error('unknown format');
-            }
-        }
     }
 
     public update(){
@@ -59,6 +39,17 @@ export default class BufferAttribute{
         }
 
         
+    }
+
+    private _parseFormat(){
+        this._itemSize = this._itemSize;
+        this._byteLength = this._array.BYTES_PER_ELEMENT;
+        this._count = this._array.length / this._itemSize;
+    }
+
+
+    get format(){
+        return this._format;
     }
 
     get array():RelativeIndexable<number>{
@@ -79,6 +70,10 @@ export default class BufferAttribute{
 
     set itemSize(v : number){
         this._itemSize = v;
+    }
+
+    get byteLength(){
+        return this._byteLength;
     }
 
     get name():string{

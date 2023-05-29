@@ -8,6 +8,10 @@ class Camera extends Object3D {
 		return "Camera";
     }
 
+	public static Is(object:Object3D){
+		return object instanceof Camera;
+	}
+
 	public matrixWorldInverse = new Matrix4();
 
 	public projectionMatrix = new Matrix4();

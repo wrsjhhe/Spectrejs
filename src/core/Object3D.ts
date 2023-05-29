@@ -4,6 +4,7 @@ import { Matrix4 } from '../math/Matrix4';
 import { Euler } from '../math/Euler';
 import * as MathUtils from '../math/MathUtils';
 import { Color } from '../math/Color';
+import { Camera } from '../cameras/Camera';
 
 let _object3DId = 0;
 
@@ -20,9 +21,6 @@ const _xAxis = /*@__PURE__*/ new Vector3( 1, 0, 0 );
 const _yAxis = /*@__PURE__*/ new Vector3( 0, 1, 0 );
 const _zAxis = /*@__PURE__*/ new Vector3( 0, 0, 1 );
 
-const _addedEvent = { type: 'added' };
-const _removedEvent = { type: 'removed' };
-
 export class Object3D {
 
     static DEFAULT_UP = /*@__PURE__*/ new Vector3( 0, 1, 0 );
@@ -33,20 +31,16 @@ export class Object3D {
 		return "Object3D";
     }
 
+	public static Is(object:Object3D){
+		return object instanceof Object3D;
+	}
+
     public uuid : string;
     public name : string;
     public up : Vector3;
 
     private _parent : Object3D;
     private _children : Array<Object3D>;
-
-    public get parent(){
-        return this._parent;
-    }
-
-    public get children(){
-        return this._children;
-    }
 
 	private _position = new Vector3();
 	private _rotation = new Euler();
@@ -235,11 +229,11 @@ export class Object3D {
 
 	}
 
-	lookAt( x:Vector3 ) {
+	lookAt( target:Vector3 ) {
 
 		// This method does not support objects having non-uniformly-scaled parent(s)
 
-		_target.copy( x );
+		_target.copy( target );
 
 		const parent = this.parent;
 
@@ -247,7 +241,7 @@ export class Object3D {
 
 		_position.setFromMatrixPosition( this.matrixWorld );
 
-		if ( this.type === "Camera" || this.type === "Light" ) {
+		if ( Camera.Is(this) || this.type === "Light" ) {
 
 			_m1.lookAt( _position, _target, this.up );
 
@@ -396,61 +390,6 @@ export class Object3D {
 		return this;
 
 	}
-
-	// getObjectById( id ) {
-
-	// 	return this.getObjectByProperty( 'id', id );
-
-	// }
-
-	// getObjectByName( name:string ) {
-
-	// 	return this.getObjectByProperty( 'name', name );
-
-	// }
-
-	// getObjectByProperty( name, value ) {
-
-	// 	if ( this[ name ] === value ) return this;
-
-	// 	for ( let i = 0, l = this.children.length; i < l; i ++ ) {
-
-	// 		const child = this.children[ i ];
-	// 		const object = child.getObjectByProperty( name, value );
-
-	// 		if ( object !== undefined ) {
-
-	// 			return object;
-
-	// 		}
-
-	// 	}
-
-	// 	return undefined;
-
-	// }
-
-	// getObjectsByProperty( name:string, value:any ) {
-
-	// 	let result = [];
-
-	// 	if ( this[ name ] === value ) result.push( this );
-
-	// 	for ( let i = 0, l = this.children.length; i < l; i ++ ) {
-
-	// 		const childResult = this.children[ i ].getObjectsByProperty( name, value );
-
-	// 		if ( childResult.length > 0 ) {
-
-	// 			result = result.concat( childResult );
-
-	// 		}
-
-	// 	}
-
-	// 	return result;
-
-	// }
 
 	getWorldPosition( target:Vector3 ) {
 
@@ -626,248 +565,6 @@ export class Object3D {
 
 	}
 
-	// toJSON( meta:string | object | undefined ) {
-
-	// 	// meta is a string when called from JSON.stringify
-	// 	const isRootObject = ( meta === undefined || typeof meta === 'string' );
-
-	// 	const output : any = {};
-
-	// 	// meta is a hash used to collect geometries, materials.
-	// 	// not providing it implies that this is the root object
-	// 	// being serialized.
-	// 	if ( isRootObject ) {
-
-	// 		// initialize meta obj
-	// 		meta = {
-	// 			geometries: {},
-	// 			materials: {},
-	// 			textures: {},
-	// 			images: {},
-	// 			shapes: {},
-	// 			skeletons: {},
-	// 			animations: {},
-	// 			nodes: {}
-	// 		};
-
-	// 		output.metadata = {
-	// 			version: 4.6,
-	// 			type: 'Object',
-	// 			generator: 'Object3D.toJSON'
-	// 		};
-
-	// 	}
-
-	// 	// standard Object3D serialization
-
-	// 	const object : any = {};
-
-	// 	object.uuid = this.uuid;
-	// 	object.type = this.type;
-
-	// 	if ( this.name !== '' ) object.name = this.name;
-	// 	if ( this.castShadow === true ) object.castShadow = true;
-	// 	if ( this.receiveShadow === true ) object.receiveShadow = true;
-	// 	if ( this.visible === false ) object.visible = false;
-	// 	if ( this.frustumCulled === false ) object.frustumCulled = false;
-	// 	if ( this.renderOrder !== 0 ) object.renderOrder = this.renderOrder;
-	// 	if ( Object.keys( this.userData ).length > 0 ) object.userData = this.userData;
-
-	// 	object.matrix = this.matrix.toArray();
-	// 	object.up = this.up.toArray();
-
-	// 	if ( this.matrixAutoUpdate === false ) object.matrixAutoUpdate = false;
-
-	// 	// object specific properties
-
-	// 	if ( this.isInstancedMesh ) {
-
-	// 		object.type = 'InstancedMesh';
-	// 		object.count = this.count;
-	// 		object.instanceMatrix = this.instanceMatrix.toJSON();
-	// 		if ( this.instanceColor !== null ) object.instanceColor = this.instanceColor.toJSON();
-
-	// 	}
-
-	// 	//
-
-	// 	function serialize( library, element ) {
-
-	// 		if ( library[ element.uuid ] === undefined ) {
-
-	// 			library[ element.uuid ] = element.toJSON( meta );
-
-	// 		}
-
-	// 		return element.uuid;
-
-	// 	}
-
-	// 	if ( this.isScene ) {
-
-	// 		if ( this.background ) {
-
-	// 			if ( this.background.isColor ) {
-
-	// 				object.background = this.background.toJSON();
-
-	// 			} else if ( this.background.isTexture ) {
-
-	// 				object.background = this.background.toJSON( meta ).uuid;
-
-	// 			}
-
-	// 		}
-
-	// 		if ( this.environment && this.environment.isTexture && this.environment.isRenderTargetTexture !== true ) {
-
-	// 			object.environment = this.environment.toJSON( meta ).uuid;
-
-	// 		}
-
-	// 	} else if ( this.isMesh || this.isLine || this.isPoints ) {
-
-	// 		object.geometry = serialize( meta.geometries, this.geometry );
-
-	// 		const parameters = this.geometry.parameters;
-
-	// 		if ( parameters !== undefined && parameters.shapes !== undefined ) {
-
-	// 			const shapes = parameters.shapes;
-
-	// 			if ( Array.isArray( shapes ) ) {
-
-	// 				for ( let i = 0, l = shapes.length; i < l; i ++ ) {
-
-	// 					const shape = shapes[ i ];
-
-	// 					serialize( meta.shapes, shape );
-
-	// 				}
-
-	// 			} else {
-
-	// 				serialize( meta.shapes, shapes );
-
-	// 			}
-
-	// 		}
-
-	// 	}
-
-	// 	if ( this.isSkinnedMesh ) {
-
-	// 		object.bindMode = this.bindMode;
-	// 		object.bindMatrix = this.bindMatrix.toArray();
-
-	// 		if ( this.skeleton !== undefined ) {
-
-	// 			serialize( meta.skeletons, this.skeleton );
-
-	// 			object.skeleton = this.skeleton.uuid;
-
-	// 		}
-
-	// 	}
-
-	// 	if ( this.material !== undefined ) {
-
-	// 		if ( Array.isArray( this.material ) ) {
-
-	// 			const uuids = [];
-
-	// 			for ( let i = 0, l = this.material.length; i < l; i ++ ) {
-
-	// 				uuids.push( serialize( meta.materials, this.material[ i ] ) );
-
-	// 			}
-
-	// 			object.material = uuids;
-
-	// 		} else {
-
-	// 			object.material = serialize( meta.materials, this.material );
-
-	// 		}
-
-	// 	}
-
-	// 	//
-
-	// 	if ( this.children.length > 0 ) {
-
-	// 		object.children = [];
-
-	// 		for ( let i = 0; i < this.children.length; i ++ ) {
-
-	// 			object.children.push( this.children[ i ].toJSON( meta ).object );
-
-	// 		}
-
-	// 	}
-
-	// 	//
-
-	// 	if ( this.animations.length > 0 ) {
-
-	// 		object.animations = [];
-
-	// 		for ( let i = 0; i < this.animations.length; i ++ ) {
-
-	// 			const animation = this.animations[ i ];
-
-	// 			object.animations.push( serialize( meta.animations, animation ) );
-
-	// 		}
-
-	// 	}
-
-	// 	if ( isRootObject ) {
-
-	// 		const geometries = extractFromCache( meta.geometries );
-	// 		const materials = extractFromCache( meta.materials );
-	// 		const textures = extractFromCache( meta.textures );
-	// 		const images = extractFromCache( meta.images );
-	// 		const shapes = extractFromCache( meta.shapes );
-	// 		const skeletons = extractFromCache( meta.skeletons );
-	// 		const animations = extractFromCache( meta.animations );
-	// 		const nodes = extractFromCache( meta.nodes );
-
-	// 		if ( geometries.length > 0 ) output.geometries = geometries;
-	// 		if ( materials.length > 0 ) output.materials = materials;
-	// 		if ( textures.length > 0 ) output.textures = textures;
-	// 		if ( images.length > 0 ) output.images = images;
-	// 		if ( shapes.length > 0 ) output.shapes = shapes;
-	// 		if ( skeletons.length > 0 ) output.skeletons = skeletons;
-	// 		if ( animations.length > 0 ) output.animations = animations;
-	// 		if ( nodes.length > 0 ) output.nodes = nodes;
-
-	// 	}
-
-	// 	output.object = object;
-
-	// 	return output;
-
-	// 	// extract data from the cache hash
-	// 	// remove metadata on each item
-	// 	// and return as array
-	// 	function extractFromCache( cache ) {
-
-	// 		const values = [];
-	// 		for ( const key in cache ) {
-
-	// 			const data = cache[ key ];
-	// 			delete data.metadata;
-	// 			values.push( data );
-
-	// 		}
-
-	// 		return values;
-
-	// 	}
-
-	// }
-
 	clone( recursive = false ) {
 
 		return new Object3D().copy( this, recursive );
@@ -917,7 +614,13 @@ export class Object3D {
 		return this;
 
 	}
+    public get parent(){
+        return this._parent;
+    }
 
+    public get children(){
+        return this._children;
+    }
 	
 	public set position(v:Vector3){
 		this._position.copy(v);
