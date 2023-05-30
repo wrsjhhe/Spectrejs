@@ -1,3 +1,4 @@
+import { NumberArrayType } from "../Constants";
 import { GPUBufferWrapper } from "./GPUBufferWrapper";
 
 export class Uniform{
@@ -5,20 +6,35 @@ export class Uniform{
     private _buffer : GPUBufferWrapper;
     private _binding : number;
     private _flags : GPUShaderStageFlags;
+    private _data : NumberArrayType;
+    private _needsUpdate = true;
 
-    public data:any;
+    public set data(v:NumberArrayType){
+        for(let i = 0;i < v.length;++i){
+            if(v[i] !== this._data[i]){
+                this._needsUpdate = true;
+                break;
+            }
+        }
+        if(this._needsUpdate){
+            this._data = v;
+        }
+        
+    }
 
-    constructor(name:string,binding:number,data:any,flags:GPUShaderStageFlags){
+
+    constructor(name:string,binding:number,data:NumberArrayType,flags:GPUShaderStageFlags){
         this._name = name;
         this._binding = binding;
         this._buffer = new GPUBufferWrapper(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,data);
         this._flags = flags;
+        this._data = data;
     }
 
     public update(){
-        if(this.data){
-            this._buffer.update(this.data);
-            this.data = null;
+        if(this._needsUpdate){
+            this._buffer.update(this._data);
+            this._needsUpdate = false;
         }
     }
 

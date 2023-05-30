@@ -1,7 +1,7 @@
-import { GPUVertexFormat } from "../../Constants";
-import { BufferAttribute } from "../../core/BufferAttribute";
-import { BufferGeometry } from "../../core/BufferGeometry";
-import { Vector3 } from "../../math/Vector3";
+import { GPUVertexFormat } from "../Constants";
+import { BufferAttribute } from "../core/BufferAttribute";
+import { BufferGeometry } from "../core/BufferGeometry";
+import { Vector3 } from "../math/Vector3";
 
 
 export class BoxGeometry extends BufferGeometry {

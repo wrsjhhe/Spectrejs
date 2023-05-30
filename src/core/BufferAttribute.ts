@@ -1,7 +1,7 @@
-import * as GPUConstances from '../Constants'
+
+import { NumberArrayType } from '../Constants';
 import { GPUBufferWrapper } from './GPUBufferWrapper';
 
-type NumberArrayType = Float32Array | Int8Array | Uint32Array;;
 export class BufferAttribute{
     private _array : NumberArrayType;
     private _count : number = 0;

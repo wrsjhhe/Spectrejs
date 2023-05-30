@@ -6,8 +6,11 @@ import { Matrix4 } from "../math/Matrix4";
 import { WebGPURenderer } from "../renderers/WebGPURenderer";
 import { Camera } from "../cameras/Camera";
 
-const u_projectionView = "projectionView"
-const u_tranform = "tranform";
+const t_matrix = new Matrix4();
+
+const u_projection = "projectionMatrix"
+const u_view = "viewMatrix"
+const u_modelTranform = "modelMatrix";
 export class RenderableObject extends Object3D{
 
     public get type() {
@@ -40,6 +43,7 @@ export class RenderableObject extends Object3D{
     }
 
     public update(renderer:WebGPURenderer,camera:Camera){
+        this.updateMatrixWorld();
         if(this._needCompile){
             this._createBindLayout(renderer.device);
             this._compilePipeline(renderer);
@@ -62,17 +66,21 @@ export class RenderableObject extends Object3D{
         super.updateMatrixWorld();
 
         if(needsUpdate){
-            this._uniforms.get(u_tranform).data = this.matrixWorld.toArray();
+            this._uniforms.get(u_modelTranform).data = this.matrixWorld.toArray();
         }
 
     }
 
     private _initInitialUniform(){
-        const projectionViewUniform = new Uniform(u_projectionView,0,new Matrix4().toArray(),GPUShaderStage.VERTEX); 
-        this._uniforms.set(u_projectionView,projectionViewUniform);
+        t_matrix.identity();
+        const projectionUniform = new Uniform(u_projection,0,t_matrix.toArray(),GPUShaderStage.VERTEX); 
+        this._uniforms.set(u_projection,projectionUniform);
 
-        const tranformUniform = new Uniform(u_tranform,1,new Matrix4().toArray(),GPUShaderStage.VERTEX);
-        this._uniforms.set(u_tranform,tranformUniform);
+        const viewUniform = new Uniform(u_view,1,t_matrix.toArray(),GPUShaderStage.VERTEX); 
+        this._uniforms.set(u_view,viewUniform);
+
+        const tranformUniform = new Uniform(u_modelTranform,2,t_matrix.toArray(),GPUShaderStage.VERTEX);
+        this._uniforms.set(u_modelTranform,tranformUniform);
     } 
 
     private createVetexBuffers(){
@@ -224,9 +232,10 @@ export class RenderableObject extends Object3D{
 
     public _updateUniformValue(camera:Camera){
         for(const uniform of this._uniforms.values()){
-            if(uniform.name === u_projectionView){
-                const matrix = new Matrix4().multiplyMatrices(camera.projectionMatrix,camera.matrixWorld);
-                uniform.data = matrix.toArray();
+            if(uniform.name === u_projection){
+                uniform.data = camera.projectionMatrix.toArray();
+            }else if(uniform.name === u_view){
+                uniform.data = camera.matrixWorldInverse.toArray();
             }
             uniform.update();
         }

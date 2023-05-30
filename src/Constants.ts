@@ -1,3 +1,5 @@
+export type NumberArrayType = Float32Array | Int8Array | Uint32Array;;
+
 export const GPUPrimitiveTopology = {
 	PointList: 'point-list',
 	LineList: 'line-list',
@@ -264,3 +266,64 @@ export const GPUMapModeFlags = {
 	Read:0x0001,
 	Write:0x0002
 }
+
+export enum MOUSE {
+    LEFT = 0,
+    MIDDLE = 1,
+    RIGHT = 2,
+    ROTATE = 0,
+    DOLLY = 1,
+    PAN = 2,
+}
+
+export enum TOUCH {
+    ROTATE = 0,
+    PAN = 1,
+    DOLLY_PAN = 2,
+    DOLLY_ROTATE = 3,
+}
+
+
+export const UVMapping = 300;
+export const CubeReflectionMapping = 301;
+export const CubeRefractionMapping = 302;
+export const EquirectangularReflectionMapping = 303;
+export const EquirectangularRefractionMapping = 304;
+export const CubeUVReflectionMapping = 306;
+export const RepeatWrapping = 1000;
+export const ClampToEdgeWrapping = 1001;
+export const MirroredRepeatWrapping = 1002;
+export const NearestFilter = 1003;
+export const NearestMipmapNearestFilter = 1004;
+export const NearestMipMapNearestFilter = 1004;
+export const NearestMipmapLinearFilter = 1005;
+export const NearestMipMapLinearFilter = 1005;
+export const LinearFilter = 1006;
+export const LinearMipmapNearestFilter = 1007;
+export const LinearMipMapNearestFilter = 1007;
+export const LinearMipmapLinearFilter = 1008;
+export const LinearMipMapLinearFilter = 1008;
+export const UnsignedByteType = 1009;
+export const ByteType = 1010;
+export const ShortType = 1011;
+export const UnsignedShortType = 1012;
+export const IntType = 1013;
+export const UnsignedIntType = 1014;
+export const FloatType = 1015;
+export const HalfFloatType = 1016;
+export const UnsignedShort4444Type = 1017;
+export const UnsignedShort5551Type = 1018;
+export const UnsignedInt248Type = 1020;
+export const AlphaFormat = 1021;
+export const RGBAFormat = 1023;
+export const LuminanceFormat = 1024;
+export const LuminanceAlphaFormat = 1025;
+export const DepthFormat = 1026;
+export const DepthStencilFormat = 1027;
+export const RedFormat = 1028;
+export const RedIntegerFormat = 1029;
+export const RGFormat = 1030;
+export const RGIntegerFormat = 1031;
+export const RGBAIntegerFormat = 1033;
+
+export const NoColorSpace = '';

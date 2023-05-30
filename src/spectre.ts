@@ -7,8 +7,10 @@ import { Mesh } from "./objects/Mesh";
 import { Scene } from "./core/Scene";
 import { Color } from "./math/Color";
 import { PerspectiveCamera } from "./cameras/PerspectiveCamera";
-import { BoxGeometry } from "./cameras/geometries/BoxGeometry";
+import { BoxGeometry } from "./geometries/BoxGeometry";
 import { Vector3 } from "./math/Vector3";
+import { OrbitControls } from "./controls/OrbitControls";
+import { PlaneGeometry } from "./geometries/PlaneGeometry";
 
 class Example_Triangle {
     private container: HTMLDivElement;
@@ -16,6 +18,7 @@ class Example_Triangle {
     private scene: Scene;
     private mesh: Mesh;
     private camera: PerspectiveCamera;
+    private controls:OrbitControls;
     async init() {
         this.container = document.getElementById("container") as HTMLDivElement;
         this.renderer = new WebGPURenderer({
@@ -33,18 +36,19 @@ class Example_Triangle {
         // const geometry = new BufferGeometry();
         // geometry.setAttribute("position", new BufferAttribute(vertex, GPUConstances.GPUVertexFormat.Float32x3,3));
         // geometry.setIndex(new BufferAttribute(indices, GPUConstances.GPUVertexFormat.Uint32,1));
-        const geometry = new BoxGeometry(200,200,200);
-        
+        //const geometry = new PlaneGeometry(200,200);
+        const geometry = new BoxGeometry(20,20,20);
         const material = new Material();
         material.color = new Color(1, 0, 0);
         this.mesh = new Mesh(geometry, material);
+        this.mesh.rotateX(- Math.PI / 2);
         this.scene.add(this.mesh);
 
-        this.camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
-        this.camera.position.z = -1000;
-        this.camera.position.y = -200;
-        this.camera.position.x = -2;
+        this.camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
+        this.camera.position.z = -500;
         this.camera.lookAt(new Vector3(0,0,0));
+    
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     }
 
     frame() {
@@ -52,7 +56,6 @@ class Example_Triangle {
         this.render();
         this.mesh.rotateZ(0.01);
         this.mesh.matrixWorldNeedsUpdate = true;
-        this.mesh.updateMatrixWorld();
     }
 
     render() {

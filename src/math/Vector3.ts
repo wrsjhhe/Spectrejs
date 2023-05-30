@@ -4,6 +4,7 @@ import * as MathUtils from './MathUtils';
 import { Matrix3 } from './Matrix3';
 import { Matrix4 } from './Matrix4';
 import { Quaternion } from './Quaternion';
+import { Spherical } from './Spherical';
 
 class Vector3 {
 
@@ -560,11 +561,11 @@ class Vector3 {
 
 	}
 
-	// setFromSpherical( s ) {
+	setFromSpherical( s:Spherical ) {
 
-	// 	return this.setFromSphericalCoords( s.radius, s.phi, s.theta );
+		return this.setFromSphericalCoords( s.radius, s.phi, s.theta );
 
-	// }
+	}
 
 	setFromSphericalCoords( radius:number, phi:number, theta:number ) {
 

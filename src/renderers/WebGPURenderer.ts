@@ -35,6 +35,8 @@ export class WebGPURenderer {
     private _clearColor = new Color(1, 1, 1);
     private _sizeChanged = false;
 
+    private _renderPassDescriptor : GPURenderPassDescriptor;
+
     constructor(parameters: WebGPURendererParameters = {}) {
         this._parameters = parameters;
 
@@ -72,6 +74,24 @@ export class WebGPURenderer {
 
         //this._setupColorBuffer();
         this._initGlobalData();
+
+        this._renderPassDescriptor = {
+            colorAttachments: [
+                {
+                    view: null,
+                    resolveTarget: undefined,
+                    clearValue: { r: this._clearColor.r, g: this._clearColor.g, b: this._clearColor.b, a: 1.0 },
+                    loadOp: "clear",
+                    storeOp: "store",
+                },
+            ],
+            depthStencilAttachment: {
+                view: null,
+                depthClearValue: 1.0,
+                depthLoadOp: 'clear',
+                depthStoreOp: 'store',
+              },
+        };
     }
 
     _initGlobalData() {
@@ -104,28 +124,16 @@ export class WebGPURenderer {
 
             this._sizeChanged = false;
         }
-
+        camera.updateWorldMatrix();
         const commandEncoder = this.device.createCommandEncoder();
 
-        const renderPassDescriptor: GPURenderPassDescriptor = {
-            colorAttachments: [
-                {
-                    view: this._colorAttachmentView,
-                    resolveTarget: this._context.getCurrentTexture().createView(),
-                    clearValue: { r: this._clearColor.r, g: this._clearColor.g, b: this._clearColor.b, a: 1.0 },
-                    loadOp: "clear",
-                    storeOp: "store",
-                },
-            ],
-            depthStencilAttachment: {
-                view: this._depthBuffer.createView(),
-                depthClearValue: 1.0,
-                depthLoadOp: 'clear',
-                depthStoreOp: 'store',
-              },
-        };
+        const view = this.sampleCount > 1 ? this._colorAttachmentView : this._context.getCurrentTexture().createView();
+        const resolveTarget = this.sampleCount > 1 ? this._context.getCurrentTexture().createView() : undefined;
+        (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].view = view;
+        (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget = resolveTarget;
+        (this._renderPassDescriptor.depthStencilAttachment as GPURenderPassDepthStencilAttachment).view = this._depthBuffer.createView();
 
-        const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+        const passEncoder = commandEncoder.beginRenderPass(this._renderPassDescriptor);
         for (let i = 0; i < scene.children.length; ++i) {
             const child = scene.children[i] as RenderableObject;
             this._renderObject(passEncoder, child, camera);
