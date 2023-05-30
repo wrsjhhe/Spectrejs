@@ -7,7 +7,14 @@ module.exports = {
     entry: "./src/spectre.ts", //相对路径
     //输出
     output: {
+        path: path.resolve(__dirname, "dist"), //绝对路径
         filename: "js/spectre.js",
+        library: {
+            type: 'module',
+        }
+    },
+    experiments: {
+        outputModule: true,
     },
     resolve: {
         extensions: [".ts", ".js", ".json"],
@@ -31,9 +38,9 @@ module.exports = {
         new ESLintPlugin({
             context: path.resolve(__dirname, "src"),
         }),
-        new HtmlWebpackPlugin({
-            template: path.resolve(__dirname, "examples/index.html"),
-        }),
+        // new HtmlWebpackPlugin({
+        //     template: path.resolve(__dirname, "examples/index.html"),
+        // }),
     ],
     //模式
     mode: "development",

@@ -1,6 +1,7 @@
 import { Camera } from "../cameras/Camera";
 import { PerspectiveCamera } from "../cameras/PerspectiveCamera";
 import { GPUIndexFormat, GPUTextureFormat } from "../Constants";
+import { Environment } from "../core/Environment";
 import { GPUBufferWrapper } from "../core/GPUBufferWrapper";
 import { RenderableObject } from "../core/RenderableObject";
 import { Scene } from "../core/Scene";
@@ -95,7 +96,7 @@ export class WebGPURenderer {
     }
 
     _initGlobalData() {
-        GPUBufferWrapper.device = this._device;
+        Environment.activeDevice = this._device;
     }
 
     public setSize(width: number, height: number) {

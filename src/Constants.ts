@@ -1,4 +1,10 @@
-export type NumberArrayType = Float32Array | Int8Array | Uint32Array;;
+export type NumberArrayType = Float32Array | Int8Array | Uint32Array | Uint8Array;
+
+export const UniformDataType = {
+	buffer:"buffer",
+	sampler:"sampler",
+	texture:"texture"
+}
 
 export const GPUPrimitiveTopology = {
 	PointList: 'point-list',

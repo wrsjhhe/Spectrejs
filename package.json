@@ -7,7 +7,8 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "npm run dev",
         "dev": "npx webpack serve --config webpack.dev.js",
-        "build": "npx webpack --config webpack.prod.js"
+        "build": "npx webpack --config webpack.prod.js",
+        "build:dev": "npx webpack --config webpack.dev.js"
     },
     "keywords": [],
     "author": "",

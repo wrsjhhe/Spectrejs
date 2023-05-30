@@ -21,6 +21,30 @@ export class BufferGeometry{
         this._indices && this._indices.update();
     }
 
+    public createVetexBuffers(){
+        const buffers : Array<GPUVertexBufferLayout> = [];
+        let index = 0;
+        for(const attr of this.attributes.values()){
+            const buffer = {
+                // 顶点长度，以字节为单位
+                arrayStride: attr.byteLength * attr.itemSize,
+                attributes: [
+                    {
+                        // 变量索引
+                        shaderLocation: index,
+                        // 偏移
+                        offset: 0,
+                        // 参数格式
+                        format: attr.format
+                    },
+                ]
+            }
+            ++index;
+            buffers.push(buffer);
+        }
+        return buffers;
+    }
+
     public setVertexBuffer(passEncoder:GPURenderPassEncoder){
         let index = 0;
         for(const attribute of this._attributes.values()){

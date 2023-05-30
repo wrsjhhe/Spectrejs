@@ -4,8 +4,19 @@ import { Matrix3 } from '../math/Matrix3';
 import * as Constants from '../Constants';
 import { Source } from './Source';
 
+const t_nullCanvas = document.createElement("canvas") as HTMLCanvasElement;
+t_nullCanvas.width = 255;
+t_nullCanvas.height = 255;
+const t_ctx = t_nullCanvas.getContext("2d");
+t_ctx.fillStyle = "#fff000";
+t_ctx.fillRect(0, 0, t_nullCanvas.width, t_nullCanvas.height);
+
+const t_nullImage = document.createElement("img") as HTMLImageElement;
+t_nullImage.width = 1;
+t_nullImage.height = 1;
+t_nullImage.src = t_nullCanvas.toDataURL();
 class Texture {
-    static DEFAULT_IMAGE:any = null;
+    static DEFAULT_IMAGE:HTMLImageElement = t_nullImage;
     static DEFAULT_MAPPING = Constants.UVMapping;
     static DEFAULT_ANISOTROPY = 1;
 

@@ -26,7 +26,7 @@ class ImageUtils {
 
 		} else {
 
-			if ( _canvas === undefined ) _canvas = new HTMLCanvasElement();
+			if ( _canvas === undefined ) _canvas = document.createElement("canvas");
 
 			_canvas.width = image.width;
 			_canvas.height = image.height;
@@ -67,7 +67,7 @@ class ImageUtils {
 			( typeof HTMLCanvasElement !== 'undefined' && image instanceof HTMLCanvasElement ) ||
 			( typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap ) ) {
 
-			const canvas = new HTMLCanvasElement();
+			const canvas = document.createElement("canvas");
 
 			canvas.width = image.width;
 			canvas.height = image.height;

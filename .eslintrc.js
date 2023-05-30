@@ -5,7 +5,7 @@ module.exports = {
         browser: true,
     },
     parserOptions: {
-        ecmaVersion: 6,
+        ecmaVersion: 8,
         sourceType: "module",
     },
     rules: {

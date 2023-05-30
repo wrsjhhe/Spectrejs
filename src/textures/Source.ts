@@ -1,4 +1,4 @@
-import * as MathUtils from '../math/MathUtils.js';
+import * as MathUtils from '../math/MathUtils';
 
 export class Source {
 

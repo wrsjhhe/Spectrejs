@@ -1,4 +1,4 @@
-import { DefaultLoadingManager, LoadingManager } from './LoadingManager.js';
+import { DefaultLoadingManager, LoadingManager } from './LoadingManager';
 
  export abstract class Loader {
 

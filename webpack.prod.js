@@ -10,6 +10,12 @@ module.exports = {
         path: path.resolve(__dirname, "dist"), //绝对路径
         filename: "js/spectre.js",
         clean: true,
+        library: {
+            type: 'module',
+        }
+    },
+    experiments: {
+        outputModule: true,
     },
     resolve: {
         extensions: [".ts", ".js", ".json"],
