@@ -1,5 +1,5 @@
 import { Material } from "../spectre";
-import * as basic from "./basic"
+import * as basic from "./ShaderBasic"
 
 export class MeshBasicShader {
     private _vertexShaderCode: string;
