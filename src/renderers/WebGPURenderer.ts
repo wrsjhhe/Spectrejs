@@ -2,8 +2,6 @@ import { Camera } from "../cameras/Camera";
 import { PerspectiveCamera } from "../cameras/PerspectiveCamera";
 import { GPUIndexFormat, GPUTextureFormat } from "../Constants";
 import { Environment } from "../core/Environment";
-import { GPUBufferWrapper } from "../core/GPUBufferWrapper";
-import { Pipleline } from "../core/Pipeline";
 import { RenderableObject } from "../core/RenderableObject";
 import { Scene } from "../core/Scene";
 import { Color } from "../math/Color";
@@ -79,7 +77,6 @@ export class WebGPURenderer {
             alphaMode: this._alphaMode,
         });
 
-        //this._setupColorBuffer();
         this._initGlobalData();
 
         this._renderPassDescriptor = {
@@ -169,7 +166,7 @@ export class WebGPURenderer {
         material.pipeline.createBindGroups(camera,objects);
         passEncoder.setPipeline(material.pipeline.pipeline);
         material.pipeline.bindCommonUniform(passEncoder,camera);
-
+        material.updateUniforms();
         for(let i = 0;i < objects.length;++i){
             material.pipeline.bindObjectUnform(passEncoder,objects[i]);
             this._renderObject(passEncoder,objects[i]);
@@ -177,6 +174,8 @@ export class WebGPURenderer {
     }
 
     private _renderObject(passEncoder: GPURenderPassEncoder, object: RenderableObject) {
+        object.update();
+
         const geometry = object.geometry;
         geometry.update(this);
         geometry.setVertexBuffer(passEncoder);
@@ -186,14 +185,6 @@ export class WebGPURenderer {
         } else {
             passEncoder.drawIndirect(object.geometry.drawBuffer.buffer, 0);
         }
-    }
-
-    private _sortObjects(){
-        
-    }
-
-    private _beforRender(){
-
     }
 
     private _setupColorBuffer() {

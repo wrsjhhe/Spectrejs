@@ -37,7 +37,7 @@ export class Pipleline {
     }
 
     public bindObjectUnform(passEncoder: GPURenderPassEncoder,object:RenderableObject){
-        passEncoder.setBindGroup(1, this._objectBindGroups[object.uuid]);
+        passEncoder.setBindGroup(2, this._objectBindGroups[object.uuid]);
     }
 
     /****************************create layout start ***********************************/
@@ -50,12 +50,12 @@ export class Pipleline {
                 this._vertexBufferLayouts.push({
                     arrayStride:
                         (VertexBufferLayoutInfo as any)[key].byteLength *
-                        (VertexBufferLayoutInfo as any)[key].position.itemSize,
+                        (VertexBufferLayoutInfo as any)[key].itemSize,
                     attributes: [
                         {
                             shaderLocation: index++,
                             offset: 0,
-                            format: (VertexBufferLayoutInfo as any)[key].position.format,
+                            format: (VertexBufferLayoutInfo as any)[key].format,
                         },
                     ],
                 });
@@ -102,8 +102,11 @@ export class Pipleline {
                 },
             });
         }
-
-        return entries;
+        this._bindGroupLayouts.push(
+            Environment.activeDevice.createBindGroupLayout({
+                entries: entries,
+            })
+        );
     }
 
     private _createBindLayouts() {
@@ -154,9 +157,9 @@ export class Pipleline {
         }
         if (newObjs.length === 0) return;
 
-        const group = new Array<GPUBindGroupEntry>();
         for (let i = 0; i < newObjs.length; ++i) {
             const object = newObjs[i];
+            const group = new Array<GPUBindGroupEntry>();
             for (const key in ObjectGroupLayoutInfo) {
                 group.push({
                     binding: (ObjectGroupLayoutInfo as any)[key].binding,

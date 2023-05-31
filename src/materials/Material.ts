@@ -32,7 +32,7 @@ export class Material{
             enable:true
         },
         uv:{
-            enable:false
+            enable:true
         }
 
     }
@@ -43,6 +43,8 @@ export class Material{
         this._fragmentShader = redFragWGSL;
 
         this._initInitialUniform();
+
+        this._pipeline = new Pipleline(this);
     }
 
     public get pipeline(){
@@ -157,7 +159,6 @@ export class Material{
 
         const textureUnform = this._uniforms.get("texture") as TextureUniform;
         textureUnform.texture = v;
-        
     }
 
     public get color(){
@@ -180,7 +181,7 @@ export class Material{
         return this._uniforms;
     }
 
-    public vertexOptions(){
+    public get vertexOptions(){
         return this._vertexOptions;
     }
 

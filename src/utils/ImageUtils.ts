@@ -2,7 +2,7 @@ import { SRGBToLinear } from '../math/ColorManagement.js';
 
 let _canvas : HTMLCanvasElement;
 
-class ImageUtils {
+export class ImageUtils {
 
 	static getDataURL( image:any ) {
 
@@ -124,5 +124,3 @@ class ImageUtils {
 	}
 
 }
-
-export { ImageUtils };

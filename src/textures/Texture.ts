@@ -5,10 +5,10 @@ import * as Constants from '../Constants';
 import { Source } from './Source';
 
 const t_nullCanvas = document.createElement("canvas") as HTMLCanvasElement;
-t_nullCanvas.width = 1;
-t_nullCanvas.height = 1;
+t_nullCanvas.width = 10;
+t_nullCanvas.height = 10;
 const t_ctx = t_nullCanvas.getContext("2d");
-t_ctx.fillStyle = "#ffffff";
+t_ctx.fillStyle = "#ff0000";
 t_ctx.fillRect(0, 0, t_nullCanvas.width, t_nullCanvas.height);
 
 const t_nullImage = document.createElement("img") as HTMLImageElement;

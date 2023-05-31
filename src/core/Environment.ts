@@ -43,6 +43,6 @@ export const VertexBufferLayoutInfo = {
 	uv:{
 		byteLength:4,
 		itemSize:2,
-		format:GPUVertexFormat.Float32x3
+		format:GPUVertexFormat.Float32x2
 	}
 };

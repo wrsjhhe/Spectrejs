@@ -71,7 +71,7 @@
 
             const geometry = new Spectre.BoxGeometry(20, 20, 20);
 
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 10000; i++) {
 
                 const mesh = new Spectre.Mesh(geometry, material);
 
@@ -86,7 +86,7 @@
                 mesh.scale.x = Math.random() + 0.5;
                 mesh.scale.y = Math.random() + 0.5;
                 mesh.scale.z = Math.random() + 0.5;
-
+                mesh.matrixWorldNeedsUpdate = true;
                 scene.add(mesh);
 
             }

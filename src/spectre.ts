@@ -1,6 +1,6 @@
 
-
 export * as GPUConstances from "./Constants";
+
 
 export { WebGPURenderer } from "./renderers/WebGPURenderer";
 
@@ -32,3 +32,5 @@ export { OrbitControls } from "./controls/OrbitControls";
 export { FileLoader } from "./loaders/FileLoader";
 export { ImageLoader } from "./loaders/ImageLoader";
 export { TextureLoader } from "./loaders/TextureLoader";
+
+export * as ConstantsValues from "./utils/ConstantsValues";
