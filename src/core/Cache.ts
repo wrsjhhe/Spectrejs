@@ -2,15 +2,15 @@ export class Cache {
 
 	public static enabled = false;
 
-	static files:any = {};
+	static caches:any = {};
 
-	public static add ( key:string, file:any ) {
+	public static add ( key:string, obj:any ) {
 
 		if ( this.enabled === false ) return;
 
 		// console.log( 'THREE.Cache', 'Adding key:', key );
 
-		this.files[ key ] = file;
+		this.caches[ key ] = obj;
 
 	}
 
@@ -20,19 +20,19 @@ export class Cache {
 
 		// console.log( 'THREE.Cache', 'Checking key:', key );
 
-		return this.files[ key ];
+		return this.caches[ key ];
 
 	}
 
 	public static remove ( key:string ) {
 
-		delete this.files[ key ];
+		delete this.caches[ key ];
 
 	}
 
 	public static clear () {
 
-		this.files = {};
+		this.caches = {};
 
 	}
 

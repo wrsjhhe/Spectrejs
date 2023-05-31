@@ -21,8 +21,8 @@ export class BufferGeometry{
         this._indices && this._indices.update();
     }
 
-    public createVetexBuffers(){
-        const buffers : Array<GPUVertexBufferLayout> = [];
+    public createVetexBufferLayouts(){
+        const bufferLayouts : Array<GPUVertexBufferLayout> = [];
         let index = 0;
         for(const attr of this.attributes.values()){
             const buffer = {
@@ -40,9 +40,9 @@ export class BufferGeometry{
                 ]
             }
             ++index;
-            buffers.push(buffer);
+            bufferLayouts.push(buffer);
         }
-        return buffers;
+        return bufferLayouts;
     }
 
     public setVertexBuffer(passEncoder:GPURenderPassEncoder){

@@ -8,6 +8,8 @@ import { BufferUniform } from "../core/uniforms/BufferUniform";
 import { SamplerUniform } from "../core/uniforms/SamplerUniform";
 import { TextureUniform } from "../core/uniforms/TextureUniform";
 import { CommonUtils } from "../utils/CommonUtils";
+import { MathUtils } from "../math/MathUtils";
+import { Pipleline } from "../core/Pipeline";
 
 export class Material{
     private _vertexShader : string;
@@ -15,20 +17,39 @@ export class Material{
     private _uniforms : Map<string,Uniform> = new Map();
     private _color = new Color(1.0,1.0,1.0);
     private _map = NullTexture;
-    private _useMap = false;
     private _parameters = new Uint32Array(4);
+    private _pipeline : Pipleline;
 
+    public uuid : string;
     public needsCreateBindGroup = true;
     public needsCompile = true;
 
+    public _vertexOptions = {
+        position:{
+            enable:true
+        },
+        normal:{
+            enable:true
+        },
+        uv:{
+            enable:false
+        }
+
+    }
+
     constructor(){
+        this.uuid = MathUtils.generateUUID();
         this._vertexShader = triangleVertWGSL;
         this._fragmentShader = redFragWGSL;
 
         this._initInitialUniform();
     }
 
-    public createBindLayout(){
+    public get pipeline(){
+        return this._pipeline;
+    }
+
+    public getBindLayout(){
         const entriesLayout:Array<GPUBindGroupLayoutEntry> = [];
         for(const uniform of this.uniforms.values()){
             if(uniform.type === UniformDataType.buffer){
@@ -63,7 +84,7 @@ export class Material{
         return entriesLayout;
     }
 
-    public createBindGroup(device:GPUDevice){
+    public getBindGroup(){
         const entriesGroup = new Array<GPUBindGroupEntry>;
         for(const uniform of this.uniforms.values()){
             if(uniform.type === UniformDataType.buffer){
@@ -97,8 +118,9 @@ export class Material{
             uniform.update();
             if(uniform.type === UniformDataType.texture){
                 const textureUniform = uniform as TextureUniform;
-                if(textureUniform.changed){
+                if(textureUniform.changed && !this.needsCreateBindGroup){
                     this.needsCreateBindGroup = true;
+                    textureUniform.changed = false;
                 }
             }
         }
@@ -127,10 +149,10 @@ export class Material{
     public set map(v:Texture){
         if(v !== NullTexture && CommonUtils.isDefined(v)){
             this._map = v;
-            this._useMap = true;
+            this._vertexOptions.uv.enable = true;
         }else{
             this._map = NullTexture;
-            this._useMap = false;
+            this._vertexOptions.uv.enable = false;
         }
 
         const textureUnform = this._uniforms.get("texture") as TextureUniform;
@@ -158,6 +180,8 @@ export class Material{
         return this._uniforms;
     }
 
-
+    public vertexOptions(){
+        return this._vertexOptions;
+    }
 
 }

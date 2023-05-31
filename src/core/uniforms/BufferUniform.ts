@@ -17,15 +17,8 @@ export class BufferUniform extends Uniform{
     }
     
     public set data(v:NumberArrayType){
-        for(let i = 0;i < v.length;++i){
-            if(v[i] !== this._data[i]){
-                this._needsUpdate = true;
-                break;
-            }
-        }
-        if(this._needsUpdate){
-            this._data = v;
-        }
+        this._needsUpdate = true;
+        this._data = v;
     }
 
     public override update(){

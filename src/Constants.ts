@@ -6,6 +6,7 @@ export const UniformDataType = {
 	texture:"texture"
 }
 
+
 export const GPUPrimitiveTopology = {
 	PointList: 'point-list',
 	LineList: 'line-list',

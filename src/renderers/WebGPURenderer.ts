@@ -3,9 +3,11 @@ import { PerspectiveCamera } from "../cameras/PerspectiveCamera";
 import { GPUIndexFormat, GPUTextureFormat } from "../Constants";
 import { Environment } from "../core/Environment";
 import { GPUBufferWrapper } from "../core/GPUBufferWrapper";
+import { Pipleline } from "../core/Pipeline";
 import { RenderableObject } from "../core/RenderableObject";
 import { Scene } from "../core/Scene";
 import { Color } from "../math/Color";
+import { Material } from "../spectre";
 interface WebGPURendererParameters {
     canvas?: HTMLCanvasElement;
     powerPreference?: GPUPowerPreference;
@@ -17,6 +19,8 @@ interface RendererSize {
     width: number;
     height: number;
 }
+
+
 
 export class WebGPURenderer {
     private _parameters: WebGPURendererParameters;
@@ -37,6 +41,8 @@ export class WebGPURenderer {
     private _sizeChanged = false;
 
     private _renderPassDescriptor : GPURenderPassDescriptor;
+
+    private _materialObjects = new Map<Material,Array<RenderableObject>>();
 
     constructor(parameters: WebGPURendererParameters = {}) {
         this._parameters = parameters;
@@ -125,7 +131,9 @@ export class WebGPURenderer {
 
             this._sizeChanged = false;
         }
-        camera.updateWorldMatrix();
+        camera.update();
+        this._materialObjects.clear();
+
         const commandEncoder = this.device.createCommandEncoder();
 
         const view = this.sampleCount > 1 ? this._colorAttachmentView : this._context.getCurrentTexture().createView();
@@ -137,7 +145,18 @@ export class WebGPURenderer {
         const passEncoder = commandEncoder.beginRenderPass(this._renderPassDescriptor);
         for (let i = 0; i < scene.children.length; ++i) {
             const child = scene.children[i] as RenderableObject;
-            this._renderObject(passEncoder, child, camera);
+        
+            let objs = this._materialObjects.get(child.material);
+            if(objs){
+                objs.push(child);
+            }else{
+                this._materialObjects.set(child.material,[]);
+                this._materialObjects.get(child.material).push(child);
+            }
+        }
+
+        for(const [material,objects] of this._materialObjects){
+            this._renderSamePipeline(passEncoder,camera, material,objects);
         }
 
         passEncoder.end();
@@ -145,11 +164,19 @@ export class WebGPURenderer {
         this.device.queue.submit([commandEncoder.finish()]);
     }
 
-    private _renderObject(passEncoder: GPURenderPassEncoder, object: RenderableObject, camera: Camera) {
-        object.update(this, camera);
-        passEncoder.setPipeline(object.pipeline);
-        object.bindUniform(passEncoder);
+    private _renderSamePipeline(passEncoder: GPURenderPassEncoder, camera: Camera, material:Material,objects:Array<RenderableObject>){
+        material.pipeline.compilePipeline(this);
+        material.pipeline.createBindGroups(camera,objects);
+        passEncoder.setPipeline(material.pipeline.pipeline);
+        material.pipeline.bindCommonUniform(passEncoder,camera);
 
+        for(let i = 0;i < objects.length;++i){
+            material.pipeline.bindObjectUnform(passEncoder,objects[i]);
+            this._renderObject(passEncoder,objects[i]);
+        }
+    }
+
+    private _renderObject(passEncoder: GPURenderPassEncoder, object: RenderableObject) {
         const geometry = object.geometry;
         geometry.update(this);
         geometry.setVertexBuffer(passEncoder);
@@ -161,8 +188,12 @@ export class WebGPURenderer {
         }
     }
 
-    private _beforRender(){
+    private _sortObjects(){
         
+    }
+
+    private _beforRender(){
+
     }
 
     private _setupColorBuffer() {

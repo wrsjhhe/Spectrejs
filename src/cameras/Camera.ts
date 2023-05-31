@@ -1,8 +1,12 @@
 import { Object3D } from '../core/Object3D';
+import { BufferUniform } from '../core/uniforms/BufferUniform';
 import { Matrix4 } from '../math/Matrix4';
 import { Vector3 } from '../math/Vector3';
+import { IdentifyMatrix4 } from '../utils/ConstantsValues';
 
-class Camera extends Object3D {
+const u_projection = "projectionMatrix";
+const u_view = "matrixWorldInverse";
+export class Camera extends Object3D {
 
     public get type() {
 		return "Camera";
@@ -18,10 +22,13 @@ class Camera extends Object3D {
 
 	public projectionMatrixInverse = new Matrix4();
 
+	private _uniforms: Map<string, BufferUniform> = new Map();
+
 	constructor() {
 
 		super();
 
+		this._initInitialUniform();
 	}
 
 	override copy( source:Camera, recursive = false ) {
@@ -69,6 +76,31 @@ class Camera extends Object3D {
 
 	}
 
-}
+	public update(){
+		this.updateWorldMatrix();
+		this._updateUniformValue();
+	}
 
-export { Camera };
+	private _updateUniformValue(){
+		let uniform = this._uniforms.get(u_projection);
+		uniform.data = this.projectionMatrix.toArray();
+		uniform.update();
+		uniform = this._uniforms.get(u_view);
+		uniform.data = this.matrixWorldInverse.toArray();
+		uniform.update();
+	}
+
+	private _initInitialUniform() {
+		const matrixBuffer = IdentifyMatrix4.toArray();
+        const projectionUniform = new BufferUniform(u_projection, 0, matrixBuffer, GPUShaderStage.VERTEX);
+        this._uniforms.set(u_projection, projectionUniform);
+
+        const viewUniform = new BufferUniform(u_view, 1, matrixBuffer, GPUShaderStage.VERTEX);
+        this._uniforms.set(u_view, viewUniform);
+    }
+
+	public get uniforms(){
+		return this._uniforms;
+	}
+
+}
