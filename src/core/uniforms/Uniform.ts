@@ -1,5 +1,3 @@
-import { NumberArrayType } from "../Constants";
-import { GPUBufferWrapper } from "./GPUBufferWrapper";
 
 export abstract class Uniform{
     private _name : string;

@@ -161,6 +161,10 @@ export class WebGPURenderer {
         }
     }
 
+    private _beforRender(){
+        
+    }
+
     private _setupColorBuffer() {
         const device = this._device;
 

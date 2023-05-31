@@ -1,5 +1,5 @@
-import { NumberArrayType, UniformDataType } from "../Constants";
-import { GPUBufferWrapper } from "./GPUBufferWrapper";
+import { NumberArrayType, UniformDataType } from "../../Constants";
+import { GPUBufferWrapper } from "../GPUBufferWrapper";
 import { Uniform } from "./Uniform";
 
 export class BufferUniform extends Uniform{

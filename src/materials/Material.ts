@@ -1,18 +1,20 @@
-import triangleVertWGSL from "../shaders/triangle.vert.wgsl";
-import redFragWGSL from "../shaders/red.frag.wgsl";
-import { Uniform } from "../core/Uniform";
+import triangleVertWGSL from "../shaders/basic.vert.wgsl";
+import redFragWGSL from "../shaders/basic.frag.wgsl";
+import { Uniform } from "../core/uniforms/Uniform";
 import { Color } from "../math/Color";
-import { Texture } from "../textures/Texture";
+import { NullTexture, Texture } from "../textures/Texture";
 import { UniformDataType } from "../Constants";
-import { BufferUniform } from "../core/BufferUniform";
-import { SamplerUniform } from "../core/SamplerUniform";
-import { TextureUniform } from "../core/TextureUniform";
+import { BufferUniform } from "../core/uniforms/BufferUniform";
+import { SamplerUniform } from "../core/uniforms/SamplerUniform";
+import { TextureUniform } from "../core/uniforms/TextureUniform";
+import { CommonUtils } from "../utils/CommonUtils";
+
 export class Material{
     private _vertexShader : string;
     private _fragmentShader :string;
     private _uniforms : Map<string,Uniform> = new Map();
     private _color = new Color(1.0,1.0,1.0);
-    private _map = new Texture();
+    private _map = NullTexture;
     private _useMap = false;
     private _parameters = new Uint32Array(4);
 
@@ -95,7 +97,7 @@ export class Material{
             uniform.update();
             if(uniform.type === UniformDataType.texture){
                 const textureUniform = uniform as TextureUniform;
-                if(textureUniform.updated){
+                if(textureUniform.changed){
                     this.needsCreateBindGroup = true;
                 }
             }
@@ -123,10 +125,17 @@ export class Material{
     }
 
     public set map(v:Texture){
-        this._map = v;
+        if(v !== NullTexture && CommonUtils.isDefined(v)){
+            this._map = v;
+            this._useMap = true;
+        }else{
+            this._map = NullTexture;
+            this._useMap = false;
+        }
+
         const textureUnform = this._uniforms.get("texture") as TextureUniform;
         textureUnform.texture = v;
-        this._useMap = true;
+        
     }
 
     public get color(){

@@ -1,13 +1,13 @@
-import { UniformDataType } from "../Constants";
-import { Texture } from "../textures/Texture";
-import { Environment } from "./Environment";
+import { UniformDataType } from "../../Constants";
+import { Texture } from "../../textures/Texture";
+import { Environment } from "../Environment";
 import { Uniform } from "./Uniform";
 
 export class TextureUniform extends Uniform {
     private _texture: Texture;
     private _data: GPUTexture;
 
-    public updated = false;
+    public changed = false;
 
     constructor(name: string, binding: number, texture: Texture, flags: GPUShaderStageFlags) {
         super(name, binding, flags);
@@ -43,7 +43,7 @@ export class TextureUniform extends Uniform {
                     { texture: this._data },
                     [imageBitmap.width, imageBitmap.height]
                 );
-                this.updated = true;
+                this.changed = true;
             });
 
             this._needsUpdate = false;

@@ -9,4 +9,8 @@ export class CommonUtils {
 
         console.warn(message);
     }
+
+    public static isDefined(o:any){
+        return o !== undefined && o !== null;
+    }
 }

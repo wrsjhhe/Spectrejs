@@ -1,5 +1,5 @@
-import { UniformDataType } from "../Constants";
-import { Environment } from "./Environment";
+import { UniformDataType } from "../../Constants";
+import { Environment } from "../Environment";
 import { Uniform } from "./Uniform";
 
 export class SamplerUniform extends Uniform{

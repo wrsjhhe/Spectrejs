@@ -1,11 +1,10 @@
 import { BufferGeometry } from "./BufferGeometry";
 import { Material } from "../materials/Material";
 import { Object3D } from "./Object3D";
-import { Uniform } from "./Uniform";
 import { Matrix4 } from "../math/Matrix4";
 import { WebGPURenderer } from "../renderers/WebGPURenderer";
 import { Camera } from "../cameras/Camera";
-import { BufferUniform } from "./BufferUniform";
+import { BufferUniform } from "./uniforms/BufferUniform";
 
 const t_matrix = new Matrix4();
 

@@ -4,7 +4,7 @@
 
 struct VertexOutput {
   @builtin(position) Position : vec4<f32>,
-  @location(0) fragUV : vec2<f32>
+  @location(0) uv : vec2<f32>
 }
 
 @vertex
@@ -15,6 +15,6 @@ fn main(
 ) -> VertexOutput {
     var output : VertexOutput;
     output.Position = projectionMatrix * viewMatrix * modelMatrix * vec4<f32>(position, 1.0);
-    output.fragUV = uv;
+    output.uv = uv;
     return output;
 }
