@@ -173,7 +173,7 @@ export class WebGPURenderer {
         }
     }
 
-    private _renderObject(passEncoder: GPURenderPassEncoder, object: RenderableObject) {
+    private _renderObject(passEncoder: GPURenderPassEncoder, object: RenderableObject ) {
         object.update();
 
         const geometry = object.geometry;

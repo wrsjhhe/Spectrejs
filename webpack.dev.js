@@ -26,10 +26,6 @@ module.exports = {
                 test: /\.tsx?$/,
                 use: "ts-loader",
                 exclude: "/node-modules/",
-            },
-            {
-                test: /\.wgsl$/i,
-                use: 'raw-loader',
             }
         ],
     },

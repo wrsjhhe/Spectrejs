@@ -40,26 +40,76 @@ export class Pipleline {
         passEncoder.setBindGroup(2, this._objectBindGroups[object.uuid]);
     }
 
+    private _compile(renderer: WebGPURenderer) {
+        const device = renderer.device;
+        this.material.shader.recreate();
+
+        this._pipeline = device.createRenderPipeline({
+            layout: device.createPipelineLayout({
+                bindGroupLayouts: [...this._bindGroupLayouts],
+            }),
+            vertex: {
+                module: device.createShaderModule({
+                    code: this.material.shader.vertexShaderCode,
+                }),
+                entryPoint: "main",
+                buffers: this._vertexBufferLayouts,
+            },
+            fragment: {
+                module: device.createShaderModule({
+                    code: this.material.shader.fragmentShaderCode,
+                }),
+                entryPoint: "main",
+                targets: [
+                    {
+                        format: renderer.presentationFormat,
+                        blend: {
+                            color: {
+                                srcFactor: "src-alpha",
+                                dstFactor: "one-minus-src-alpha",
+                            },
+                            alpha: {
+                                srcFactor: "one",
+                                dstFactor: "one-minus-src-alpha",
+                            },
+                        },
+                    },
+                ],
+            },
+            primitive: {
+                topology: "triangle-list",
+                cullMode: "back",
+            },
+            multisample: {
+                count: renderer.sampleCount,
+            },
+            depthStencil: {
+                depthWriteEnabled: true,
+                depthCompare: "less",
+                format: "depth24plus",
+            },
+        });
+    }
+
     /****************************create layout start ***********************************/
     private _createVertexBufferLayouts() {
         this._vertexBufferLayouts.length = 0;
 
-        let index = 0;
-        for (const key in this._material.vertexOptions) {
-            if ((this._material.vertexOptions as any)[key].enable === true) {
-                this._vertexBufferLayouts.push({
-                    arrayStride:
-                        (VertexBufferLayoutInfo as any)[key].byteLength *
-                        (VertexBufferLayoutInfo as any)[key].itemSize,
-                    attributes: [
-                        {
-                            shaderLocation: index++,
-                            offset: 0,
-                            format: (VertexBufferLayoutInfo as any)[key].format,
-                        },
-                    ],
-                });
-            }
+        for (const [key,value] of this._material.shaderOptions.locationValues) {
+
+            this._vertexBufferLayouts.push({
+                arrayStride:
+                    (VertexBufferLayoutInfo as any)[key].byteLength *
+                    (VertexBufferLayoutInfo as any)[key].itemSize,
+                attributes: [
+                    {
+                        shaderLocation: value.index,
+                        offset: 0,
+                        format: (VertexBufferLayoutInfo as any)[key].format,
+                    },
+                ],
+            });
+            
         }
     }
 
@@ -184,56 +234,6 @@ export class Pipleline {
     private _beforeCompile() {
         this._createBindLayouts();
         this._createVertexBufferLayouts();
-    }
-
-    private _compile(renderer: WebGPURenderer) {
-        const device = renderer.device;
-
-        this._pipeline = device.createRenderPipeline({
-            layout: device.createPipelineLayout({
-                bindGroupLayouts: [...this._bindGroupLayouts],
-            }),
-            vertex: {
-                module: device.createShaderModule({
-                    code: this.material.vertexShader,
-                }),
-                entryPoint: "main",
-                buffers: this._vertexBufferLayouts,
-            },
-            fragment: {
-                module: device.createShaderModule({
-                    code: this.material.fragmentShader,
-                }),
-                entryPoint: "main",
-                targets: [
-                    {
-                        format: renderer.presentationFormat,
-                        blend: {
-                            color: {
-                                srcFactor: "src-alpha",
-                                dstFactor: "one-minus-src-alpha",
-                            },
-                            alpha: {
-                                srcFactor: "one",
-                                dstFactor: "one-minus-src-alpha",
-                            },
-                        },
-                    },
-                ],
-            },
-            primitive: {
-                topology: "triangle-list",
-                cullMode: "back",
-            },
-            multisample: {
-                count: renderer.sampleCount,
-            },
-            depthStencil: {
-                depthWriteEnabled: true,
-                depthCompare: "less",
-                format: "depth24plus",
-            },
-        });
     }
 
     public get pipeline() {

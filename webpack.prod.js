@@ -27,10 +27,6 @@ module.exports = {
                 test: /\.tsx?$/,
                 use: "ts-loader",
                 exclude: "/node-modules/",
-            },
-            {
-                test: /\.wgsl$/i,
-                use: 'raw-loader',
             }
         ],
     },
@@ -38,10 +34,7 @@ module.exports = {
     plugins: [
         new ESLintPlugin({
             context: path.resolve(__dirname, "src"),
-        }),
-        new HtmlWebpackPlugin({
-            template: path.resolve(__dirname, "examples/index.html"),
-        }),
+        })
     ],
     //模式
     mode: "production",

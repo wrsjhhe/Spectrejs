@@ -5,7 +5,7 @@ import { Uniform } from "./Uniform";
 
 export class TextureUniform extends Uniform {
     private _texture: Texture;
-    private _data: GPUTexture;
+    private _textureBuffer: GPUTexture;
 
     public changed = false;
 
@@ -14,7 +14,7 @@ export class TextureUniform extends Uniform {
 
         this._texture = texture;
         createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
-            this._data = Environment.activeDevice.createTexture({
+            this._textureBuffer = Environment.activeDevice.createTexture({
                 size: [imageBitmap.width, imageBitmap.height, 1],
                 format: "rgba8unorm",
                 usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
@@ -22,7 +22,7 @@ export class TextureUniform extends Uniform {
 
             Environment.activeDevice.queue.copyExternalImageToTexture(
                 { source: imageBitmap },
-                { texture: this._data },
+                { texture: this._textureBuffer },
                 [imageBitmap.width, imageBitmap.height]
             );
         });
@@ -32,7 +32,7 @@ export class TextureUniform extends Uniform {
     public override update() {
         if (this._needsUpdate) {
             createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
-                this._data = Environment.activeDevice.createTexture({
+                this._textureBuffer = Environment.activeDevice.createTexture({
                     size: [imageBitmap.width, imageBitmap.height, 1],
                     format: "rgba8unorm",
                     usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
@@ -40,7 +40,7 @@ export class TextureUniform extends Uniform {
     
                 Environment.activeDevice.queue.copyExternalImageToTexture(
                     { source: imageBitmap },
-                    { texture: this._data },
+                    { texture: this._textureBuffer },
                     [imageBitmap.width, imageBitmap.height]
                 );
                 this.changed = true;
@@ -48,6 +48,10 @@ export class TextureUniform extends Uniform {
 
             this._needsUpdate = false;
         }
+    }
+
+    public override destroy(): void {
+        this._textureBuffer.destroy();
     }
 
     public set texture(v: Texture) {
@@ -65,7 +69,7 @@ export class TextureUniform extends Uniform {
         return this._texture;
     }
 
-    public get data() {
-        return this._data;
+    public get textureBuffer() {
+        return this._textureBuffer;
     }
 }

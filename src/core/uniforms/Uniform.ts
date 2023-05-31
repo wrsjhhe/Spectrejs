@@ -14,6 +14,8 @@ export abstract class Uniform{
 
     public abstract get type():string;
 
+    public destroy(){}
+
     public update(){}
 
     public get name(){

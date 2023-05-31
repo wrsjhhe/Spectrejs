@@ -12,6 +12,10 @@ export class BufferUniform extends Uniform{
         this._data = data;
     }
 
+    public override destroy(): void {
+        this._buffer.destroy();
+    }
+
     public override get type(){
         return UniformDataType.buffer;
     }
