@@ -1,22 +1,15 @@
 import { Material } from "../materials/Material";
 import { CommonUtils } from "../utils/CommonUtils";
+import { ShaderBase } from "./ShaderBase";
 import * as basic from "./ShaderBasic"
 
-export class MeshBasicShader {
-    private _vertexShaderCode: string;
-    private _fragmentShaderCode: string;
-    private _material: Material;
+export class MeshBasicShader extends ShaderBase {
 
     constructor(material: Material) {
-        this._material = material;
+        super(material);
     }
 
-    public recreate() {
-        this._createVertexShader();
-        this._createFragmentShader();
-    }
-
-    private _createVertexShader() {
+    protected override _createVertexShader() {
         const shaderOptions = this._material.shaderOptions;
         this._vertexShaderCode = `
             ${basic.location_transform_vert()}
@@ -41,7 +34,7 @@ export class MeshBasicShader {
         `
     }
 
-    private _createFragmentShader(){
+    protected override  _createFragmentShader(){
         const shaderOptions = this._material.shaderOptions;
 
         this._fragmentShaderCode = `
@@ -59,13 +52,5 @@ export class MeshBasicShader {
             }
 
         `;
-    }
-
-    public get vertexShaderCode() {
-        return this._vertexShaderCode;
-    }
-
-    public get fragmentShaderCode() {
-        return this._fragmentShaderCode;
     }
 }
