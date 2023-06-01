@@ -1,6 +1,5 @@
 import { BufferAttribute } from "./BufferAttribute";
 import { GPUBufferWrapper } from "./GPUBufferWrapper";
-import { WebGPURenderer } from "../renderers/WebGPURenderer";
 
 export class BufferGeometry {
     private _attributes: Map<string, BufferAttribute> = new Map();

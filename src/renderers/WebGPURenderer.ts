@@ -35,7 +35,7 @@ export class WebGPURenderer {
     private _size: RendererSize;
     private _pixelRatio = window.devicePixelRatio || 1;
     private _colorAttachmentView: GPUTextureView;
-    private _sampleCount: number = 1;
+    private _sampleCount = 1;
     private _clearColor = new Color(1, 1, 1);
     private _sizeChanged = false;
 
@@ -144,7 +144,7 @@ export class WebGPURenderer {
         for (let i = 0; i < scene.children.length; ++i) {
             const child = scene.children[i] as RenderableObject;
         
-            let objs = this._materialObjects.get(child.material);
+            const objs = this._materialObjects.get(child.material);
             if(objs){
                 objs.push(child);
             }else{
@@ -165,7 +165,7 @@ export class WebGPURenderer {
     private _renderSamePipeline(passEncoder: GPURenderPassEncoder, camera: Camera, material:Material,objects:Array<RenderableObject>){
         material.pipeline.compilePipeline(this);
         passEncoder.setPipeline(material.pipeline.pipeline);
-        material.pipeline.createBindGroups(camera,objects);
+        material.pipeline.createBindGroups(camera);
         material.pipeline.bindCommonUniform(passEncoder,camera);
         material.updateUniforms();
         for(let i = 0;i < objects.length;++i){

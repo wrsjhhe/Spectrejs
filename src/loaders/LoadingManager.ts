@@ -36,7 +36,7 @@ export class LoadingManager {
 
         this.isLoading = true;
 
-    };
+    }
 
     itemEnd ( url:string ) {
 
@@ -60,7 +60,7 @@ export class LoadingManager {
 
         }
 
-    };
+    }
 
     itemError ( url:string ) {
 
@@ -70,7 +70,7 @@ export class LoadingManager {
 
         }
 
-    };
+    }
 
     resolveURL ( url:string ) {
 
@@ -82,7 +82,7 @@ export class LoadingManager {
 
         return url;
 
-    };
+    }
 
     setURLModifier ( transform:Function ) {
 
@@ -90,7 +90,7 @@ export class LoadingManager {
 
         return this;
 
-    };
+    }
 
     addHandler ( regex:RegExp, loader:any ) {
 
@@ -98,7 +98,7 @@ export class LoadingManager {
 
         return this;
 
-    };
+    }
 
     removeHandler ( regex:RegExp ) {
 
@@ -112,7 +112,7 @@ export class LoadingManager {
 
         return this;
 
-    };
+    }
 
     getHandler ( file:string ) {
 
@@ -133,7 +133,7 @@ export class LoadingManager {
 
         return null;
 
-    };
+    }
 }
 
 export const DefaultLoadingManager = /*@__PURE__*/ new LoadingManager();

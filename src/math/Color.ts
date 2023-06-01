@@ -55,7 +55,7 @@ class Color {
     public g = 1;
     public b = 1;
 
-	constructor( r:number = 1, g:number = 1, b:number = 1 ) {
+	constructor( r = 1, g = 1, b = 1 ) {
 
 		return this.set( r, g, b );
 

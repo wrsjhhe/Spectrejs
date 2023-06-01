@@ -18,9 +18,6 @@ const STATE = {
   TOUCH_PAN: 5
 };
 
-const CHANGE_EVENT = { type: 'change' };
-const START_EVENT = { type: 'start' };
-const END_EVENT = { type: 'end' };
 const EPS = 0.000001;
 const twoPI = 2 * Math.PI;
 /**
@@ -285,12 +282,11 @@ export class OrbitControls {
       }
     }
 
-    this.onMouseUp = ( event: Event ) => {
+    this.onMouseUp = () => {
       if ( this.enabled === false ) return;
       document.removeEventListener( 'mousemove', this.onMouseMove, false );
       document.removeEventListener( 'mouseup', this.onMouseUp, false );
 
-      //this.dispatchEvent( END_EVENT );
       this.state = STATE.NONE;
     };
 
@@ -353,10 +349,10 @@ export class OrbitControls {
         case 2:	{
           if ( this.enableZoom === false ) return;
 
-          var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-          var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+          const dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
+          const dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
 
-          var distance = Math.sqrt( dx * dx + dy * dy );
+          const distance = Math.sqrt( dx * dx + dy * dy );
           this.dollyStart.set( 0, distance );
           this.state = STATE.TOUCH_DOLLY;
         } break;
@@ -392,7 +388,7 @@ export class OrbitControls {
           this.rotateEnd.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
           this.rotateDelta.subVectors( this.rotateEnd, this.rotateStart );
 
-          var element = this.domElement;
+          const element = this.domElement;
 
           // rotating across whole screen goes 360 degrees around
           this.rotateLeft( 2 * Math.PI * this.rotateDelta.x / (element as any).clientWidth * this.rotateSpeed );
@@ -410,10 +406,10 @@ export class OrbitControls {
           if ( this.state !== STATE.TOUCH_DOLLY ) return; // is this needed?...
 
           //console.log( 'handleTouchMoveDolly' );
-          var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-          var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+          const dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
+          const dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
 
-          var distance = Math.sqrt( dx * dx + dy * dy );
+          const distance = Math.sqrt( dx * dx + dy * dy );
 
           this.dollyEnd.set( 0, distance );
 
@@ -444,10 +440,10 @@ export class OrbitControls {
       }
     };
 
-    this.onTouchEnd = ( event: Event ) => {
+    this.onTouchEnd = () => {
 
       if ( this.enabled === false ) return;
-      //this.dispatchEvent( END_EVENT );
+
       this.state = STATE.NONE;
     }
 
@@ -670,7 +666,7 @@ export class OrbitControls {
       // perspective
       const position = this.camera.position;
       this.panInternalOffset.copy( position ).sub( this.target );
-      var targetDistance = this.panInternalOffset.length();
+      let targetDistance = this.panInternalOffset.length();
 
       // half of the fov is center to top of screen
       targetDistance *= Math.tan( ( this.camera.fov / 2 ) * Math.PI / 180.0 );

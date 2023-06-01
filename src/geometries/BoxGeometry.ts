@@ -40,12 +40,11 @@ export class BoxGeometry extends BufferGeometry {
 		// helper variables
 
 		let numberOfVertices = 0;
-		let groupStart = 0;
 
 		const buildPlane = ( u:string, v:string, w:string, 
             udir:number, vdir:number, 
             width:number, height:number, depth:number, 
-            gridX:number, gridY:number, materialIndex:number ) => {
+            gridX:number, gridY:number ) => {
 
 			const segmentWidth = width / gridX;
 			const segmentHeight = height / gridY;
@@ -58,7 +57,6 @@ export class BoxGeometry extends BufferGeometry {
 			const gridY1 = gridY + 1;
 
 			let vertexCounter = 0;
-			let groupCount = 0;
 
 			const vector = new Vector3();
 
@@ -125,10 +123,6 @@ export class BoxGeometry extends BufferGeometry {
 					indices.push( a, b, d );
 					indices.push( b, c, d );
 
-					// increase counter
-
-					groupCount += 6;
-
 				}
 
 			}
@@ -139,8 +133,6 @@ export class BoxGeometry extends BufferGeometry {
 
 			// calculate new start value for groups
 
-			groupStart += groupCount;
-
 			// update total number of vertices
 
 			numberOfVertices += vertexCounter;
@@ -148,12 +140,12 @@ export class BoxGeometry extends BufferGeometry {
 		}
 		// build each side of the box geometry
 
-		buildPlane( 'z', 'y', 'x', - 1, - 1, depth, height, width, depthSegments, heightSegments, 0 ); // px
-		buildPlane( 'z', 'y', 'x', 1, - 1, depth, height, - width, depthSegments, heightSegments, 1 ); // nx
-		buildPlane( 'x', 'z', 'y', 1, 1, width, depth, height, widthSegments, depthSegments, 2 ); // py
-		buildPlane( 'x', 'z', 'y', 1, - 1, width, depth, - height, widthSegments, depthSegments, 3 ); // ny
-		buildPlane( 'x', 'y', 'z', 1, - 1, width, height, depth, widthSegments, heightSegments, 4 ); // pz
-		buildPlane( 'x', 'y', 'z', - 1, - 1, width, height, - depth, widthSegments, heightSegments, 5 ); // nz
+		buildPlane( 'z', 'y', 'x', - 1, - 1, depth, height, width, depthSegments, heightSegments ); // px
+		buildPlane( 'z', 'y', 'x', 1, - 1, depth, height, - width, depthSegments, heightSegments ); // nx
+		buildPlane( 'x', 'z', 'y', 1, 1, width, depth, height, widthSegments, depthSegments ); // py
+		buildPlane( 'x', 'z', 'y', 1, - 1, width, depth, - height, widthSegments, depthSegments ); // ny
+		buildPlane( 'x', 'y', 'z', 1, - 1, width, height, depth, widthSegments, heightSegments ); // pz
+		buildPlane( 'x', 'y', 'z', - 1, - 1, width, height, - depth, widthSegments, heightSegments ); // nz
 
         // build geometry
         const indicesAttr = new BufferAttribute(new Uint32Array(indices),GPUIndexFormat.Uint32,1);

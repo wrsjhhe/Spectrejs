@@ -1,5 +1,3 @@
-import { Object3D } from "../core/Object3D";
-
 const _cache: any = {};
 export class CommonUtils {
     public static warnOnce(message: string) {

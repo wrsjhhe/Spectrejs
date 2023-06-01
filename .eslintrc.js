@@ -1,15 +1,21 @@
 module.exports = {
-    extends: ["eslint:recommended"],
+    extends: [
+        "plugin:@typescript-eslint/recommended"
+    ],
     env: {
-        node: true,
+        node: false,
         browser: true,
     },
     parserOptions: {
-        ecmaVersion: 8,
+        ecmaVersion: 11,
         sourceType: "module",
     },
     rules: {
         "no-var": 2,
-        "no-unused-vars": 1,
+        "@typescript-eslint/no-explicit-any": 0,
+        "@typescript-eslint/ban-types": 0,
+        "@typescript-eslint/no-this-alias": 0,
+        "@typescript-eslint/no-empty-function": 0,
+        "prefer-rest-params":0
     },
 };

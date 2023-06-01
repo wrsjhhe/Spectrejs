@@ -1,5 +1,4 @@
 import { Light } from './Light';
-import { DirectionalLightShadow } from './DirectionalLightShadow';
 import { Object3D } from '../core/Object3D.js';
 import { Color } from '../spectre';
 

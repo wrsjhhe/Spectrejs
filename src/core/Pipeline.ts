@@ -221,7 +221,7 @@ export class Pipleline {
 
     }
 
-    public createBindGroups(camera: Camera, objects: Array<RenderableObject>) {
+    public createBindGroups(camera: Camera) {
         this._createGlobalBindGroup(camera); //Group 0
         this._createMaterialBindGroup(); //Group 1
         //this._createObjectsBindGroup(objects); //Group 2

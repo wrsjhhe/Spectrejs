@@ -13,10 +13,10 @@ class Matrix4 {
     ];
 
 	constructor( 
-        n11:number = 1, n12:number = 0, n13:number = 0, n14:number = 0, 
-        n21:number = 0, n22:number = 1, n23:number = 0, n24:number = 0, 
-        n31:number = 0, n32:number = 0, n33:number = 1, n34:number = 0, 
-        n41:number = 0, n42:number = 0, n43:number = 0, n44:number = 1
+        n11 = 1, n12 = 0, n13 = 0, n14 = 0, 
+        n21 = 0, n22 = 1, n23 = 0, n24 = 0, 
+        n31 = 0, n32 = 0, n33 = 1, n34 = 0, 
+        n41 = 0, n42 = 0, n43 = 0, n44 = 1
         ) {
 
 		if ( n11 !== undefined ) {

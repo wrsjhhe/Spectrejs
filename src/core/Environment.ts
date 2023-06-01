@@ -4,7 +4,7 @@ export class Context{
     private static _activeDevice:GPUDevice;
     public static get activeDevice(): GPUDevice{
         return Context._activeDevice;
-    };
+    }
 
     public static set activeDevice(v:GPUDevice) {
 
@@ -13,7 +13,7 @@ export class Context{
         GlobalGroupLayoutInfo.projectionMatrix.flags = GPUShaderStage.VERTEX;
         GlobalGroupLayoutInfo.matrixWorldInverse.flags = GPUShaderStage.VERTEX;
         ObjectGroupLayoutInfo.matrixWorld.flags = GPUShaderStage.VERTEX;
-    };
+    }
 }
 
 export const BindGroupLayoutIndexInfo = {

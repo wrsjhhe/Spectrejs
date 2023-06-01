@@ -67,12 +67,12 @@ export class TextureUniform extends BindValue {
         }
     }
 
-    public override get type() {
-        return BindType.sampler;
-    }
-
     public get texture() {
         return this._texture;
+    }
+
+    public override get type() {
+        return BindType.sampler;
     }
 
     public get textureBuffer() {

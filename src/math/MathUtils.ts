@@ -76,7 +76,7 @@ function damp( x:number, y:number, lambda:number, dt:number ) {
 }
 
 // https://www.desmos.com/calculator/vcsjnyz7x4
-function pingpong( x:number, length:number = 1 ) {
+function pingpong( x:number, length = 1 ) {
 
 	return length - Math.abs( euclideanModulo( x, length * 2 ) - length );
 

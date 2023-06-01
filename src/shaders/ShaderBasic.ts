@@ -13,7 +13,7 @@ export function location_normal_vert(item:ShaderItem){
     if(item)
         return `@location(${item.index}) normal : vec3<f32>,`
     return "";
-} ;
+} 
 
 export function location_uv_vert(item:ShaderItem){
     if(item)

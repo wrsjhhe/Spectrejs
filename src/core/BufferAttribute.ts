@@ -3,13 +3,13 @@ import { GPUBufferWrapper } from './GPUBufferWrapper';
 
 export class BufferAttribute{
     private _array : NumberArrayType;
-    private _count : number = 0;
-    private _itemSize : number = 0;
+    private _count  = 0;
+    private _itemSize  = 0;
     private _format : GPUVertexFormat | GPUIndexFormat;
-    private _normalized : boolean = false;
-    private _byteLength : number = 0;
-    private _name : string = '';
-    private _needsUpdate : boolean = false;
+    private _normalized  = false;
+    private _byteLength  = 0;
+    private _name  = '';
+    private _needsUpdate  = false;
     private _gpuBuffer : GPUBufferWrapper;
     private _usage : GPUFlagsConstant = GPUBufferUsage.VERTEX;
 

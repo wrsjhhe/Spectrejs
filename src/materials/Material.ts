@@ -21,8 +21,8 @@ export class Material {
     private _map: Texture = null;
     private _parameters = new Uint32Array(4);
     private _pipeline: Pipleline;
-    private _transparent: boolean = false;
-    private _opacity: number = 1;
+    private _transparent = false;
+    private _opacity = 1;
 
     protected _shader: MeshBasicShader;
 
@@ -176,6 +176,10 @@ export class Material {
         }
     }
 
+    public get color() {
+        return this._color;
+    }
+
     public set map(v: Texture | null) {
         if(v === this._map)
             return;
@@ -221,6 +225,10 @@ export class Material {
         this._map = v;
     }
 
+    public get map() {
+        return this._map;
+    }
+    
     public set transparent(v:boolean){
         if(this._transparent === v)
             return;
@@ -231,6 +239,10 @@ export class Material {
         this.color = this._color;
     }
 
+    public get transparent(){
+        return this._transparent;
+    }
+
     public set opacity(v:number){
         this._opacity = v;
         this.color = this._color;
@@ -238,16 +250,6 @@ export class Material {
 
     public get opacity(){
         return this._opacity;
-    }
-    public get transparent(){
-        return this._transparent;
-    }
-    public get color() {
-        return this._color;
-    }
-
-    public get map() {
-        return this._map;
     }
 
     public get uniforms() {
