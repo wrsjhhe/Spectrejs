@@ -9,12 +9,13 @@
         "dev": "npx webpack serve --config webpack.dev.js",
         "build": "npx webpack --config webpack.prod.js",
         "build:dev": "npx webpack --config webpack.dev.js",
-        "serve":"http-server -p 8081 -d False -i False"
+        "serve": "http-server -p 8081 -d False -i False"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "devDependencies": {
+        "@webgpu/types": "^0.1.32",
         "eslint": "^8.41.0",
         "eslint-webpack-plugin": "^3.2.0",
         "html-webpack-plugin": "^5.5.1",
@@ -25,8 +26,5 @@
         "webpack": "^5.85.0",
         "webpack-cli": "^4.10.0",
         "webpack-dev-server": "^4.15.0"
-    },
-    "dependencies": {
-        "@webgpu/types": "^0.1.32"
     }
 }
