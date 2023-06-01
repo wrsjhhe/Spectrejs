@@ -5,7 +5,7 @@ export class BufferAttribute{
     private _array : NumberArrayType;
     private _count : number = 0;
     private _itemSize : number = 0;
-    private _format : GPUVertexFormat;
+    private _format : GPUVertexFormat | GPUIndexFormat;
     private _normalized : boolean = false;
     private _byteLength : number = 0;
     private _name : string = '';
@@ -17,7 +17,7 @@ export class BufferAttribute{
         return this._gpuBuffer;
     }
 
-    constructor( array : NumberArrayType, format:GPUVertexFormat,itemSize : number, normalized? : boolean){
+    constructor( array : NumberArrayType, format:GPUVertexFormat | GPUIndexFormat,itemSize : number, normalized? : boolean){
         this._array = array;
         this._format = format;
         this._itemSize = itemSize;

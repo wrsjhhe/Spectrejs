@@ -179,7 +179,7 @@ export class WebGPURenderer {
         object.update();
 
         const geometry = object.geometry;
-        geometry.update(this);
+        geometry.update();
         geometry.setVertexBuffer(passEncoder);
         if (geometry.indices) {
             passEncoder.setIndexBuffer(geometry.indices.buffer.buffer, GPUIndexFormat.Uint32);

@@ -9,8 +9,8 @@ export class BufferGeometry {
 
     constructor() {}
 
-    public update(renderer: WebGPURenderer) {
-        this.updateDrawBuffer(renderer.device);
+    public update() {
+        this.updateDrawBuffer();
         for (const attribute of this._attributes.values()) {
             attribute.update();
         }
@@ -32,7 +32,7 @@ export class BufferGeometry {
                         // 偏移
                         offset: 0,
                         // 参数格式
-                        format: attr.format,
+                        format: attr.format as GPUVertexFormat,
                     },
                 ],
             };
@@ -70,7 +70,7 @@ export class BufferGeometry {
         return this._attributes.get(name);
     }
 
-    public updateDrawBuffer(device: GPUDevice) {
+    public updateDrawBuffer() {
         if (!this._drawBuffer) {
             const k = this.indices ? 5 : 4;
             const parameters = new Uint32Array(k);

@@ -1,4 +1,5 @@
 import { Camera } from "../cameras/Camera";
+import { GPUBlendFactor, GPUCompareFunction, GPUCullMode, GPUPrimitiveTopology, GPUTextureFormat } from "../Constants";
 import { Material } from "../materials/Material";
 import { WebGPURenderer } from "../renderers/WebGPURenderer";
 import { BindGroupLayoutIndexInfo, Environment, GlobalGroupLayoutInfo, ObjectGroupLayoutInfo, VertexBufferLayoutInfo } from "./Environment";
@@ -66,28 +67,28 @@ export class Pipleline {
                         format: renderer.presentationFormat,
                         blend: {
                             color: {
-                                srcFactor: "src-alpha",
-                                dstFactor: "one-minus-src-alpha",
+                                srcFactor: GPUBlendFactor.SrcAlpha,
+                                dstFactor: GPUBlendFactor.OneMinusSrcAlpha,
                             },
                             alpha: {
-                                srcFactor: "one",
-                                dstFactor: "one-minus-src-alpha",
+                                srcFactor: GPUBlendFactor.One,
+                                dstFactor: GPUBlendFactor.OneMinusSrcAlpha,
                             },
                         },
                     },
                 ],
             },
             primitive: {
-                topology: "triangle-list",
-                cullMode: "back",
+                topology: GPUPrimitiveTopology.TriangleList,
+                cullMode: GPUCullMode.Back,
             },
             multisample: {
                 count: renderer.sampleCount,
             },
             depthStencil: {
                 depthWriteEnabled: true,
-                depthCompare: "less",
-                format: "depth24plus",
+                depthCompare: GPUCompareFunction.Less,
+                format: GPUTextureFormat.Depth24Plus,
             },
         });
     }

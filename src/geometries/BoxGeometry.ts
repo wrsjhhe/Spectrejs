@@ -1,4 +1,4 @@
-import { GPUVertexFormat } from "../Constants";
+import { GPUIndexFormat, GPUVertexFormat } from "../Constants";
 import { BufferAttribute } from "../core/BufferAttribute";
 import { BufferGeometry } from "../core/BufferGeometry";
 import { Vector3 } from "../math/Vector3";
@@ -156,7 +156,7 @@ export class BoxGeometry extends BufferGeometry {
 		buildPlane( 'x', 'y', 'z', - 1, - 1, width, height, - depth, widthSegments, heightSegments, 5 ); // nz
 
         // build geometry
-        const indicesAttr = new BufferAttribute(new Uint32Array(indices),GPUVertexFormat.Uint32,1);
+        const indicesAttr = new BufferAttribute(new Uint32Array(indices),GPUIndexFormat.Uint32,1);
         this.setIndex( indicesAttr );
         this.setAttribute( 'position', new BufferAttribute( new Float32Array(vertices),GPUVertexFormat.Float32x3, 3 ) );
         this.setAttribute( 'normal', new BufferAttribute( new Float32Array(normals),GPUVertexFormat.Float32x3, 3 ) );

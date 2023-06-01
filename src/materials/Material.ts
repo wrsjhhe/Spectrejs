@@ -1,7 +1,7 @@
 import { BindValue } from "../core/binds/BindValue";
 import { Color } from "../math/Color";
 import { Texture } from "../textures/Texture";
-import { BindType } from "../Constants";
+import { BindType, GPUBufferBindingType, GPUSamplerBindingType } from "../Constants";
 import { BufferUniform } from "../core/binds/BindBuffer";
 import { SamplerUniform } from "../core/binds/BindSampler";
 import { TextureUniform } from "../core/binds/BindTexture";
@@ -71,7 +71,7 @@ export class Material {
                     binding: bindOption.index,
                     visibility: bufferUnform.flags,
                     buffer: {
-                        type: "uniform",
+                        type: GPUBufferBindingType.Uniform,
                         minBindingSize: bufferUnform.buffer.size,
                     },
                 });
@@ -81,7 +81,7 @@ export class Material {
                     binding: bindOption.index,
                     visibility: samplerUnform.flags,
                     sampler: {
-                        type: "filtering",
+                        type: GPUSamplerBindingType.Filtering,
                     },
                 });
             }else if(bindOption.bindType === BindType.texture){
@@ -160,6 +160,9 @@ export class Material {
     }
 
     public set map(v: Texture | null) {
+        if(v === this._map)
+            return;
+
         if(v === null && this._map !== null){
             this._uniforms.get("sampler").destroy();
             this._uniforms.get("texture").destroy();
@@ -170,7 +173,6 @@ export class Material {
             this._shaderOptions.bindValues.delete("sampler");
             this._shaderOptions.bindValues.delete("texture");
 
-            this.needsCreateBindGroup = true;
             this.pipeline.needsCompile = true;
 
         }else if(v !== null && this._map === null){
@@ -193,11 +195,10 @@ export class Material {
             const textureUniform = new TextureUniform("texture", v, GPUShaderStage.FRAGMENT);
             this._uniforms.set("texture", textureUniform);
 
-            this.needsCreateBindGroup = true;
             this.pipeline.needsCompile = true;
-        }else if(v !== null && this._map !== null){
-            this.needsCreateBindGroup = true;
         }
+
+        this.needsCreateBindGroup = true;
         this._map = v;
 
         (this._uniforms.get("texture") as TextureUniform).texture = v;
