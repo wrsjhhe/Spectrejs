@@ -1,9 +1,9 @@
 export type NumberArrayType = Float32Array | Int32Array | Int8Array | Uint32Array | Uint16Array | Uint8Array;
 
-export const UniformDataType = {
-	buffer:"buffer",
-	sampler:"sampler",
-	texture:"texture"
+export enum BindType{
+	buffer = 1,
+	sampler = 2,
+	texture = 3
 }
 
 

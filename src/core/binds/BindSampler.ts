@@ -1,12 +1,12 @@
-import { UniformDataType } from "../../Constants";
+import { BindType } from "../../Constants";
 import { Environment } from "../Environment";
-import { Uniform } from "./Uniform";
+import { BindValue } from "./BindValue";
 
-export class SamplerUniform extends Uniform{
+export class SamplerUniform extends BindValue{
     private _sampler : GPUSampler;
 
-    constructor(name:string,binding:number,flags:GPUShaderStageFlags){
-        super(name,binding,flags);
+    constructor(name:string,flags:GPUShaderStageFlags){
+        super(name,flags);
 
         this._sampler = Environment.activeDevice.createSampler({
             magFilter: 'linear',
@@ -15,7 +15,7 @@ export class SamplerUniform extends Uniform{
     }
 
     public override get type(){
-        return UniformDataType.sampler;
+        return BindType.sampler;
     }
 
     public get sampler(){

@@ -1,5 +1,5 @@
 import { Object3D } from '../core/Object3D';
-import { BufferUniform } from '../core/uniforms/BufferUniform';
+import { BufferUniform } from '../core/binds/BindBuffer';
 import { Matrix4 } from '../math/Matrix4';
 import { Vector3 } from '../math/Vector3';
 import { IdentifyMatrix4 } from '../utils/ConstantsValues';
@@ -92,10 +92,10 @@ export class Camera extends Object3D {
 
 	private _initInitialUniform() {
 		const matrixBuffer = IdentifyMatrix4.toArray();
-        const projectionUniform = new BufferUniform(u_projection, 0, matrixBuffer, GPUShaderStage.VERTEX);
+        const projectionUniform = new BufferUniform(u_projection, matrixBuffer, GPUShaderStage.VERTEX);
         this._uniforms.set(u_projection, projectionUniform);
 
-        const viewUniform = new BufferUniform(u_view, 1, matrixBuffer, GPUShaderStage.VERTEX);
+        const viewUniform = new BufferUniform(u_view, matrixBuffer, GPUShaderStage.VERTEX);
         this._uniforms.set(u_view, viewUniform);
     }
 

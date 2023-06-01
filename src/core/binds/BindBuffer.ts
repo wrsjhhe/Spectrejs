@@ -1,13 +1,13 @@
-import { NumberArrayType, UniformDataType } from "../../Constants";
+import { BindType, NumberArrayType } from "../../Constants";
 import { GPUBufferWrapper } from "../GPUBufferWrapper";
-import { Uniform } from "./Uniform";
+import { BindValue } from "./BindValue";
 
-export class BufferUniform extends Uniform{
+export class BufferUniform extends BindValue{
     private _buffer : GPUBufferWrapper;
     private _data : NumberArrayType;
 
-    constructor(name:string,binding:number,data:NumberArrayType,flags:GPUShaderStageFlags){
-        super(name,binding,flags);
+    constructor(name:string,data:NumberArrayType,flags:GPUShaderStageFlags){
+        super(name,flags);
         this._buffer = new GPUBufferWrapper(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,data);
         this._data = data;
     }
@@ -17,7 +17,7 @@ export class BufferUniform extends Uniform{
     }
 
     public override get type(){
-        return UniformDataType.buffer;
+        return BindType.buffer;
     }
     
     public set data(v:NumberArrayType){

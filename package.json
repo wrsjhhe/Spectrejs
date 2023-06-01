@@ -8,7 +8,8 @@
         "start": "npm run dev",
         "dev": "npx webpack serve --config webpack.dev.js",
         "build": "npx webpack --config webpack.prod.js",
-        "build:dev": "npx webpack --config webpack.dev.js"
+        "build:dev": "npx webpack --config webpack.dev.js",
+        "serve":"http-server -p 8081 -d False -i False"
     },
     "keywords": [],
     "author": "",
@@ -17,6 +18,7 @@
         "eslint": "^8.41.0",
         "eslint-webpack-plugin": "^3.2.0",
         "html-webpack-plugin": "^5.5.1",
+        "http-server": "^14.1.1",
         "raw-loader": "^4.0.2",
         "ts-loader": "^9.4.3",
         "typescript": "^4.9.5",

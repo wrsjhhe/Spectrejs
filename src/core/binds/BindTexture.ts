@@ -1,16 +1,16 @@
-import { UniformDataType } from "../../Constants";
+import { BindType } from "../../Constants";
 import { Texture } from "../../textures/Texture";
 import { Environment } from "../Environment";
-import { Uniform } from "./Uniform";
+import { BindValue } from "./BindValue";
 
-export class TextureUniform extends Uniform {
+export class TextureUniform extends BindValue {
     private _texture: Texture;
     private _textureBuffer: GPUTexture;
 
     public changed = false;
 
-    constructor(name: string, binding: number, texture: Texture, flags: GPUShaderStageFlags) {
-        super(name, binding, flags);
+    constructor(name: string, texture: Texture, flags: GPUShaderStageFlags) {
+        super(name, flags);
 
         this._texture = texture;
         createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
@@ -62,7 +62,7 @@ export class TextureUniform extends Uniform {
     }
 
     public override get type() {
-        return UniformDataType.texture;
+        return BindType.sampler;
     }
 
     public get texture() {
