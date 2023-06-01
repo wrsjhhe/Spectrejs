@@ -1,5 +1,5 @@
 import { BindType } from "../../Constants";
-import { Environment } from "../Environment";
+import { Context } from "../Environment";
 import { BindValue } from "./BindValue";
 
 export class SamplerUniform extends BindValue{
@@ -8,7 +8,7 @@ export class SamplerUniform extends BindValue{
     constructor(name:string,flags:GPUShaderStageFlags){
         super(name,flags);
 
-        this._sampler = Environment.activeDevice.createSampler({
+        this._sampler = Context.activeDevice.createSampler({
             magFilter: 'linear',
             minFilter: 'linear',
         });

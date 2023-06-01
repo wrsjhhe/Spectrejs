@@ -27,7 +27,13 @@ export class BufferUniform extends BindValue{
 
     public override update(){
         if(this._needsUpdate){
-            this._buffer.update(this._data);
+            if(this._data.byteLength!==this._buffer.size){
+                //this._buffer.destroy();
+                this._buffer = new GPUBufferWrapper(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,this._data);
+            }else{
+                this._buffer.update(this._data);
+            }
+
             this._needsUpdate = false;
         }
     }

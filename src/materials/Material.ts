@@ -11,7 +11,8 @@ import { MeshBasicShader } from "../shaders/MeshBasicShader";
 
 export interface ShaderItem {
     index: number;
-    bindType?:BindType
+    bindType?:BindType,
+    itemSize?:number
 }
 export class Material {
 
@@ -146,16 +147,32 @@ export class Material {
     public set color(v: Color) {
         this._color = v;
 
-        if(!this._uniforms.get("color")){
+        const colorBuffer = this._transparent ? new Float32Array(4) : this._color.toArray();
+        if(this._transparent){
+            colorBuffer.set(this._color.toArray());
+            colorBuffer[3] = this._opacity;
+        }
+            
+
+        let colorUniform = this._uniforms.get("color") as BufferUniform;
+        if(!colorUniform){
             this._shaderOptions.bindValues.set("color",{
                 index:this._shaderOptions.bindValues.size,
-                bindType:BindType.buffer
+                bindType:BindType.buffer,
+                itemSize:colorBuffer.length
             });
-            const colorUniform = new BufferUniform("color", this._color.toArray(), GPUShaderStage.FRAGMENT);
+
+            colorUniform = new BufferUniform("color", colorBuffer, GPUShaderStage.FRAGMENT);
             this._uniforms.set("color", colorUniform);
-        }else{
+        }else if(colorBuffer.length * colorBuffer.BYTES_PER_ELEMENT !== colorUniform.buffer.size){
+            this._shaderOptions.bindValues.get("color").itemSize = colorBuffer.length;
+
+            colorUniform = new BufferUniform("color", colorBuffer, GPUShaderStage.FRAGMENT);
+            this._uniforms.set("color", colorUniform);
+        } 
+        else{
             const bufferUnform = this._uniforms.get("color") as BufferUniform;
-            bufferUnform.data = this._color.toArray();
+            bufferUnform.data = colorBuffer;
         }
     }
 
@@ -196,25 +213,35 @@ export class Material {
             this._uniforms.set("texture", textureUniform);
 
             this.pipeline.needsCompile = true;
+
+            (this._uniforms.get("texture") as TextureUniform).texture = v;
         }
 
         this.needsCreateBindGroup = true;
         this._map = v;
-
-        (this._uniforms.get("texture") as TextureUniform).texture = v;
     }
 
     public set transparent(v:boolean){
         if(this._transparent === v)
             return;
+
+        this.pipeline.needsCompile = true;
+        this.needsCreateBindGroup = true;
         this._transparent = v;
-        
+        this.color = this._color;
     }
 
+    public set opacity(v:number){
+        this._opacity = v;
+        this.color = this._color;
+    }
+
+    public get opacity(){
+        return this._opacity;
+    }
     public get transparent(){
         return this._transparent;
     }
-
     public get color() {
         return this._color;
     }

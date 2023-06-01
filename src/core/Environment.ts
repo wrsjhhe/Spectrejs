@@ -1,14 +1,14 @@
 import { GPUVertexFormat } from "../Constants";
 
-export class Environment{
+export class Context{
     private static _activeDevice:GPUDevice;
     public static get activeDevice(): GPUDevice{
-        return Environment._activeDevice;
+        return Context._activeDevice;
     };
 
     public static set activeDevice(v:GPUDevice) {
 
-        Environment._activeDevice = v;
+        Context._activeDevice = v;
 
         GlobalGroupLayoutInfo.projectionMatrix.flags = GPUShaderStage.VERTEX;
         GlobalGroupLayoutInfo.matrixWorldInverse.flags = GPUShaderStage.VERTEX;

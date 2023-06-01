@@ -48,13 +48,13 @@ export function in_uv_frag(item:ShaderItem){
 
 export function bind_color_frag (item:ShaderItem){
     if(item)
-        return `@group(1) @binding(${item.index}) var<uniform> color : vec3<f32>;`;
+        return `@group(1) @binding(${item.index}) var<uniform> color : vec${item.itemSize}<f32>;`;
     return "";
 }
 
-export function bind_colorSampler_frag (item:ShaderItem){
+export function bind_textureSampler_frag (item:ShaderItem){
     if(item)
-        return `@group(1) @binding(${item.index}) var colorSampler: sampler;`;
+        return `@group(1) @binding(${item.index}) var textureSampler: sampler;`;
     return "";
 }
 
@@ -66,12 +66,17 @@ export function bind_texture_frag (item:ShaderItem){
 
 export function textureSampler_frag (item:ShaderItem){
     if(item)
-        return `return textureSample(texture, colorSampler, uv);`;
+        return `return textureSample(texture, textureSampler, uv);`;
     return "";
 }
 
-export function color_frag (item:ShaderItem){
-    if(!item)
-        return `return vec4(color,1.0);`;
+export function color_frag (colorItem:ShaderItem,useMap:boolean){
+    if(!useMap){
+        if(colorItem.itemSize === 3)
+            return `return vec4(color,1.0);`;
+        else
+            return `return color;`;
+    }
+        
     return "";
 } 

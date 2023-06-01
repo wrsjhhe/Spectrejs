@@ -1,4 +1,5 @@
 import { Material } from "../materials/Material";
+import { CommonUtils } from "../utils/CommonUtils";
 import * as basic from "./ShaderBasic"
 
 export class MeshBasicShader {
@@ -46,7 +47,7 @@ export class MeshBasicShader {
         this._fragmentShaderCode = `
             @group(1) @binding(0) var<uniform> parameters : vec4<u32>;
             ${basic.bind_color_frag(shaderOptions.bindValues.get("color"))}
-            ${basic.bind_colorSampler_frag(shaderOptions.bindValues.get("sampler"))}
+            ${basic.bind_textureSampler_frag(shaderOptions.bindValues.get("sampler"))}
             ${basic.bind_texture_frag(shaderOptions.bindValues.get("texture"))}
             
             @fragment
@@ -54,7 +55,7 @@ export class MeshBasicShader {
                 ${basic.in_uv_frag(shaderOptions.locationValues.get("uv"))}
             ) -> @location(0) vec4<f32> {
                 ${basic.textureSampler_frag(shaderOptions.bindValues.get("texture"))}
-                ${basic.color_frag(shaderOptions.bindValues.get("texture"))}
+                ${basic.color_frag(shaderOptions.bindValues.get("color"),CommonUtils.isDefined(shaderOptions.bindValues.get("texture")))}
             }
 
         `;
