@@ -38,11 +38,13 @@ export class Cache {
 
 }
 
-export class GPUGarbageDestroyer{
-	
-	public static destroy(garbage:any,destroyFunc:(g:any)=>void){
+export class DelayDestroyer{
+
+	public static delayTime = 5000;
+
+	public static destroy(garbage:any,destroyFunc:(g:any)=>void,time = DelayDestroyer.delayTime){
 		setTimeout(() => {
 			destroyFunc(garbage);
-		}, 5000);
+		}, time);
 	}
 }

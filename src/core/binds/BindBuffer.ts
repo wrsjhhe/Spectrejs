@@ -1,5 +1,6 @@
 import { BindType, NumberArrayType } from "../../Constants";
 import { GPUBufferWrapper } from "../GPUBufferWrapper";
+import { DelayDestroyer } from "../ResourceManagers";
 import { BindValue } from "./BindValue";
 
 export class BufferUniform extends BindValue{
@@ -28,7 +29,9 @@ export class BufferUniform extends BindValue{
     public override update(){
         if(this._needsUpdate){
             if(this._data.byteLength!==this._buffer.size){
-                //this._buffer.destroy();
+                DelayDestroyer.destroy(this._buffer,(data)=>{
+                    data.destroy();
+                });
                 this._buffer = new GPUBufferWrapper(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,this._data);
             }else{
                 this._buffer.update(this._data);

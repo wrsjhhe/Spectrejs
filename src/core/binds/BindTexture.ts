@@ -1,7 +1,7 @@
 import { BindType } from "../../Constants";
 import { Texture } from "../../textures/Texture";
 import { Context } from "../Environment";
-import { GPUGarbageDestroyer } from "../ResourceManagers";
+import { DelayDestroyer } from "../ResourceManagers";
 import { BindValue } from "./BindValue";
 
 export class TextureUniform extends BindValue {
@@ -33,7 +33,7 @@ export class TextureUniform extends BindValue {
     public override update() {
         if (this._needsUpdate) {
             createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
-                GPUGarbageDestroyer.destroy(this._textureBuffer,(data)=>{
+                DelayDestroyer.destroy(this._textureBuffer,(data)=>{
                     data.destroy();
                 });
                 this._textureBuffer = Context.activeDevice.createTexture({
@@ -55,7 +55,9 @@ export class TextureUniform extends BindValue {
     }
 
     public override destroy(): void {
-        this._textureBuffer.destroy();
+        DelayDestroyer.destroy(this._textureBuffer,(data)=>{
+            data.destroy();
+        });
     }
 
     public set texture(v: Texture) {
