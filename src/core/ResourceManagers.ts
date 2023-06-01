@@ -37,3 +37,12 @@ export class Cache {
 	}
 
 }
+
+export class GPUGarbageDestroyer{
+	
+	public static destroy(garbage:any,destroyFunc:(g:any)=>void){
+		setTimeout(() => {
+			destroyFunc(garbage);
+		}, 5000);
+	}
+}

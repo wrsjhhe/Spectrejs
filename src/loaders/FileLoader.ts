@@ -1,4 +1,4 @@
-import { Cache } from '../core/Cache';
+import { Cache } from '../core/ResourceManagers';
 import { Loader } from './Loader';
 import { LoadingManager } from './LoadingManager';
 

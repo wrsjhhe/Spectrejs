@@ -1,6 +1,7 @@
 import { UniformDataType } from "../../Constants";
 import { Texture } from "../../textures/Texture";
 import { Environment } from "../Environment";
+import { GPUGarbageDestroyer } from "../ResourceManagers";
 import { Uniform } from "./Uniform";
 
 export class TextureUniform extends Uniform {
@@ -32,6 +33,9 @@ export class TextureUniform extends Uniform {
     public override update() {
         if (this._needsUpdate) {
             createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
+                GPUGarbageDestroyer.destroy(this._textureBuffer,(data)=>{
+                    data.destroy();
+                });
                 this._textureBuffer = Environment.activeDevice.createTexture({
                     size: [imageBitmap.width, imageBitmap.height, 1],
                     format: "rgba8unorm",
