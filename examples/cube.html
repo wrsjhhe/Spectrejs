@@ -49,7 +49,23 @@
             const controls = new Spectre.OrbitControls(camera, renderer.domElement);
             const material = new Spectre.Material();
             material.color = new Spectre.Color(1, 0, 0);
+            material.transparent = true;
+            material.opacity = 0.5;
 
+            // setInterval(() => {
+            //     material.transparent = !material.transparent;
+            // }, 2000);
+
+            let texutre = null;
+            setInterval(() => {
+                if(material.map){
+                    material.map = null;
+                }else{
+                    material.map = texutre;
+                }
+            }, 2000);
+
+           
             const loader = new Spectre.TextureLoader();
             loader.load(
                 // resource URL
@@ -57,7 +73,7 @@
 
                 // onLoad callback
                 function (texture) {
-                    material.map = texture;
+                    texutre = texture;
                 },
 
                 // onProgress callback currently not supported
@@ -86,7 +102,11 @@
                 mesh.scale.x = Math.random() + 0.5;
                 mesh.scale.y = Math.random() + 0.5;
                 mesh.scale.z = Math.random() + 0.5;
-                mesh.matrixWorldNeedsUpdate = true;
+
+                mesh.matrixWorldAutoUpdate = false;
+                mesh.matrixAutoUpdate = false;
+                mesh.updateMatrix();
+
                 scene.add(mesh);
 
             }
@@ -101,7 +121,7 @@
                 const mesh = scene.children[i];
                 mesh.rotateX(Math.random()*0.1);
                 mesh.rotateY(Math.random()*0.1);
-                mesh.matrixWorldNeedsUpdate = true;
+                mesh.updateMatrix();
 
             }    
         }

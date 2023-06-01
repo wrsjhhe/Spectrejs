@@ -1,29 +1,29 @@
-export type NumberArrayType = Float32Array | Int8Array | Uint32Array | Uint8Array;
+export type NumberArrayType = Float32Array | Int32Array | Int8Array | Uint32Array | Uint16Array | Uint8Array;
 
-export const UniformDataType = {
-	buffer:"buffer",
-	sampler:"sampler",
-	texture:"texture"
+export enum BindType{
+	buffer = 1,
+	sampler = 2,
+	texture = 3
 }
 
 
 export const GPUPrimitiveTopology = {
-	PointList: 'point-list',
-	LineList: 'line-list',
-	LineStrip: 'line-strip',
-	TriangleList: 'triangle-list',
-	TriangleStrip: 'triangle-strip',
+	PointList: 'point-list' as GPUPrimitiveTopology,
+	LineList: 'line-list' as GPUPrimitiveTopology,
+	LineStrip: 'line-strip' as GPUPrimitiveTopology,
+	TriangleList: 'triangle-list' as GPUPrimitiveTopology,
+	TriangleStrip: 'triangle-strip' as GPUPrimitiveTopology,
 };
 
 export const GPUCompareFunction = {
-	Never: 'never',
-	Less: 'less',
-	Equal: 'equal',
-	LessEqual: 'less-equal',
-	Greater: 'greater',
-	NotEqual: 'not-equal',
-	GreaterEqual: 'greater-equal',
-	Always: 'always'
+	Never: 'never' as GPUCompareFunction,
+	Less: 'less' as GPUCompareFunction,
+	Equal: 'equal' as GPUCompareFunction,
+	LessEqual: 'less-equal' as GPUCompareFunction,
+	Greater: 'greater' as GPUCompareFunction,
+	NotEqual: 'not-equal' as GPUCompareFunction,
+	GreaterEqual: 'greater-equal' as GPUCompareFunction,
+	Always: 'always' as GPUCompareFunction
 };
 
 export const GPUStoreOp = {
@@ -42,9 +42,9 @@ export const GPUFrontFace = {
 };
 
 export const GPUCullMode = {
-	None: 'none',
-	Front: 'front',
-	Back: 'back'
+	None: 'none' as GPUCullMode,
+	Front: 'front' as GPUCullMode,
+	Back: 'back' as GPUCullMode
 };
 
 export const GPUIndexFormat = {
@@ -187,19 +187,19 @@ export const GPUFilterMode = {
 };
 
 export const GPUBlendFactor = {
-	Zero: 'zero',
-	One: 'one',
-	SrcColor: 'src-color',
-	OneMinusSrcColor: 'one-minus-src-color',
-	SrcAlpha: 'src-alpha',
-	OneMinusSrcAlpha: 'one-minus-src-alpha',
-	DstColor: 'dst-color',
-	OneMinusDstColor: 'one-minus-dst-color',
-	DstAlpha: 'dst-alpha',
-	OneMinusDstAlpha: 'one-minus-dst-alpha',
-	SrcAlphaSaturated: 'src-alpha-saturated',
-	BlendColor: 'blend-color',
-	OneMinusBlendColor: 'one-minus-blend-color'
+	Zero: 'zero' as GPUBlendFactor,
+	One: 'one' as GPUBlendFactor,
+	SrcColor: 'src-color' as GPUBlendFactor,
+	OneMinusSrcColor: 'one-minus-src-color' as GPUBlendFactor,
+	SrcAlpha: 'src-alpha' as GPUBlendFactor,
+	OneMinusSrcAlpha: 'one-minus-src-alpha' as GPUBlendFactor,
+	DstColor: 'dst-color' as GPUBlendFactor,
+	OneMinusDstColor: 'one-minus-dst-color' as GPUBlendFactor,
+	DstAlpha: 'dst-alpha' as GPUBlendFactor,
+	OneMinusDstAlpha: 'one-minus-dst-alpha' as GPUBlendFactor,
+	SrcAlphaSaturated: 'src-alpha-saturated' as GPUBlendFactor,
+	BlendColor: 'blend-color' as GPUBlendFactor,
+	OneMinusBlendColor: 'one-minus-blend-color' as GPUBlendFactor
 };
 
 export const GPUBlendOperation = {
@@ -262,9 +262,20 @@ export const GPUInputStepMode = {
 	Instance: 'instance'
 };
 
+export const GPUSamplerBindingType = {
+	Filtering:"filtering" as GPUSamplerBindingType,
+    NonFiltering:"non-filtering" as GPUSamplerBindingType,
+    Comparison:"comparison" as GPUSamplerBindingType
+}
+
+export const GPUBufferBindingType = {
+	Uniform:"uniform" as GPUBufferBindingType,
+    Storage:"storage" as GPUBufferBindingType,
+    ReadOnlyStorage:"read-only-storage" as GPUBufferBindingType
+}
+
 export const GPUChunkSize = 16; // size of a chunk in bytes (STD140 layout)
 
-// @TODO: Move to src/constants.ts
 
 export const BlendColorFactor = 211;
 export const OneMinusBlendColorFactor = 212;

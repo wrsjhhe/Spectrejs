@@ -1,7 +1,19 @@
 import { GPUVertexFormat } from "../Constants";
 
-export class Environment{
-    public static activeDevice : GPUDevice;
+export class Context{
+    private static _activeDevice:GPUDevice;
+    public static get activeDevice(): GPUDevice{
+        return Context._activeDevice;
+    };
+
+    public static set activeDevice(v:GPUDevice) {
+
+        Context._activeDevice = v;
+
+        GlobalGroupLayoutInfo.projectionMatrix.flags = GPUShaderStage.VERTEX;
+        GlobalGroupLayoutInfo.matrixWorldInverse.flags = GPUShaderStage.VERTEX;
+        ObjectGroupLayoutInfo.matrixWorld.flags = GPUShaderStage.VERTEX;
+    };
 }
 
 export const BindGroupLayoutIndexInfo = {
@@ -14,18 +26,18 @@ export const BindGroupLayoutIndexInfo = {
 export const GlobalGroupLayoutInfo = {
     projectionMatrix:{
         binding : 0,
-        flags : GPUShaderStage.VERTEX,
+        flags : 0,
     },
     matrixWorldInverse:{
         binding : 1,
-        flags : GPUShaderStage.VERTEX
+        flags : 0
     }
 }
 
 export const ObjectGroupLayoutInfo = {
     matrixWorld:{
         binding : 0,
-        flags : GPUShaderStage.VERTEX
+        flags : 0
     }
 }
 

@@ -1,11 +1,12 @@
 import { Camera } from "../cameras/Camera";
 import { PerspectiveCamera } from "../cameras/PerspectiveCamera";
 import { GPUIndexFormat, GPUTextureFormat } from "../Constants";
-import { Environment } from "../core/Environment";
+import { Context } from "../core/Environment";
 import { RenderableObject } from "../core/RenderableObject";
 import { Scene } from "../core/Scene";
+import { Material } from "../materials/Material";
 import { Color } from "../math/Color";
-import { Material } from "../spectre";
+
 interface WebGPURendererParameters {
     canvas?: HTMLCanvasElement;
     powerPreference?: GPUPowerPreference;
@@ -99,7 +100,7 @@ export class WebGPURenderer {
     }
 
     _initGlobalData() {
-        Environment.activeDevice = this._device;
+        Context.activeDevice = this._device;
     }
 
     public setSize(width: number, height: number) {
@@ -163,11 +164,12 @@ export class WebGPURenderer {
 
     private _renderSamePipeline(passEncoder: GPURenderPassEncoder, camera: Camera, material:Material,objects:Array<RenderableObject>){
         material.pipeline.compilePipeline(this);
-        material.pipeline.createBindGroups(camera,objects);
         passEncoder.setPipeline(material.pipeline.pipeline);
+        material.pipeline.createBindGroups(camera,objects);
         material.pipeline.bindCommonUniform(passEncoder,camera);
         material.updateUniforms();
         for(let i = 0;i < objects.length;++i){
+            material.pipeline.createObjectBindGroup(objects[i]);
             material.pipeline.bindObjectUnform(passEncoder,objects[i]);
             this._renderObject(passEncoder,objects[i]);
         }
@@ -177,7 +179,7 @@ export class WebGPURenderer {
         object.update();
 
         const geometry = object.geometry;
-        geometry.update(this);
+        geometry.update();
         geometry.setVertexBuffer(passEncoder);
         if (geometry.indices) {
             passEncoder.setIndexBuffer(geometry.indices.buffer.buffer, GPUIndexFormat.Uint32);

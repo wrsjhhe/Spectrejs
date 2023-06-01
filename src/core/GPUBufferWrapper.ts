@@ -1,4 +1,4 @@
-import { Environment } from "./Environment";
+import { Context } from "./Environment";
 
 export class GPUBufferWrapper{
 
@@ -8,7 +8,7 @@ export class GPUBufferWrapper{
     constructor(usage: GPUBufferUsageFlags,data:any){
         this._size = data.byteLength;
         this._usage = usage;
-        this.buffer = Environment.activeDevice.createBuffer( {
+        this.buffer = Context.activeDevice.createBuffer( {
             size:this._size,
             usage: usage,
             mappedAtCreation: true
@@ -19,7 +19,7 @@ export class GPUBufferWrapper{
     }
 
     public update(data:any){
-        Environment.activeDevice.queue.writeBuffer(this.buffer,0,data);
+        Context.activeDevice.queue.writeBuffer(this.buffer,0,data);
     }
 
     public destroy(){

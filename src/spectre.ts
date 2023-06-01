@@ -1,6 +1,6 @@
-
 export * as GPUConstances from "./Constants";
 
+export * as Environment from "./core/Environment";
 
 export { WebGPURenderer } from "./renderers/WebGPURenderer";
 

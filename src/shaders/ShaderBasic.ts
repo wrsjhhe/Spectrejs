@@ -1,6 +1,6 @@
 import { ShaderItem } from "../materials/Material";
 
-export function transform_paras(){
+export function location_transform_vert(){
     return `
             @group(0) @binding(0) var<uniform> projectionMatrix : mat4x4<f32>;
             @group(0) @binding(1) var<uniform> viewMatrix : mat4x4<f32>;
@@ -9,62 +9,74 @@ export function transform_paras(){
             `;
 }
 
-export function location_normal(item:ShaderItem){
+export function location_normal_vert(item:ShaderItem){
     if(item)
         return `@location(${item.index}) normal : vec3<f32>,`
     return "";
 } ;
 
-export function location_uv(item:ShaderItem){
+export function location_uv_vert(item:ShaderItem){
     if(item)
         return `@location(${item.index}) uv : vec2<f32>,`;
     return "";
 } 
 
-export function vary_uv(item:ShaderItem){
+export function out_uv_vert(item:ShaderItem){
     if(item)
         return `@location(${item.index}) uv : vec2<f32>,`;
     return "";
-} 
-export function transform(){
+}
+
+export function transform_vert(){
     return `
             var mvPosition = viewMatrix * modelMatrix * vec4<f32>(position, 1.0);
             output.Position = projectionMatrix * mvPosition;
             `;
 }
 
-export function uv(item:ShaderItem){
+export function uv_vert(item:ShaderItem){
     if(item)
         return `output.uv = uv;`;
     return "";
 }
 
-export function color_paras (item:ShaderItem){
+export function in_uv_frag(item:ShaderItem){
     if(item)
-        return `@group(1) @binding(${item.index}) var<uniform> color : vec3<f32>;`;
+        return `@location(${item.index}) uv : vec2<f32>,`;
+    return "";
+} 
+
+export function bind_color_frag (item:ShaderItem){
+    if(item)
+        return `@group(1) @binding(${item.index}) var<uniform> color : vec${item.itemSize}<f32>;`;
     return "";
 }
 
-export function colorSampler_paras (item:ShaderItem){
+export function bind_textureSampler_frag (item:ShaderItem){
     if(item)
-        return `@group(1) @binding(${item.index}) var colorSampler: sampler;`;
+        return `@group(1) @binding(${item.index}) var textureSampler: sampler;`;
     return "";
 }
 
-export function texture_paras (item:ShaderItem){
+export function bind_texture_frag (item:ShaderItem){
     if(item)
         return `@group(1) @binding(${item.index}) var texture: texture_2d<f32>;`;
     return "";
 }
 
-export function textureSampler (item:ShaderItem){
+export function textureSampler_frag (item:ShaderItem){
     if(item)
-        return `return textureSample(texture, colorSampler, uv);`;
+        return `return textureSample(texture, textureSampler, uv);`;
     return "";
 }
 
-export function color (item:ShaderItem){
-    if(!item)
-        return `return vec4(color,1.0);`;
+export function color_frag (colorItem:ShaderItem,useMap:boolean){
+    if(!useMap){
+        if(colorItem.itemSize === 3)
+            return `return vec4(color,1.0);`;
+        else
+            return `return color;`;
+    }
+        
     return "";
 } 

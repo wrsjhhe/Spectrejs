@@ -1,27 +1,27 @@
-import { UniformDataType } from "../../Constants";
+import { BindType } from "../../Constants";
 import { Texture } from "../../textures/Texture";
-import { Environment } from "../Environment";
+import { Context } from "../Environment";
 import { GPUGarbageDestroyer } from "../ResourceManagers";
-import { Uniform } from "./Uniform";
+import { BindValue } from "./BindValue";
 
-export class TextureUniform extends Uniform {
+export class TextureUniform extends BindValue {
     private _texture: Texture;
     private _textureBuffer: GPUTexture;
 
     public changed = false;
 
-    constructor(name: string, binding: number, texture: Texture, flags: GPUShaderStageFlags) {
-        super(name, binding, flags);
+    constructor(name: string, texture: Texture, flags: GPUShaderStageFlags) {
+        super(name, flags);
 
         this._texture = texture;
         createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
-            this._textureBuffer = Environment.activeDevice.createTexture({
+            this._textureBuffer = Context.activeDevice.createTexture({
                 size: [imageBitmap.width, imageBitmap.height, 1],
                 format: "rgba8unorm",
                 usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
             });
 
-            Environment.activeDevice.queue.copyExternalImageToTexture(
+            Context.activeDevice.queue.copyExternalImageToTexture(
                 { source: imageBitmap },
                 { texture: this._textureBuffer },
                 [imageBitmap.width, imageBitmap.height]
@@ -36,13 +36,13 @@ export class TextureUniform extends Uniform {
                 GPUGarbageDestroyer.destroy(this._textureBuffer,(data)=>{
                     data.destroy();
                 });
-                this._textureBuffer = Environment.activeDevice.createTexture({
+                this._textureBuffer = Context.activeDevice.createTexture({
                     size: [imageBitmap.width, imageBitmap.height, 1],
                     format: "rgba8unorm",
                     usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
                 });
     
-                Environment.activeDevice.queue.copyExternalImageToTexture(
+                Context.activeDevice.queue.copyExternalImageToTexture(
                     { source: imageBitmap },
                     { texture: this._textureBuffer },
                     [imageBitmap.width, imageBitmap.height]
@@ -66,7 +66,7 @@ export class TextureUniform extends Uniform {
     }
 
     public override get type() {
-        return UniformDataType.texture;
+        return BindType.sampler;
     }
 
     public get texture() {
