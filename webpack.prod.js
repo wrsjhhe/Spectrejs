@@ -1,6 +1,5 @@
 const path = require("path");
 const ESLintPlugin = require("eslint-webpack-plugin");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
     //入口
@@ -38,9 +37,4 @@ module.exports = {
     ],
     //模式
     mode: "production",
-    devServer: {
-        host: "localhost",
-        port: "3000",
-        open: true,
-    },
 };

@@ -2,7 +2,7 @@ import { Object3D } from '../core/Object3D';
 import { BufferUniform } from '../core/uniforms/BufferUniform';
 import { Matrix4 } from '../math/Matrix4';
 import { Vector3 } from '../math/Vector3';
-import { IdentifyMatrix4Array } from '../utils/ConstantsValues';
+import { IdentifyMatrix4 } from '../utils/ConstantsValues';
 
 const u_projection = "projectionMatrix";
 const u_view = "matrixWorldInverse";
@@ -91,7 +91,7 @@ export class Camera extends Object3D {
 	}
 
 	private _initInitialUniform() {
-		const matrixBuffer = IdentifyMatrix4Array;
+		const matrixBuffer = IdentifyMatrix4.toArray();
         const projectionUniform = new BufferUniform(u_projection, 0, matrixBuffer, GPUShaderStage.VERTEX);
         this._uniforms.set(u_projection, projectionUniform);
 

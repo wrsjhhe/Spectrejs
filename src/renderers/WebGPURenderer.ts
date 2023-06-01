@@ -4,8 +4,9 @@ import { GPUIndexFormat, GPUTextureFormat } from "../Constants";
 import { Environment } from "../core/Environment";
 import { RenderableObject } from "../core/RenderableObject";
 import { Scene } from "../core/Scene";
+import { Material } from "../materials/Material";
 import { Color } from "../math/Color";
-import { Material } from "../spectre";
+
 interface WebGPURendererParameters {
     canvas?: HTMLCanvasElement;
     powerPreference?: GPUPowerPreference;
@@ -163,11 +164,12 @@ export class WebGPURenderer {
 
     private _renderSamePipeline(passEncoder: GPURenderPassEncoder, camera: Camera, material:Material,objects:Array<RenderableObject>){
         material.pipeline.compilePipeline(this);
-        material.pipeline.createBindGroups(camera,objects);
         passEncoder.setPipeline(material.pipeline.pipeline);
+        material.pipeline.createBindGroups(camera,objects);
         material.pipeline.bindCommonUniform(passEncoder,camera);
         material.updateUniforms();
         for(let i = 0;i < objects.length;++i){
+            material.pipeline.createObjectBindGroup(objects[i]);
             material.pipeline.bindObjectUnform(passEncoder,objects[i]);
             this._renderObject(passEncoder,objects[i]);
         }

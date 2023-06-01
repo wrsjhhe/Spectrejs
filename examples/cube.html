@@ -86,7 +86,11 @@
                 mesh.scale.x = Math.random() + 0.5;
                 mesh.scale.y = Math.random() + 0.5;
                 mesh.scale.z = Math.random() + 0.5;
-                mesh.matrixWorldNeedsUpdate = true;
+
+                mesh.matrixWorldAutoUpdate = false;
+                mesh.matrixAutoUpdate = false;
+                mesh.updateMatrix();
+
                 scene.add(mesh);
 
             }
@@ -101,7 +105,7 @@
                 const mesh = scene.children[i];
                 mesh.rotateX(Math.random()*0.1);
                 mesh.rotateY(Math.random()*0.1);
-                mesh.matrixWorldNeedsUpdate = true;
+                mesh.updateMatrix();
 
             }    
         }

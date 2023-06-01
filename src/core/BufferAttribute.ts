@@ -1,4 +1,3 @@
-
 import { NumberArrayType } from '../Constants';
 import { GPUBufferWrapper } from './GPUBufferWrapper';
 
@@ -52,7 +51,7 @@ export class BufferAttribute{
         return this._format;
     }
 
-    get array():RelativeIndexable<number>{
+    get array():NumberArrayType{
         return this._array;
     }
 

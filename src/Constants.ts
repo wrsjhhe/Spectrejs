@@ -1,4 +1,4 @@
-export type NumberArrayType = Float32Array | Int8Array | Uint32Array | Uint8Array;
+export type NumberArrayType = Float32Array | Int32Array | Int8Array | Uint32Array | Uint16Array | Uint8Array;
 
 export const UniformDataType = {
 	buffer:"buffer",

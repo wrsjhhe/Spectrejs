@@ -1,5 +1,6 @@
 import { Camera } from "../cameras/Camera";
-import { Material, WebGPURenderer } from "../spectre";
+import { Material } from "../materials/Material";
+import { WebGPURenderer } from "../renderers/WebGPURenderer";
 import { BindGroupLayoutIndexInfo, Environment, GlobalGroupLayoutInfo, ObjectGroupLayoutInfo, VertexBufferLayoutInfo } from "./Environment";
 import { RenderableObject } from "./RenderableObject";
 
@@ -198,7 +199,28 @@ export class Pipleline {
         this.material.needsCreateBindGroup = false;
     }
 
-    private _createObjectBindGroup(objects: Array<RenderableObject>) {
+    public createObjectBindGroup(object: RenderableObject){
+        if (this._objectBindGroups[object.uuid]) {
+            return;
+        }
+
+        const group = new Array<GPUBindGroupEntry>();
+        for (const key in ObjectGroupLayoutInfo) {
+            group.push({
+                binding: (ObjectGroupLayoutInfo as any)[key].binding,
+                resource: {
+                    buffer: object.uniforms.get(key).buffer,
+                },
+            });
+        }
+        this._objectBindGroups[object.uuid] = Environment.activeDevice.createBindGroup({
+            layout: this.pipeline.getBindGroupLayout(BindGroupLayoutIndexInfo.object),
+            entries: group,
+        });
+
+    }
+
+    private _createObjectsBindGroup(objects: Array<RenderableObject>) {
         const newObjs: Array<RenderableObject> = [];
         for (let i = 0; i < objects.length; ++i) {
             if (!this._objectBindGroups[objects[i].uuid]) {
@@ -227,7 +249,7 @@ export class Pipleline {
     public createBindGroups(camera: Camera, objects: Array<RenderableObject>) {
         this._createGlobalBindGroup(camera); //Group 0
         this._createMaterialBindGroup(); //Group 1
-        this._createObjectBindGroup(objects); //Group 2
+        //this._createObjectsBindGroup(objects); //Group 2
     }
 
     /****************************create group end ***********************************/

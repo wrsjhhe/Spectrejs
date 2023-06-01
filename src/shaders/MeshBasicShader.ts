@@ -1,4 +1,4 @@
-import { Material } from "../spectre";
+import { Material } from "../materials/Material";
 import * as basic from "./ShaderBasic"
 
 export class MeshBasicShader {
