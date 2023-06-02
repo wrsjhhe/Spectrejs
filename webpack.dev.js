@@ -6,7 +6,7 @@ module.exports = {
     entry: "./src/spectre.ts", //相对路径
     //输出
     output: {
-        path: path.resolve(__dirname, "./examples/dist"), //绝对路径
+        path: path.resolve(__dirname, "./examples/build"), //绝对路径
         filename: "js/spectre.js",
         library: {
             type: 'module',
