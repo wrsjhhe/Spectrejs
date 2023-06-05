@@ -14,7 +14,7 @@ export class MeshPhongMaterial extends Material{
     protected _setDefaultShaderOptions(){
         super._setDefaultShaderOptions();
         
-        this._setValue(this._shaderOptions.locationValues,"normal");
+        this._setValue(this._shaderOptions.locationValues,"normal",null);
 
         
     }

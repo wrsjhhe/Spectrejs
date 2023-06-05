@@ -60,14 +60,15 @@ export const VertexBufferLayoutInfo = {
 };
 
 export interface ShaderItem {
+    name: string;
     index: number;
-    itemSize?:number
+    itemType:string;
 }
 
 export interface AttributeShaderItem extends ShaderItem {
-    size:number
+    
 }
 
 export interface BindShaderItem extends ShaderItem {
-    bindType?:BindType,
+    bindType?:BindType;
 }

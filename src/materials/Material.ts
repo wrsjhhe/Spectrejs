@@ -123,17 +123,18 @@ export class Material {
     }
 
     protected _setDefaultShaderOptions(){
-        this._setValue(this._shaderOptions.locationValues,"position");
+        this._setValue(this._shaderOptions.locationValues,"position",null,null);
 
         this._uniforms.set("parameters", new BufferUniform("parameters", this._parameters, GPUShaderStage.FRAGMENT));
-        this._setValue(this._shaderOptions.bindValues,"parameters",BindType.buffer);
+        this._setValue(this._shaderOptions.bindValues,"parameters","vec4<u32>",BindType.buffer);
     }
 
-    protected _setValue(map:Map<string,BindShaderItem>,name:string,type? : BindType,size? : number){
+    protected _setValue(map:Map<string,BindShaderItem>,name:string,itemType : string,bindType? : BindType){
         map.set(name,{
+            name:name,
             index:this._shaderOptions.bindValues.size,
-            bindType:type,
-            itemSize:size
+            bindType:bindType,
+            itemType:itemType
         });
         let index = 0;
         for(const value of map.values()){
@@ -153,19 +154,25 @@ export class Material {
     public set color(v: Color) {
         this._color = v;
 
-        const colorBuffer = this._transparent ? new Float32Array(4) : this._color.toArray();
+        let colorBuffer;
+        let itemType;
         if(this._transparent){
+            colorBuffer = new Float32Array(4);
+            itemType = "vec4<f32>";
             colorBuffer.set(this._color.toArray());
             colorBuffer[3] = this._opacity;
+        }else{
+            colorBuffer = this._color.toArray();
+            itemType = "vec3<f32>";
         }
 
         const colorUniform = this._uniforms.get("color") as BufferUniform;
         if(!colorUniform){
-            this._setValue(this._shaderOptions.bindValues,"color",BindType.buffer,colorBuffer.length);
+            this._setValue(this._shaderOptions.bindValues,"color",itemType,BindType.buffer);
 
             this._uniforms.set("color", new BufferUniform("color", colorBuffer, GPUShaderStage.FRAGMENT));
         }else if(colorBuffer.length * colorBuffer.BYTES_PER_ELEMENT !== colorUniform.buffer.size){
-            this._shaderOptions.bindValues.get("color").itemSize = colorBuffer.length;
+            this._shaderOptions.bindValues.get("color").itemType = itemType;
 
             this._uniforms.set("color", new BufferUniform("color", colorBuffer, GPUShaderStage.FRAGMENT));
         } 
@@ -183,24 +190,24 @@ export class Material {
             return;
 
         if(v === null && this._map !== null){
-            this._uniforms.get("sampler").destroy();
+            this._uniforms.get("colorSampler").destroy();
             this._uniforms.get("texture").destroy();
-            this._uniforms.delete("sampler");
+            this._uniforms.delete("colorSampler");
             this._uniforms.delete("texture");
 
             this._deleteValue(this._shaderOptions.locationValues,"uv");
-            this._deleteValue(this._shaderOptions.bindValues,"sampler");
+            this._deleteValue(this._shaderOptions.bindValues,"colorSampler");
             this._deleteValue(this._shaderOptions.bindValues,"texture");
 
             this.pipeline.needsCompile = true;
 
         }else if(v !== null && this._map === null){
-            this._setValue(this._shaderOptions.locationValues,"uv");
+            this._setValue(this._shaderOptions.locationValues,"uv",null,null);
 
-            this._setValue(this._shaderOptions.bindValues,"sampler",BindType.sampler);
-            this._uniforms.set("sampler", new SamplerUniform("sampler", GPUShaderStage.FRAGMENT));
+            this._setValue(this._shaderOptions.bindValues,"colorSampler","sampler",BindType.sampler);
+            this._uniforms.set("colorSampler", new SamplerUniform("colorSampler", GPUShaderStage.FRAGMENT));
    
-            this._setValue(this._shaderOptions.bindValues,"texture",BindType.texture);
+            this._setValue(this._shaderOptions.bindValues,"texture","texture_2d<f32>",BindType.texture);
             this._uniforms.set("texture", new TextureUniform("texture", v, GPUShaderStage.FRAGMENT));
 
             this.pipeline.needsCompile = true;

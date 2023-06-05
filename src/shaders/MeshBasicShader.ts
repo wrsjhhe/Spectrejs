@@ -11,24 +11,26 @@ export class MeshBasicShader extends Shader {
 
     protected override _createVertexShader() {
         const shaderOptions = this._material.shaderOptions;
+        const indexObj = {index:1} as basic.IndexObj;
+
+        const uvItem = shaderOptions.locationValues.get("uv");
+
         this._vertexShaderCode = `
             ${basic.location_transform_vert()}
 
             struct VertexOutput {
                 @builtin(position) Position : vec4<f32>,
-                ${basic.out_uv_vert(shaderOptions.locationValues.get("uv"))}
-                ${basic.out_uv_vert(shaderOptions.locationValues.get("normal"))}
+                ${basic.varyValue(uvItem,indexObj)}
             }
 
             @vertex
             fn main(
             @location(0) position : vec3<f32>,
-            ${basic.location_normal_vert(shaderOptions.locationValues.get("normal"))}
-            ${basic.location_uv_vert(shaderOptions.locationValues.get("uv"))}
+            ${basic.location_uv_vert(uvItem)}
             ) -> VertexOutput {
                 var output : VertexOutput;
                 ${basic.transform_vert()}
-                output.normal = normal;
+                ${basic.uv_vert(uvItem)}
                 return output;
             }
         
@@ -37,19 +39,20 @@ export class MeshBasicShader extends Shader {
 
     protected override  _createFragmentShader(){
         const shaderOptions = this._material.shaderOptions;
+        const indexObj = {index:1} as basic.IndexObj;
+        const uvItem = shaderOptions.locationValues.get("uv");
 
         this._fragmentShaderCode = `
-            @group(1) @binding(0) var<uniform> parameters : vec4<u32>;
-            ${basic.bind_color_frag(shaderOptions.bindValues.get("color"))}
-            ${basic.bind_textureSampler_frag(shaderOptions.bindValues.get("sampler"))}
-            ${basic.bind_texture_frag(shaderOptions.bindValues.get("texture"))}
+            ${basic.bind_buffer_frag(shaderOptions.bindValues.get("parameters"))}
+            ${basic.bind_buffer_frag(shaderOptions.bindValues.get("color"))}
+            ${basic.bind_sampler_frag(shaderOptions.bindValues.get("colorSampler"))}
+            ${basic.bind_sampler_frag(shaderOptions.bindValues.get("texture"))}
             
             @fragment
             fn main(
-                ${basic.in_uv_frag(shaderOptions.locationValues.get("uv"))}
+                ${basic.varyValue(uvItem,indexObj)}
             ) -> @location(0) vec4<f32> {
-                ${basic.textureSampler_frag(shaderOptions.bindValues.get("texture"))}
-                ${basic.color_frag(shaderOptions.bindValues.get("color"),CommonUtils.isDefined(shaderOptions.bindValues.get("texture")))}
+                ${basic.getColo_frag(shaderOptions.bindValues.get("texture"),shaderOptions.bindValues.get("color"))}
             }
 
         `;

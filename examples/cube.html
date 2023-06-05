@@ -56,16 +56,16 @@
             //     material.transparent = !material.transparent;
             // }, 2000);
 
-            let texutre = null;
+            // let tex = null;
             // setInterval(() => {
             //     if(material.map){
             //         material.map = null;
             //     }else{
-            //         material.map = texutre;
+            //         material.map = tex;
             //     }
             // }, 2000);
 
-           
+            
             const loader = new Spectre.TextureLoader();
             loader.load(
                 // resource URL
@@ -73,8 +73,8 @@
 
                 // onLoad callback
                 function (texture) {
-                    //texutre = texture;
-                    material.map = texutre;
+                    //tex = texture;
+                    material.map = texture;
                 },
 
                 // onProgress callback currently not supported

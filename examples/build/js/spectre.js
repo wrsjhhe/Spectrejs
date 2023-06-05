@@ -3360,15 +3360,16 @@ class Material {
         return entriesGroup;
     }
     _setDefaultShaderOptions() {
-        this._setValue(this._shaderOptions.locationValues, "position");
+        this._setValue(this._shaderOptions.locationValues, "position", null, null);
         this._uniforms.set("parameters", new _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_2__.BufferUniform("parameters", this._parameters, GPUShaderStage.FRAGMENT));
-        this._setValue(this._shaderOptions.bindValues, "parameters", _Constants__WEBPACK_IMPORTED_MODULE_1__.BindType.buffer);
+        this._setValue(this._shaderOptions.bindValues, "parameters", "vec4<u32>", _Constants__WEBPACK_IMPORTED_MODULE_1__.BindType.buffer);
     }
-    _setValue(map, name, type, size) {
+    _setValue(map, name, itemType, bindType) {
         map.set(name, {
+            name: name,
             index: this._shaderOptions.bindValues.size,
-            bindType: type,
-            itemSize: size
+            bindType: bindType,
+            itemType: itemType
         });
         let index = 0;
         for (const value of map.values()) {
@@ -3384,18 +3385,25 @@ class Material {
     }
     set color(v) {
         this._color = v;
-        const colorBuffer = this._transparent ? new Float32Array(4) : this._color.toArray();
+        let colorBuffer;
+        let itemType;
         if (this._transparent) {
+            colorBuffer = new Float32Array(4);
+            itemType = "vec4<f32>";
             colorBuffer.set(this._color.toArray());
             colorBuffer[3] = this._opacity;
         }
+        else {
+            colorBuffer = this._color.toArray();
+            itemType = "vec3<f32>";
+        }
         const colorUniform = this._uniforms.get("color");
         if (!colorUniform) {
-            this._setValue(this._shaderOptions.bindValues, "color", _Constants__WEBPACK_IMPORTED_MODULE_1__.BindType.buffer, colorBuffer.length);
+            this._setValue(this._shaderOptions.bindValues, "color", itemType, _Constants__WEBPACK_IMPORTED_MODULE_1__.BindType.buffer);
             this._uniforms.set("color", new _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_2__.BufferUniform("color", colorBuffer, GPUShaderStage.FRAGMENT));
         }
         else if (colorBuffer.length * colorBuffer.BYTES_PER_ELEMENT !== colorUniform.buffer.size) {
-            this._shaderOptions.bindValues.get("color").itemSize = colorBuffer.length;
+            this._shaderOptions.bindValues.get("color").itemType = itemType;
             this._uniforms.set("color", new _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_2__.BufferUniform("color", colorBuffer, GPUShaderStage.FRAGMENT));
         }
         else {
@@ -3409,20 +3417,20 @@ class Material {
         if (v === this._map)
             return;
         if (v === null && this._map !== null) {
-            this._uniforms.get("sampler").destroy();
+            this._uniforms.get("colorSampler").destroy();
             this._uniforms.get("texture").destroy();
-            this._uniforms.delete("sampler");
+            this._uniforms.delete("colorSampler");
             this._uniforms.delete("texture");
             this._deleteValue(this._shaderOptions.locationValues, "uv");
-            this._deleteValue(this._shaderOptions.bindValues, "sampler");
+            this._deleteValue(this._shaderOptions.bindValues, "colorSampler");
             this._deleteValue(this._shaderOptions.bindValues, "texture");
             this.pipeline.needsCompile = true;
         }
         else if (v !== null && this._map === null) {
-            this._setValue(this._shaderOptions.locationValues, "uv");
-            this._setValue(this._shaderOptions.bindValues, "sampler", _Constants__WEBPACK_IMPORTED_MODULE_1__.BindType.sampler);
-            this._uniforms.set("sampler", new _core_binds_BindSampler__WEBPACK_IMPORTED_MODULE_3__.SamplerUniform("sampler", GPUShaderStage.FRAGMENT));
-            this._setValue(this._shaderOptions.bindValues, "texture", _Constants__WEBPACK_IMPORTED_MODULE_1__.BindType.texture);
+            this._setValue(this._shaderOptions.locationValues, "uv", null, null);
+            this._setValue(this._shaderOptions.bindValues, "colorSampler", "sampler", _Constants__WEBPACK_IMPORTED_MODULE_1__.BindType.sampler);
+            this._uniforms.set("colorSampler", new _core_binds_BindSampler__WEBPACK_IMPORTED_MODULE_3__.SamplerUniform("colorSampler", GPUShaderStage.FRAGMENT));
+            this._setValue(this._shaderOptions.bindValues, "texture", "texture_2d<f32>", _Constants__WEBPACK_IMPORTED_MODULE_1__.BindType.texture);
             this._uniforms.set("texture", new _core_binds_BindTexture__WEBPACK_IMPORTED_MODULE_4__.TextureUniform("texture", v, GPUShaderStage.FRAGMENT));
             this.pipeline.needsCompile = true;
             this._uniforms.get("texture").texture = v;
@@ -3490,7 +3498,7 @@ class MeshPhongMaterial extends _Material__WEBPACK_IMPORTED_MODULE_1__.Material 
     }
     _setDefaultShaderOptions() {
         super._setDefaultShaderOptions();
-        this._setValue(this._shaderOptions.locationValues, "normal");
+        this._setValue(this._shaderOptions.locationValues, "normal", null);
     }
 }
 
@@ -6617,35 +6625,34 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   MeshBasicShader: () => (/* binding */ MeshBasicShader)
 /* harmony export */ });
-/* harmony import */ var _utils_CommonUtils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils/CommonUtils */ "./src/utils/CommonUtils.ts");
-/* harmony import */ var _Shader__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Shader */ "./src/shaders/Shader.ts");
-/* harmony import */ var _ShaderBasic__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./ShaderBasic */ "./src/shaders/ShaderBasic.ts");
+/* harmony import */ var _Shader__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Shader */ "./src/shaders/Shader.ts");
+/* harmony import */ var _ShaderBasic__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ShaderBasic */ "./src/shaders/ShaderBasic.ts");
 
 
-
-class MeshBasicShader extends _Shader__WEBPACK_IMPORTED_MODULE_1__.Shader {
+class MeshBasicShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
     constructor(material) {
         super(material);
     }
     _createVertexShader() {
         const shaderOptions = this._material.shaderOptions;
+        const indexObj = { index: 1 };
+        const uvItem = shaderOptions.locationValues.get("uv");
         this._vertexShaderCode = `
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_2__.location_transform_vert()}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.location_transform_vert()}
 
             struct VertexOutput {
                 @builtin(position) Position : vec4<f32>,
-                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_2__.out_uv_vert(shaderOptions.locationValues.get("uv"))}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.varyValue(uvItem, indexObj)}
             }
 
             @vertex
             fn main(
             @location(0) position : vec3<f32>,
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_2__.location_normal_vert(shaderOptions.locationValues.get("normal"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_2__.location_uv_vert(shaderOptions.locationValues.get("uv"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.location_uv_vert(uvItem)}
             ) -> VertexOutput {
                 var output : VertexOutput;
-                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_2__.transform_vert()}
-                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_2__.uv_vert(shaderOptions.locationValues.get("uv"))}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.transform_vert()}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.uv_vert(uvItem)}
                 return output;
             }
         
@@ -6653,18 +6660,19 @@ class MeshBasicShader extends _Shader__WEBPACK_IMPORTED_MODULE_1__.Shader {
     }
     _createFragmentShader() {
         const shaderOptions = this._material.shaderOptions;
+        const indexObj = { index: 1 };
+        const uvItem = shaderOptions.locationValues.get("uv");
         this._fragmentShaderCode = `
-            @group(1) @binding(0) var<uniform> parameters : vec4<u32>;
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_2__.bind_color_frag(shaderOptions.bindValues.get("color"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_2__.bind_textureSampler_frag(shaderOptions.bindValues.get("sampler"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_2__.bind_texture_frag(shaderOptions.bindValues.get("texture"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_buffer_frag(shaderOptions.bindValues.get("parameters"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_buffer_frag(shaderOptions.bindValues.get("color"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_sampler_frag(shaderOptions.bindValues.get("colorSampler"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_sampler_frag(shaderOptions.bindValues.get("texture"))}
             
             @fragment
             fn main(
-                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_2__.in_uv_frag(shaderOptions.locationValues.get("uv"))}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.varyValue(uvItem, indexObj)}
             ) -> @location(0) vec4<f32> {
-                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_2__.textureSampler_frag(shaderOptions.bindValues.get("texture"))}
-                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_2__.color_frag(shaderOptions.bindValues.get("color"), _utils_CommonUtils__WEBPACK_IMPORTED_MODULE_0__.CommonUtils.isDefined(shaderOptions.bindValues.get("texture")))}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.getColo_frag(shaderOptions.bindValues.get("texture"), shaderOptions.bindValues.get("color"))}
             }
 
         `;
@@ -6711,18 +6719,16 @@ class Shader {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   bind_color_frag: () => (/* binding */ bind_color_frag),
-/* harmony export */   bind_textureSampler_frag: () => (/* binding */ bind_textureSampler_frag),
+/* harmony export */   bind_buffer_frag: () => (/* binding */ bind_buffer_frag),
+/* harmony export */   bind_sampler_frag: () => (/* binding */ bind_sampler_frag),
 /* harmony export */   bind_texture_frag: () => (/* binding */ bind_texture_frag),
-/* harmony export */   color_frag: () => (/* binding */ color_frag),
-/* harmony export */   in_uv_frag: () => (/* binding */ in_uv_frag),
+/* harmony export */   getColo_frag: () => (/* binding */ getColo_frag),
 /* harmony export */   location_normal_vert: () => (/* binding */ location_normal_vert),
 /* harmony export */   location_transform_vert: () => (/* binding */ location_transform_vert),
 /* harmony export */   location_uv_vert: () => (/* binding */ location_uv_vert),
-/* harmony export */   out_uv_vert: () => (/* binding */ out_uv_vert),
-/* harmony export */   textureSampler_frag: () => (/* binding */ textureSampler_frag),
 /* harmony export */   transform_vert: () => (/* binding */ transform_vert),
-/* harmony export */   uv_vert: () => (/* binding */ uv_vert)
+/* harmony export */   uv_vert: () => (/* binding */ uv_vert),
+/* harmony export */   varyValue: () => (/* binding */ varyValue)
 /* harmony export */ });
 function location_transform_vert() {
     return `
@@ -6742,9 +6748,15 @@ function location_uv_vert(item) {
         return `@location(${item.index}) uv : vec2<f32>,`;
     return "";
 }
-function out_uv_vert(item) {
-    if (item)
-        return `@location(${item.index}) uv : vec2<f32>,`;
+function varyValue(item, index) {
+    if (item) {
+        if (typeof item === "string") {
+            return `@location(${index.index++}) ${item} : vec2<f32>,`;
+        }
+        else {
+            return `@location(${index.index++}) ${item.name} : vec2<f32>,`;
+        }
+    }
     return "";
 }
 function transform_vert() {
@@ -6758,39 +6770,30 @@ function uv_vert(item) {
         return `output.uv = uv;`;
     return "";
 }
-function in_uv_frag(item) {
+function bind_buffer_frag(item) {
     if (item)
-        return `@location(${item.index}) uv : vec2<f32>,`;
-    return "";
-}
-function bind_color_frag(item) {
-    if (item)
-        return `@group(1) @binding(${item.index}) var<uniform> color : vec${item.itemSize}<f32>;`;
-    return "";
-}
-function bind_textureSampler_frag(item) {
-    if (item)
-        return `@group(1) @binding(${item.index}) var textureSampler: sampler;`;
+        return `@group(1) @binding(${item.index}) var<uniform> ${item.name} : ${item.itemType};`;
     return "";
 }
 function bind_texture_frag(item) {
     if (item)
-        return `@group(1) @binding(${item.index}) var texture: texture_2d<f32>;`;
+        return `@group(1) @binding(${item.index}) var ${item.name} : ${item.itemType};`;
     return "";
 }
-function textureSampler_frag(item) {
+function bind_sampler_frag(item) {
     if (item)
-        return `return textureSample(texture, textureSampler, uv);`;
+        return `@group(1) @binding(${item.index}) var ${item.name} : ${item.itemType};`;
     return "";
 }
-function color_frag(colorItem, useMap) {
-    if (!useMap) {
-        if (colorItem.itemSize === 3)
+function getColo_frag(textureItem, colorItem) {
+    if (textureItem)
+        return `return textureSample(texture, colorSampler, uv);`;
+    else {
+        if (colorItem.itemType === "vec3<f32>")
             return `return vec4(color,1.0);`;
         else
             return `return color;`;
     }
-    return "";
 }
 
 
@@ -6984,32 +6987,6 @@ Texture.DEFAULT_IMAGE = t_nullImage;
 Texture.DEFAULT_MAPPING = _Constants__WEBPACK_IMPORTED_MODULE_3__.UVMapping;
 Texture.DEFAULT_ANISOTROPY = 1;
 const NullTexture = new Texture();
-
-
-/***/ }),
-
-/***/ "./src/utils/CommonUtils.ts":
-/*!**********************************!*\
-  !*** ./src/utils/CommonUtils.ts ***!
-  \**********************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   CommonUtils: () => (/* binding */ CommonUtils)
-/* harmony export */ });
-const _cache = {};
-class CommonUtils {
-    static warnOnce(message) {
-        if (message in _cache)
-            return;
-        _cache[message] = true;
-        console.warn(message);
-    }
-    static isDefined(o) {
-        return o !== undefined && o !== null;
-    }
-}
 
 
 /***/ }),

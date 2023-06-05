@@ -9,30 +9,35 @@ export class MeshPhongShader extends Shader {
     }
 
     protected _createVertexShader(): void {
+        const shaderOptions = this._material.shaderOptions;
+        const indexObj = {index:1} as basic.IndexObj;
+        const uvItem = shaderOptions.locationValues.get("uv");
+        const normalItem = shaderOptions.locationValues.get("normal");
         this._vertexShaderCode = `
 
             vViewPosition = - mvPosition.xyz;
         
         `;
-        const shaderOptions = this._material.shaderOptions;
+ 
         this._vertexShaderCode = `
             ${basic.location_transform_vert()}
 
             struct VertexOutput {
                 @builtin(position) Position : vec4<f32>,
-                ${basic.out_uv_vert(shaderOptions.locationValues.get("normal"))}
-                ${basic.out_uv_vert(shaderOptions.locationValues.get("uv"))}
+                ${basic.varyValue(normalItem,indexObj)}
+                ${basic.varyValue(uvItem,indexObj)}
+                ${basic.varyValue("vViewPosition",indexObj)}
             }
 
             @vertex
             fn main(
             @location(0) position : vec3<f32>,
-            ${basic.location_normal_vert(shaderOptions.locationValues.get("normal"))}
-            ${basic.location_uv_vert(shaderOptions.locationValues.get("uv"))}
+            ${basic.location_normal_vert(normalItem)}
+            ${basic.location_uv_vert(uvItem)}
             ) -> VertexOutput {
                 var output : VertexOutput;
                 ${basic.transform_vert()}
-                ${basic.uv_vert(shaderOptions.locationValues.get("uv"))}
+                ${basic.uv_vert(uvItem)}
                 return output;
             }
         
