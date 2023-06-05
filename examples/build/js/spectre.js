@@ -1518,11 +1518,11 @@ class BufferGeometry {
         }
         return bufferLayouts;
     }
-    setVertexBuffer(passEncoder) {
-        let index = 0;
-        for (const attribute of this._attributes.values()) {
-            passEncoder.setVertexBuffer(index, attribute.buffer.buffer);
-            ++index;
+    setVertexBuffer(passEncoder, locationValues) {
+        for (const value of locationValues.values()) {
+            const attr = this._attributes.get(value.name);
+            if (attr)
+                passEncoder.setVertexBuffer(value.index, attr.buffer.buffer);
         }
     }
     setIndex(attribute) {
@@ -2795,6 +2795,99 @@ class PlaneGeometry extends _core_BufferGeometry__WEBPACK_IMPORTED_MODULE_0__.Bu
 
 /***/ }),
 
+/***/ "./src/geometries/SphereGeometry.ts":
+/*!******************************************!*\
+  !*** ./src/geometries/SphereGeometry.ts ***!
+  \******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   SphereGeometry: () => (/* binding */ SphereGeometry)
+/* harmony export */ });
+/* harmony import */ var _Constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Constants */ "./src/Constants.ts");
+/* harmony import */ var _core_BufferAttribute__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/BufferAttribute */ "./src/core/BufferAttribute.ts");
+/* harmony import */ var _core_BufferGeometry__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../core/BufferGeometry */ "./src/core/BufferGeometry.ts");
+/* harmony import */ var _math_Vector3__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../math/Vector3 */ "./src/math/Vector3.ts");
+
+
+
+
+class SphereGeometry extends _core_BufferGeometry__WEBPACK_IMPORTED_MODULE_2__.BufferGeometry {
+    constructor(radius = 1, widthSegments = 32, heightSegments = 16, phiStart = 0, phiLength = Math.PI * 2, thetaStart = 0, thetaLength = Math.PI) {
+        super();
+        this.radius = radius,
+            this.widthSegments = widthSegments,
+            this.heightSegments = heightSegments,
+            this.phiStart = phiStart,
+            this.phiLength = phiLength,
+            this.thetaStart = thetaStart,
+            this.thetaLength = thetaLength;
+        widthSegments = Math.max(3, Math.floor(widthSegments));
+        heightSegments = Math.max(2, Math.floor(heightSegments));
+        const thetaEnd = Math.min(thetaStart + thetaLength, Math.PI);
+        let index = 0;
+        const grid = [];
+        const vertex = new _math_Vector3__WEBPACK_IMPORTED_MODULE_3__.Vector3();
+        const normal = new _math_Vector3__WEBPACK_IMPORTED_MODULE_3__.Vector3();
+        // buffers
+        const indices = [];
+        const vertices = [];
+        const normals = [];
+        const uvs = [];
+        // generate vertices, normals and uvs
+        for (let iy = 0; iy <= heightSegments; iy++) {
+            const verticesRow = [];
+            const v = iy / heightSegments;
+            // special case for the poles
+            let uOffset = 0;
+            if (iy === 0 && thetaStart === 0) {
+                uOffset = 0.5 / widthSegments;
+            }
+            else if (iy === heightSegments && thetaEnd === Math.PI) {
+                uOffset = -0.5 / widthSegments;
+            }
+            for (let ix = 0; ix <= widthSegments; ix++) {
+                const u = ix / widthSegments;
+                // vertex
+                vertex.x = -radius * Math.cos(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
+                vertex.y = radius * Math.cos(thetaStart + v * thetaLength);
+                vertex.z = radius * Math.sin(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
+                vertices.push(vertex.x, vertex.y, vertex.z);
+                // normal
+                normal.copy(vertex).normalize();
+                normals.push(normal.x, normal.y, normal.z);
+                // uv
+                uvs.push(u + uOffset, 1 - v);
+                verticesRow.push(index++);
+            }
+            grid.push(verticesRow);
+        }
+        // indices
+        for (let iy = 0; iy < heightSegments; iy++) {
+            for (let ix = 0; ix < widthSegments; ix++) {
+                const a = grid[iy][ix + 1];
+                const b = grid[iy][ix];
+                const c = grid[iy + 1][ix];
+                const d = grid[iy + 1][ix + 1];
+                if (iy !== 0 || thetaStart > 0)
+                    indices.push(a, b, d);
+                if (iy !== heightSegments - 1 || thetaEnd < Math.PI)
+                    indices.push(b, c, d);
+            }
+        }
+        // build geometry
+        const indicesAttr = new _core_BufferAttribute__WEBPACK_IMPORTED_MODULE_1__.BufferAttribute(new Uint32Array(indices), _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUIndexFormat.Uint32, 1);
+        this.setIndex(indicesAttr);
+        this.setAttribute('position', new _core_BufferAttribute__WEBPACK_IMPORTED_MODULE_1__.BufferAttribute(new Float32Array(vertices), _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUVertexFormat.Float32x3, 3));
+        this.setAttribute('normal', new _core_BufferAttribute__WEBPACK_IMPORTED_MODULE_1__.BufferAttribute(new Float32Array(normals), _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUVertexFormat.Float32x3, 3));
+        this.setAttribute('uv', new _core_BufferAttribute__WEBPACK_IMPORTED_MODULE_1__.BufferAttribute(new Float32Array(uvs), _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUVertexFormat.Float32x2, 2));
+    }
+}
+
+
+/***/ }),
+
 /***/ "./src/loaders/FileLoader.ts":
 /*!***********************************!*\
   !*** ./src/loaders/FileLoader.ts ***!
@@ -3360,7 +3453,7 @@ class Material {
         return entriesGroup;
     }
     _setDefaultShaderOptions() {
-        this._setValue(this._shaderOptions.locationValues, "position", null, null);
+        this._setValue(this._shaderOptions.locationValues, "position", "vec3<f32>", null);
         this._uniforms.set("parameters", new _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_2__.BufferUniform("parameters", this._parameters, GPUShaderStage.FRAGMENT));
         this._setValue(this._shaderOptions.bindValues, "parameters", "vec4<u32>", _Constants__WEBPACK_IMPORTED_MODULE_1__.BindType.buffer);
     }
@@ -3427,7 +3520,7 @@ class Material {
             this.pipeline.needsCompile = true;
         }
         else if (v !== null && this._map === null) {
-            this._setValue(this._shaderOptions.locationValues, "uv", null, null);
+            this._setValue(this._shaderOptions.locationValues, "uv", "vec2<f32>", null);
             this._setValue(this._shaderOptions.bindValues, "colorSampler", "sampler", _Constants__WEBPACK_IMPORTED_MODULE_1__.BindType.sampler);
             this._uniforms.set("colorSampler", new _core_binds_BindSampler__WEBPACK_IMPORTED_MODULE_3__.SamplerUniform("colorSampler", GPUShaderStage.FRAGMENT));
             this._setValue(this._shaderOptions.bindValues, "texture", "texture_2d<f32>", _Constants__WEBPACK_IMPORTED_MODULE_1__.BindType.texture);
@@ -3487,18 +3580,21 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   MeshPhongMaterial: () => (/* binding */ MeshPhongMaterial)
 /* harmony export */ });
 /* harmony import */ var _math_Color__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math/Color */ "./src/math/Color.ts");
-/* harmony import */ var _Material__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Material */ "./src/materials/Material.ts");
+/* harmony import */ var _shaders_MeshPhongShader__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shaders/MeshPhongShader */ "./src/shaders/MeshPhongShader.ts");
+/* harmony import */ var _Material__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Material */ "./src/materials/Material.ts");
 
 
-class MeshPhongMaterial extends _Material__WEBPACK_IMPORTED_MODULE_1__.Material {
+
+class MeshPhongMaterial extends _Material__WEBPACK_IMPORTED_MODULE_2__.Material {
     constructor() {
         super();
         this.specular = new _math_Color__WEBPACK_IMPORTED_MODULE_0__.Color(0x111111); //高光反射
         this.emissive = new _math_Color__WEBPACK_IMPORTED_MODULE_0__.Color(0x000000); //自发光
+        this._shader = new _shaders_MeshPhongShader__WEBPACK_IMPORTED_MODULE_1__.MeshPhongShader(this);
     }
     _setDefaultShaderOptions() {
         super._setDefaultShaderOptions();
-        this._setValue(this._shaderOptions.locationValues, "normal", null);
+        this._setValue(this._shaderOptions.locationValues, "normal", "vec3<f32>");
     }
 }
 
@@ -6556,7 +6652,7 @@ class WebGPURenderer {
         object.update();
         const geometry = object.geometry;
         geometry.update();
-        geometry.setVertexBuffer(passEncoder);
+        geometry.setVertexBuffer(passEncoder, object.material.shaderOptions.locationValues);
         if (geometry.indices) {
             passEncoder.setIndexBuffer(geometry.indices.buffer.buffer, _Constants__WEBPACK_IMPORTED_MODULE_1__.GPUIndexFormat.Uint32);
             passEncoder.drawIndexedIndirect(object.geometry.drawBuffer.buffer, 0);
@@ -6642,13 +6738,13 @@ class MeshBasicShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
 
             struct VertexOutput {
                 @builtin(position) Position : vec4<f32>,
-                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.varyValue(uvItem, indexObj)}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.itemVary_value(uvItem, indexObj)}
             }
 
             @vertex
             fn main(
             @location(0) position : vec3<f32>,
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.location_uv_vert(uvItem)}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.location_vert(uvItem)}
             ) -> VertexOutput {
                 var output : VertexOutput;
                 ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.transform_vert()}
@@ -6663,17 +6759,254 @@ class MeshBasicShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
         const indexObj = { index: 1 };
         const uvItem = shaderOptions.locationValues.get("uv");
         this._fragmentShaderCode = `
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_buffer_frag(shaderOptions.bindValues.get("parameters"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_buffer_frag(shaderOptions.bindValues.get("color"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_sampler_frag(shaderOptions.bindValues.get("colorSampler"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_sampler_frag(shaderOptions.bindValues.get("texture"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("parameters"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("color"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("colorSampler"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("texture"))}
             
+
+
             @fragment
             fn main(
-                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.varyValue(uvItem, indexObj)}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.itemVary_value(uvItem, indexObj)}
             ) -> @location(0) vec4<f32> {
+                var baseColor:vec4<f32>;
                 ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.getColo_frag(shaderOptions.bindValues.get("texture"), shaderOptions.bindValues.get("color"))}
+                return baseColor;
             }
+
+        `;
+    }
+}
+
+
+/***/ }),
+
+/***/ "./src/shaders/MeshPhongShader.ts":
+/*!****************************************!*\
+  !*** ./src/shaders/MeshPhongShader.ts ***!
+  \****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   MeshPhongShader: () => (/* binding */ MeshPhongShader)
+/* harmony export */ });
+/* harmony import */ var _Shader__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Shader */ "./src/shaders/Shader.ts");
+/* harmony import */ var _ShaderBasic__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ShaderBasic */ "./src/shaders/ShaderBasic.ts");
+
+
+class MeshPhongShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
+    constructor(material) {
+        super(material);
+    }
+    _createVertexShader() {
+        const shaderOptions = this._material.shaderOptions;
+        const indexObj = { index: 1 };
+        const uvItem = shaderOptions.locationValues.get("uv");
+        const normalItem = shaderOptions.locationValues.get("normal");
+        this._vertexShaderCode = `
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.location_transform_vert()}
+
+            struct VertexOutput {
+                @builtin(position) Position : vec4<f32>,
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.itemVary_value(uvItem, indexObj)}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.itemVary_value(normalItem, indexObj)}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.customVary_value("vViewPosition", "vec3<f32>", indexObj)}
+            }
+
+            @vertex
+            fn main(
+            @location(0) position : vec3<f32>,
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.location_vert(normalItem)}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.location_vert(uvItem)}
+            ) -> VertexOutput {
+                var output : VertexOutput;
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.transform_vert()}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.uv_vert(uvItem)}
+                output.vViewPosition = - mvPosition.xyz;
+                output.normal = normal;
+                return output;
+            }
+        
+        `;
+    }
+    _createFragmentShader() {
+        const shaderOptions = this._material.shaderOptions;
+        const indexObj = { index: 1 };
+        const uvItem = shaderOptions.locationValues.get("uv");
+        const normalItem = shaderOptions.locationValues.get("normal");
+        this._fragmentShaderCode = `
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("parameters"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("color"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("colorSampler"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("texture"))}
+
+
+            const RECIPROCAL_PI = 0.3183098861837907;
+            struct IncidentLight {
+                color:vec3<f32>,
+                direction:vec3<f32>,
+                visible:bool,
+            };
+
+            struct ReflectedLight {
+                directDiffuse:vec3<f32>,
+                directSpecular:vec3<f32>,
+                indirectDiffuse:vec3<f32>,
+                indirectSpecular:vec3<f32>,
+            };
+
+            struct GeometricContext {
+                position:vec3<f32>,
+                normal:vec3<f32>,
+                viewDir:vec3<f32>,
+            };
+
+            struct BlinnPhongMaterial {
+
+                diffuseColor:vec3<f32>,
+                specularColor:vec3<f32>,
+                specularShininess:f32,
+                specularStrength:f32,
+            
+            };
+
+            struct DirectionalLight {
+                direction:vec3<f32>,
+                color:vec3<f32>,
+            };
+
+            fn saturate( a:f32 )->f32 {
+                return clamp( a, 0.0, 1.0 );
+            } 
+
+            fn BRDF_Lambert( diffuseColor:vec3<f32> )->vec3<f32> {
+
+                return RECIPROCAL_PI * diffuseColor;
+            
+            }
+
+            fn F_Schlick( f0:vec3<f32>, f90:f32, dotVH:f32 )->vec3<f32> {
+
+                var fresnel = exp2( ( - 5.55473 * dotVH - 6.98316 ) * dotVH );
+            
+                return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
+            
+            } 
+
+            fn G_BlinnPhong_Implicit()->f32 {
+
+                return 0.25;
+            
+            }
+
+            fn D_BlinnPhong( shininess:f32, dotNH:f32)->f32 {
+
+                return RECIPROCAL_PI * ( shininess * 0.5 + 1.0 ) * pow( dotNH, shininess );
+            
+            }
+
+            fn BRDF_BlinnPhong( lightDir:vec3<f32>, viewDir:vec3<f32>, normal:vec3<f32>, specularColor:vec3<f32>, shininess:f32 )->vec3<f32> {
+
+                var halfDir = normalize( lightDir + viewDir );
+            
+                var dotNH = saturate( dot( normal, halfDir ) );
+                var dotVH = saturate( dot( viewDir, halfDir ) );
+            
+                var F = F_Schlick( specularColor, 1.0, dotVH );
+            
+                var G = G_BlinnPhong_Implicit( /* dotNL, dotNV */ );
+            
+                var D = D_BlinnPhong( shininess, dotNH );
+            
+                return F * ( G * D );
+            
+            }
+
+            fn RE_Direct_BlinnPhong( 
+                directLight:IncidentLight, 
+                geometry:GeometricContext, 
+                material:BlinnPhongMaterial, 
+                reflectedLight: ReflectedLight
+                ) -> ReflectedLight{
+
+                var dotNL = saturate( dot( geometry.normal, directLight.direction ) );
+                var irradiance = dotNL * directLight.color;
+            
+                var res:ReflectedLight;
+                res.directDiffuse = reflectedLight.directDiffuse;
+                res.directSpecular = reflectedLight.directSpecular;
+
+                res.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );
+            
+                res.directSpecular += irradiance * BRDF_BlinnPhong( directLight.direction, geometry.viewDir, geometry.normal, material.specularColor, material.specularShininess ) * material.specularStrength;
+                return res;
+            }
+
+            @fragment
+            fn main(
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.itemVary_value(uvItem, indexObj)}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.itemVary_value(normalItem, indexObj)}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.customVary_value("vViewPosition", "vec3<f32>", indexObj)}
+            ) -> @location(0) vec4<f32> {
+                var baseColor:vec4<f32>;
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.getColo_frag(shaderOptions.bindValues.get("texture"), shaderOptions.bindValues.get("color"))}
+
+                var diffuse = baseColor.xyz;
+                var emissive = vec3<f32>(0.0,0.0,0.0);
+                var specular = vec3<f32>(0.04,0.04,0.04);
+                var shininess = 30.;
+                var opacity = 1.;
+                var specularStrength = 1.;
+
+                var diffuseColor = vec4<f32>( diffuse, opacity );
+                var reflectedLight:ReflectedLight;
+                reflectedLight.directDiffuse = vec3<f32>( 0.0 );
+                reflectedLight.directSpecular = vec3<f32>( 0.0 );
+                reflectedLight.indirectDiffuse = vec3<f32>( 0.0 );
+                reflectedLight.indirectSpecular = vec3<f32>( 0.0 );
+
+                var totalEmissiveRadiance = emissive;
+
+                var material:BlinnPhongMaterial;
+                material.diffuseColor = diffuse;
+                material.specularColor = specular;
+                material.specularShininess = shininess;
+                material.specularStrength = specularStrength;
+
+                var geometry:GeometricContext;
+
+                geometry.position = - vViewPosition;
+                geometry.normal = normal;
+                //geometry.viewDir = ( isOrthographic ) ? vec3( 0, 0, 1 ) : normalize( vViewPosition );
+                geometry.viewDir = normalize( vViewPosition );
+
+
+                var directionalLight:DirectionalLight;
+
+                directionalLight.direction = vec3<f32>(0.,1.,1.);
+                directionalLight.color = vec3<f32>(1.,1.,1.);
+
+                var directLight:IncidentLight;
+                directLight.color = directionalLight.color;
+                directLight.direction = directionalLight.direction;
+                directLight.visible = true;
+
+                //getDirectionalLightInfo( directionalLight, geometry, directLight );
+
+                reflectedLight = RE_Direct_BlinnPhong( directLight, geometry, material, reflectedLight );
+
+                var outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;
+
+                var finalColor = vec4( outgoingLight, diffuseColor.a );
+
+                return finalColor;
+            }
+        `;
+        const test = `
+
+            #define saturate( a ) clamp( a, 0.0, 1.0 )
 
         `;
     }
@@ -6719,17 +7052,17 @@ class Shader {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   bind_buffer_frag: () => (/* binding */ bind_buffer_frag),
-/* harmony export */   bind_sampler_frag: () => (/* binding */ bind_sampler_frag),
-/* harmony export */   bind_texture_frag: () => (/* binding */ bind_texture_frag),
+/* harmony export */   bind_value_frag: () => (/* binding */ bind_value_frag),
+/* harmony export */   customVary_value: () => (/* binding */ customVary_value),
 /* harmony export */   getColo_frag: () => (/* binding */ getColo_frag),
-/* harmony export */   location_normal_vert: () => (/* binding */ location_normal_vert),
+/* harmony export */   itemVary_value: () => (/* binding */ itemVary_value),
 /* harmony export */   location_transform_vert: () => (/* binding */ location_transform_vert),
-/* harmony export */   location_uv_vert: () => (/* binding */ location_uv_vert),
+/* harmony export */   location_vert: () => (/* binding */ location_vert),
 /* harmony export */   transform_vert: () => (/* binding */ transform_vert),
-/* harmony export */   uv_vert: () => (/* binding */ uv_vert),
-/* harmony export */   varyValue: () => (/* binding */ varyValue)
+/* harmony export */   uv_vert: () => (/* binding */ uv_vert)
 /* harmony export */ });
+/* harmony import */ var _Constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Constants */ "./src/Constants.ts");
+
 function location_transform_vert() {
     return `
             @group(0) @binding(0) var<uniform> projectionMatrix : mat4x4<f32>;
@@ -6738,26 +7071,19 @@ function location_transform_vert() {
             @group(2) @binding(0) var<uniform> modelMatrix : mat4x4<f32>;
             `;
 }
-function location_normal_vert(item) {
+function location_vert(item) {
     if (item)
-        return `@location(${item.index}) normal : vec3<f32>,`;
+        return `@location(${item.index}) ${item.name} : ${item.itemType},`;
     return "";
 }
-function location_uv_vert(item) {
-    if (item)
-        return `@location(${item.index}) uv : vec2<f32>,`;
-    return "";
-}
-function varyValue(item, index) {
+function itemVary_value(item, index) {
     if (item) {
-        if (typeof item === "string") {
-            return `@location(${index.index++}) ${item} : vec2<f32>,`;
-        }
-        else {
-            return `@location(${index.index++}) ${item.name} : vec2<f32>,`;
-        }
+        return `@location(${index.index++}) ${item.name} : ${item.itemType},`;
     }
     return "";
+}
+function customVary_value(name, itemType, indexObj) {
+    return `@location(${indexObj.index++}) ${name} : ${itemType},`;
 }
 function transform_vert() {
     return `
@@ -6770,29 +7096,19 @@ function uv_vert(item) {
         return `output.uv = uv;`;
     return "";
 }
-function bind_buffer_frag(item) {
+function bind_value_frag(item) {
     if (item)
-        return `@group(1) @binding(${item.index}) var<uniform> ${item.name} : ${item.itemType};`;
-    return "";
-}
-function bind_texture_frag(item) {
-    if (item)
-        return `@group(1) @binding(${item.index}) var ${item.name} : ${item.itemType};`;
-    return "";
-}
-function bind_sampler_frag(item) {
-    if (item)
-        return `@group(1) @binding(${item.index}) var ${item.name} : ${item.itemType};`;
+        return `@group(1) @binding(${item.index}) var${item.bindType === _Constants__WEBPACK_IMPORTED_MODULE_0__.BindType.buffer ? "<uniform>" : ""} ${item.name} : ${item.itemType};`;
     return "";
 }
 function getColo_frag(textureItem, colorItem) {
     if (textureItem)
-        return `return textureSample(texture, colorSampler, uv);`;
+        return `baseColor = textureSample(texture, colorSampler, uv);`;
     else {
         if (colorItem.itemType === "vec3<f32>")
-            return `return vec4(color,1.0);`;
+            return `baseColor = vec4(color,1.0);`;
         else
-            return `return color;`;
+            return `baseColor = color;`;
     }
 }
 
@@ -7075,27 +7391,28 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   BoxGeometry: () => (/* reexport safe */ _geometries_BoxGeometry__WEBPACK_IMPORTED_MODULE_5__.BoxGeometry),
 /* harmony export */   BufferAttribute: () => (/* reexport safe */ _core_BufferAttribute__WEBPACK_IMPORTED_MODULE_3__.BufferAttribute),
 /* harmony export */   BufferGeometry: () => (/* reexport safe */ _core_BufferGeometry__WEBPACK_IMPORTED_MODULE_4__.BufferGeometry),
-/* harmony export */   Color: () => (/* reexport safe */ _math_Color__WEBPACK_IMPORTED_MODULE_11__.Color),
-/* harmony export */   ConstantsValues: () => (/* reexport module object */ _utils_ConstantsValues__WEBPACK_IMPORTED_MODULE_24__),
+/* harmony export */   Color: () => (/* reexport safe */ _math_Color__WEBPACK_IMPORTED_MODULE_12__.Color),
+/* harmony export */   ConstantsValues: () => (/* reexport module object */ _utils_ConstantsValues__WEBPACK_IMPORTED_MODULE_25__),
 /* harmony export */   Environment: () => (/* reexport module object */ _core_Environment__WEBPACK_IMPORTED_MODULE_1__),
-/* harmony export */   Euler: () => (/* reexport safe */ _math_Euler__WEBPACK_IMPORTED_MODULE_12__.Euler),
-/* harmony export */   FileLoader: () => (/* reexport safe */ _loaders_FileLoader__WEBPACK_IMPORTED_MODULE_21__.FileLoader),
+/* harmony export */   Euler: () => (/* reexport safe */ _math_Euler__WEBPACK_IMPORTED_MODULE_13__.Euler),
+/* harmony export */   FileLoader: () => (/* reexport safe */ _loaders_FileLoader__WEBPACK_IMPORTED_MODULE_22__.FileLoader),
 /* harmony export */   GPUConstances: () => (/* reexport module object */ _Constants__WEBPACK_IMPORTED_MODULE_0__),
-/* harmony export */   ImageLoader: () => (/* reexport safe */ _loaders_ImageLoader__WEBPACK_IMPORTED_MODULE_22__.ImageLoader),
-/* harmony export */   Material: () => (/* reexport safe */ _materials_Material__WEBPACK_IMPORTED_MODULE_7__.Material),
-/* harmony export */   Matrix3: () => (/* reexport safe */ _math_Matrix3__WEBPACK_IMPORTED_MODULE_13__.Matrix3),
-/* harmony export */   Matrix4: () => (/* reexport safe */ _math_Matrix4__WEBPACK_IMPORTED_MODULE_14__.Matrix4),
-/* harmony export */   Mesh: () => (/* reexport safe */ _objects_Mesh__WEBPACK_IMPORTED_MODULE_9__.Mesh),
-/* harmony export */   MeshPhongMaterial: () => (/* reexport safe */ _materials_MeshPhongMaterial__WEBPACK_IMPORTED_MODULE_8__.MeshPhongMaterial),
-/* harmony export */   OrbitControls: () => (/* reexport safe */ _controls_OrbitControls__WEBPACK_IMPORTED_MODULE_20__.OrbitControls),
-/* harmony export */   OrthographicCamera: () => (/* reexport safe */ _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_19__.OrthographicCamera),
-/* harmony export */   PerspectiveCamera: () => (/* reexport safe */ _cameras_PerspectiveCamera__WEBPACK_IMPORTED_MODULE_18__.PerspectiveCamera),
+/* harmony export */   ImageLoader: () => (/* reexport safe */ _loaders_ImageLoader__WEBPACK_IMPORTED_MODULE_23__.ImageLoader),
+/* harmony export */   Material: () => (/* reexport safe */ _materials_Material__WEBPACK_IMPORTED_MODULE_8__.Material),
+/* harmony export */   Matrix3: () => (/* reexport safe */ _math_Matrix3__WEBPACK_IMPORTED_MODULE_14__.Matrix3),
+/* harmony export */   Matrix4: () => (/* reexport safe */ _math_Matrix4__WEBPACK_IMPORTED_MODULE_15__.Matrix4),
+/* harmony export */   Mesh: () => (/* reexport safe */ _objects_Mesh__WEBPACK_IMPORTED_MODULE_10__.Mesh),
+/* harmony export */   MeshPhongMaterial: () => (/* reexport safe */ _materials_MeshPhongMaterial__WEBPACK_IMPORTED_MODULE_9__.MeshPhongMaterial),
+/* harmony export */   OrbitControls: () => (/* reexport safe */ _controls_OrbitControls__WEBPACK_IMPORTED_MODULE_21__.OrbitControls),
+/* harmony export */   OrthographicCamera: () => (/* reexport safe */ _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_20__.OrthographicCamera),
+/* harmony export */   PerspectiveCamera: () => (/* reexport safe */ _cameras_PerspectiveCamera__WEBPACK_IMPORTED_MODULE_19__.PerspectiveCamera),
 /* harmony export */   PlaneGeometry: () => (/* reexport safe */ _geometries_PlaneGeometry__WEBPACK_IMPORTED_MODULE_6__.PlaneGeometry),
-/* harmony export */   Quaternion: () => (/* reexport safe */ _math_Quaternion__WEBPACK_IMPORTED_MODULE_15__.Quaternion),
-/* harmony export */   Scene: () => (/* reexport safe */ _core_Scene__WEBPACK_IMPORTED_MODULE_10__.Scene),
-/* harmony export */   TextureLoader: () => (/* reexport safe */ _loaders_TextureLoader__WEBPACK_IMPORTED_MODULE_23__.TextureLoader),
-/* harmony export */   Vector2: () => (/* reexport safe */ _math_Vector2__WEBPACK_IMPORTED_MODULE_16__.Vector2),
-/* harmony export */   Vector3: () => (/* reexport safe */ _math_Vector3__WEBPACK_IMPORTED_MODULE_17__.Vector3),
+/* harmony export */   Quaternion: () => (/* reexport safe */ _math_Quaternion__WEBPACK_IMPORTED_MODULE_16__.Quaternion),
+/* harmony export */   Scene: () => (/* reexport safe */ _core_Scene__WEBPACK_IMPORTED_MODULE_11__.Scene),
+/* harmony export */   SphereGeometry: () => (/* reexport safe */ _geometries_SphereGeometry__WEBPACK_IMPORTED_MODULE_7__.SphereGeometry),
+/* harmony export */   TextureLoader: () => (/* reexport safe */ _loaders_TextureLoader__WEBPACK_IMPORTED_MODULE_24__.TextureLoader),
+/* harmony export */   Vector2: () => (/* reexport safe */ _math_Vector2__WEBPACK_IMPORTED_MODULE_17__.Vector2),
+/* harmony export */   Vector3: () => (/* reexport safe */ _math_Vector3__WEBPACK_IMPORTED_MODULE_18__.Vector3),
 /* harmony export */   WebGPURenderer: () => (/* reexport safe */ _renderers_WebGPURenderer__WEBPACK_IMPORTED_MODULE_2__.WebGPURenderer)
 /* harmony export */ });
 /* harmony import */ var _Constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
@@ -7105,24 +7422,26 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _core_BufferGeometry__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./core/BufferGeometry */ "./src/core/BufferGeometry.ts");
 /* harmony import */ var _geometries_BoxGeometry__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./geometries/BoxGeometry */ "./src/geometries/BoxGeometry.ts");
 /* harmony import */ var _geometries_PlaneGeometry__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./geometries/PlaneGeometry */ "./src/geometries/PlaneGeometry.ts");
-/* harmony import */ var _materials_Material__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./materials/Material */ "./src/materials/Material.ts");
-/* harmony import */ var _materials_MeshPhongMaterial__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./materials/MeshPhongMaterial */ "./src/materials/MeshPhongMaterial.ts");
-/* harmony import */ var _objects_Mesh__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./objects/Mesh */ "./src/objects/Mesh.ts");
-/* harmony import */ var _core_Scene__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./core/Scene */ "./src/core/Scene.ts");
-/* harmony import */ var _math_Color__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./math/Color */ "./src/math/Color.ts");
-/* harmony import */ var _math_Euler__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./math/Euler */ "./src/math/Euler.ts");
-/* harmony import */ var _math_Matrix3__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./math/Matrix3 */ "./src/math/Matrix3.ts");
-/* harmony import */ var _math_Matrix4__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./math/Matrix4 */ "./src/math/Matrix4.ts");
-/* harmony import */ var _math_Quaternion__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./math/Quaternion */ "./src/math/Quaternion.ts");
-/* harmony import */ var _math_Vector2__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./math/Vector2 */ "./src/math/Vector2.ts");
-/* harmony import */ var _math_Vector3__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./math/Vector3 */ "./src/math/Vector3.ts");
-/* harmony import */ var _cameras_PerspectiveCamera__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./cameras/PerspectiveCamera */ "./src/cameras/PerspectiveCamera.ts");
-/* harmony import */ var _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./cameras/OrthographicCamera */ "./src/cameras/OrthographicCamera.ts");
-/* harmony import */ var _controls_OrbitControls__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./controls/OrbitControls */ "./src/controls/OrbitControls.ts");
-/* harmony import */ var _loaders_FileLoader__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./loaders/FileLoader */ "./src/loaders/FileLoader.ts");
-/* harmony import */ var _loaders_ImageLoader__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./loaders/ImageLoader */ "./src/loaders/ImageLoader.ts");
-/* harmony import */ var _loaders_TextureLoader__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ./loaders/TextureLoader */ "./src/loaders/TextureLoader.ts");
-/* harmony import */ var _utils_ConstantsValues__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ./utils/ConstantsValues */ "./src/utils/ConstantsValues.ts");
+/* harmony import */ var _geometries_SphereGeometry__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./geometries/SphereGeometry */ "./src/geometries/SphereGeometry.ts");
+/* harmony import */ var _materials_Material__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./materials/Material */ "./src/materials/Material.ts");
+/* harmony import */ var _materials_MeshPhongMaterial__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./materials/MeshPhongMaterial */ "./src/materials/MeshPhongMaterial.ts");
+/* harmony import */ var _objects_Mesh__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./objects/Mesh */ "./src/objects/Mesh.ts");
+/* harmony import */ var _core_Scene__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./core/Scene */ "./src/core/Scene.ts");
+/* harmony import */ var _math_Color__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./math/Color */ "./src/math/Color.ts");
+/* harmony import */ var _math_Euler__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./math/Euler */ "./src/math/Euler.ts");
+/* harmony import */ var _math_Matrix3__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./math/Matrix3 */ "./src/math/Matrix3.ts");
+/* harmony import */ var _math_Matrix4__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./math/Matrix4 */ "./src/math/Matrix4.ts");
+/* harmony import */ var _math_Quaternion__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./math/Quaternion */ "./src/math/Quaternion.ts");
+/* harmony import */ var _math_Vector2__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./math/Vector2 */ "./src/math/Vector2.ts");
+/* harmony import */ var _math_Vector3__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./math/Vector3 */ "./src/math/Vector3.ts");
+/* harmony import */ var _cameras_PerspectiveCamera__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./cameras/PerspectiveCamera */ "./src/cameras/PerspectiveCamera.ts");
+/* harmony import */ var _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./cameras/OrthographicCamera */ "./src/cameras/OrthographicCamera.ts");
+/* harmony import */ var _controls_OrbitControls__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./controls/OrbitControls */ "./src/controls/OrbitControls.ts");
+/* harmony import */ var _loaders_FileLoader__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./loaders/FileLoader */ "./src/loaders/FileLoader.ts");
+/* harmony import */ var _loaders_ImageLoader__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ./loaders/ImageLoader */ "./src/loaders/ImageLoader.ts");
+/* harmony import */ var _loaders_TextureLoader__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ./loaders/TextureLoader */ "./src/loaders/TextureLoader.ts");
+/* harmony import */ var _utils_ConstantsValues__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ./utils/ConstantsValues */ "./src/utils/ConstantsValues.ts");
+
 
 
 
@@ -7172,10 +7491,11 @@ var __webpack_exports__PerspectiveCamera = __webpack_exports__.PerspectiveCamera
 var __webpack_exports__PlaneGeometry = __webpack_exports__.PlaneGeometry;
 var __webpack_exports__Quaternion = __webpack_exports__.Quaternion;
 var __webpack_exports__Scene = __webpack_exports__.Scene;
+var __webpack_exports__SphereGeometry = __webpack_exports__.SphereGeometry;
 var __webpack_exports__TextureLoader = __webpack_exports__.TextureLoader;
 var __webpack_exports__Vector2 = __webpack_exports__.Vector2;
 var __webpack_exports__Vector3 = __webpack_exports__.Vector3;
 var __webpack_exports__WebGPURenderer = __webpack_exports__.WebGPURenderer;
-export { __webpack_exports__BoxGeometry as BoxGeometry, __webpack_exports__BufferAttribute as BufferAttribute, __webpack_exports__BufferGeometry as BufferGeometry, __webpack_exports__Color as Color, __webpack_exports__ConstantsValues as ConstantsValues, __webpack_exports__Environment as Environment, __webpack_exports__Euler as Euler, __webpack_exports__FileLoader as FileLoader, __webpack_exports__GPUConstances as GPUConstances, __webpack_exports__ImageLoader as ImageLoader, __webpack_exports__Material as Material, __webpack_exports__Matrix3 as Matrix3, __webpack_exports__Matrix4 as Matrix4, __webpack_exports__Mesh as Mesh, __webpack_exports__MeshPhongMaterial as MeshPhongMaterial, __webpack_exports__OrbitControls as OrbitControls, __webpack_exports__OrthographicCamera as OrthographicCamera, __webpack_exports__PerspectiveCamera as PerspectiveCamera, __webpack_exports__PlaneGeometry as PlaneGeometry, __webpack_exports__Quaternion as Quaternion, __webpack_exports__Scene as Scene, __webpack_exports__TextureLoader as TextureLoader, __webpack_exports__Vector2 as Vector2, __webpack_exports__Vector3 as Vector3, __webpack_exports__WebGPURenderer as WebGPURenderer };
+export { __webpack_exports__BoxGeometry as BoxGeometry, __webpack_exports__BufferAttribute as BufferAttribute, __webpack_exports__BufferGeometry as BufferGeometry, __webpack_exports__Color as Color, __webpack_exports__ConstantsValues as ConstantsValues, __webpack_exports__Environment as Environment, __webpack_exports__Euler as Euler, __webpack_exports__FileLoader as FileLoader, __webpack_exports__GPUConstances as GPUConstances, __webpack_exports__ImageLoader as ImageLoader, __webpack_exports__Material as Material, __webpack_exports__Matrix3 as Matrix3, __webpack_exports__Matrix4 as Matrix4, __webpack_exports__Mesh as Mesh, __webpack_exports__MeshPhongMaterial as MeshPhongMaterial, __webpack_exports__OrbitControls as OrbitControls, __webpack_exports__OrthographicCamera as OrthographicCamera, __webpack_exports__PerspectiveCamera as PerspectiveCamera, __webpack_exports__PlaneGeometry as PlaneGeometry, __webpack_exports__Quaternion as Quaternion, __webpack_exports__Scene as Scene, __webpack_exports__SphereGeometry as SphereGeometry, __webpack_exports__TextureLoader as TextureLoader, __webpack_exports__Vector2 as Vector2, __webpack_exports__Vector3 as Vector3, __webpack_exports__WebGPURenderer as WebGPURenderer };
 
 //# sourceMappingURL=spectre.js.map

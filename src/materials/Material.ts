@@ -9,6 +9,7 @@ import { MathUtils } from "../math/MathUtils";
 import { Pipleline } from "../core/Pipeline";
 import { MeshBasicShader } from "../shaders/MeshBasicShader";
 import { AttributeShaderItem, BindShaderItem, ShaderItem } from "../core/Environment";
+import { Shader } from "../shaders/Shader";
 
 export class Material {
 
@@ -20,7 +21,7 @@ export class Material {
     private _transparent = false;
     private _opacity = 1;
 
-    protected _shader: MeshBasicShader;
+    protected _shader: Shader;
 
     protected _shaderOptions = {
         locationValues: new Map<string,AttributeShaderItem>(),
@@ -123,7 +124,7 @@ export class Material {
     }
 
     protected _setDefaultShaderOptions(){
-        this._setValue(this._shaderOptions.locationValues,"position",null,null);
+        this._setValue(this._shaderOptions.locationValues,"position","vec3<f32>",null);
 
         this._uniforms.set("parameters", new BufferUniform("parameters", this._parameters, GPUShaderStage.FRAGMENT));
         this._setValue(this._shaderOptions.bindValues,"parameters","vec4<u32>",BindType.buffer);
@@ -202,7 +203,7 @@ export class Material {
             this.pipeline.needsCompile = true;
 
         }else if(v !== null && this._map === null){
-            this._setValue(this._shaderOptions.locationValues,"uv",null,null);
+            this._setValue(this._shaderOptions.locationValues,"uv","vec2<f32>",null);
 
             this._setValue(this._shaderOptions.bindValues,"colorSampler","sampler",BindType.sampler);
             this._uniforms.set("colorSampler", new SamplerUniform("colorSampler", GPUShaderStage.FRAGMENT));

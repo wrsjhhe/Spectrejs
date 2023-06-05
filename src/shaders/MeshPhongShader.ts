@@ -13,167 +13,211 @@ export class MeshPhongShader extends Shader {
         const indexObj = {index:1} as basic.IndexObj;
         const uvItem = shaderOptions.locationValues.get("uv");
         const normalItem = shaderOptions.locationValues.get("normal");
-        this._vertexShaderCode = `
-
-            vViewPosition = - mvPosition.xyz;
-        
-        `;
  
         this._vertexShaderCode = `
             ${basic.location_transform_vert()}
 
             struct VertexOutput {
                 @builtin(position) Position : vec4<f32>,
-                ${basic.varyValue(normalItem,indexObj)}
-                ${basic.varyValue(uvItem,indexObj)}
-                ${basic.varyValue("vViewPosition",indexObj)}
+                ${basic.itemVary_value(uvItem,indexObj)}
+                ${basic.itemVary_value(normalItem,indexObj)}
+                ${basic.customVary_value("vViewPosition","vec3<f32>",indexObj)}
             }
 
             @vertex
             fn main(
             @location(0) position : vec3<f32>,
-            ${basic.location_normal_vert(normalItem)}
-            ${basic.location_uv_vert(uvItem)}
+            ${basic.location_vert(normalItem)}
+            ${basic.location_vert(uvItem)}
             ) -> VertexOutput {
                 var output : VertexOutput;
                 ${basic.transform_vert()}
                 ${basic.uv_vert(uvItem)}
+                output.vViewPosition = - mvPosition.xyz;
+                output.normal = normal;
                 return output;
             }
         
         `
     }
     protected _createFragmentShader(): void {
+        const shaderOptions = this._material.shaderOptions;
+        const indexObj = {index:1} as basic.IndexObj;
+        const uvItem = shaderOptions.locationValues.get("uv");
+        const normalItem = shaderOptions.locationValues.get("normal");
 
         this._fragmentShaderCode = `
-            var diffuse = color.xyz;
-            var emissive = vec3<f32>(0.0,0.0,0.0);
-            var emissive = vec3<f32>(0.04,0.04,0.04);
-            var shininess = 30.;
-            var opacity = 1.;
+            ${basic.bind_value_frag(shaderOptions.bindValues.get("parameters"))}
+            ${basic.bind_value_frag(shaderOptions.bindValues.get("color"))}
+            ${basic.bind_value_frag(shaderOptions.bindValues.get("colorSampler"))}
+            ${basic.bind_value_frag(shaderOptions.bindValues.get("texture"))}
 
+
+            const RECIPROCAL_PI = 0.3183098861837907;
             struct IncidentLight {
-                vec3 color;
-                vec3 direction;
-                bool visible;
+                color:vec3<f32>,
+                direction:vec3<f32>,
+                visible:bool,
             };
 
             struct ReflectedLight {
-                vec3 directDiffuse;
-                vec3 directSpecular;
-                vec3 indirectDiffuse;
-                vec3 indirectSpecular;
+                directDiffuse:vec3<f32>,
+                directSpecular:vec3<f32>,
+                indirectDiffuse:vec3<f32>,
+                indirectSpecular:vec3<f32>,
             };
 
             struct GeometricContext {
-                vec3 position;
-                vec3 normal;
-                vec3 viewDir;
+                position:vec3<f32>,
+                normal:vec3<f32>,
+                viewDir:vec3<f32>,
             };
 
-            vec4 diffuseColor = vec4( diffuse, opacity );
-            ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
-            vec3 totalEmissiveRadiance = emissive;
+            struct BlinnPhongMaterial {
 
-            // uniform vec3 diffuse;
-            // uniform vec3 emissive;
-            // uniform vec3 specular;
-            // uniform float shininess;
-            // uniform float opacity;
+                diffuseColor:vec3<f32>,
+                specularColor:vec3<f32>,
+                specularShininess:f32,
+                specularStrength:f32,
+            
+            };
 
-            BlinnPhongMaterial material;
-            material.diffuseColor = diffuse;
-            material.specularColor = specular;
-            material.specularShininess = shininess;
-            material.specularStrength = specularStrength;
+            struct DirectionalLight {
+                direction:vec3<f32>,
+                color:vec3<f32>,
+            };
 
-            GeometricContext geometry;
+            fn saturate( a:f32 )->f32 {
+                return clamp( a, 0.0, 1.0 );
+            } 
 
-            geometry.position = - vViewPosition;
-            geometry.normal = normal;
-            geometry.viewDir = ( isOrthographic ) ? vec3( 0, 0, 1 ) : normalize( vViewPosition );
-
-            #define saturate( a ) clamp( a, 0.0, 1.0 )
-
-            vec3 BRDF_Lambert( const in vec3 diffuseColor ) {
+            fn BRDF_Lambert( diffuseColor:vec3<f32> )->vec3<f32> {
 
                 return RECIPROCAL_PI * diffuseColor;
             
-            } // validated
+            }
 
-            float F_Schlick( const in float f0, const in float f90, const in float dotVH ) {
+            fn F_Schlick( f0:vec3<f32>, f90:f32, dotVH:f32 )->vec3<f32> {
 
-                // Original approximation by Christophe Schlick '94
-                // float fresnel = pow( 1.0 - dotVH, 5.0 );
-            
-                // Optimized variant (presented by Epic at SIGGRAPH '13)
-                // https://cdn2.unrealengine.com/Resources/files/2013SiggraphPresentationsNotes-26915738.pdf
-                float fresnel = exp2( ( - 5.55473 * dotVH - 6.98316 ) * dotVH );
+                var fresnel = exp2( ( - 5.55473 * dotVH - 6.98316 ) * dotVH );
             
                 return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
             
-            } // validated
+            } 
 
-            float G_BlinnPhong_Implicit( /* const in float dotNL, const in float dotNV */ ) {
+            fn G_BlinnPhong_Implicit()->f32 {
 
-                // geometry term is (n dot l)(n dot v) / 4(n dot l)(n dot v)
                 return 0.25;
             
             }
 
-            float D_BlinnPhong( const in float shininess, const in float dotNH ) {
+            fn D_BlinnPhong( shininess:f32, dotNH:f32)->f32 {
 
                 return RECIPROCAL_PI * ( shininess * 0.5 + 1.0 ) * pow( dotNH, shininess );
             
             }
 
-            vec3 BRDF_BlinnPhong( const in vec3 lightDir, const in vec3 viewDir, const in vec3 normal, const in vec3 specularColor, const in float shininess ) {
+            fn BRDF_BlinnPhong( lightDir:vec3<f32>, viewDir:vec3<f32>, normal:vec3<f32>, specularColor:vec3<f32>, shininess:f32 )->vec3<f32> {
 
-                vec3 halfDir = normalize( lightDir + viewDir );
+                var halfDir = normalize( lightDir + viewDir );
             
-                float dotNH = saturate( dot( normal, halfDir ) );
-                float dotVH = saturate( dot( viewDir, halfDir ) );
+                var dotNH = saturate( dot( normal, halfDir ) );
+                var dotVH = saturate( dot( viewDir, halfDir ) );
             
-                vec3 F = F_Schlick( specularColor, 1.0, dotVH );
+                var F = F_Schlick( specularColor, 1.0, dotVH );
             
-                float G = G_BlinnPhong_Implicit( /* dotNL, dotNV */ );
+                var G = G_BlinnPhong_Implicit( /* dotNL, dotNV */ );
             
-                float D = D_BlinnPhong( shininess, dotNH );
+                var D = D_BlinnPhong( shininess, dotNH );
             
                 return F * ( G * D );
             
-            } // validated
-
-            void RE_Direct_BlinnPhong( const in IncidentLight directLight, const in GeometricContext geometry, const in BlinnPhongMaterial material, inout ReflectedLight reflectedLight ) {
-
-                float dotNL = saturate( dot( geometry.normal, directLight.direction ) );
-                vec3 irradiance = dotNL * directLight.color;
-            
-                reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );
-            
-                reflectedLight.directSpecular += irradiance * BRDF_BlinnPhong( directLight.direction, geometry.viewDir, geometry.normal, material.specularColor, material.specularShininess ) * material.specularStrength;
-            
             }
 
-            const num_dir_lights = 0u;
-            #if ( NUM_DIR_LIGHTS > 0 ) && defined( RE_Direct )
+            fn RE_Direct_BlinnPhong( 
+                directLight:IncidentLight, 
+                geometry:GeometricContext, 
+                material:BlinnPhongMaterial, 
+                reflectedLight: ReflectedLight
+                ) -> ReflectedLight{
 
-            DirectionalLight directionalLight;
+                var dotNL = saturate( dot( geometry.normal, directLight.direction ) );
+                var irradiance = dotNL * directLight.color;
+            
+                var res:ReflectedLight;
+                res.directDiffuse = reflectedLight.directDiffuse;
+                res.directSpecular = reflectedLight.directSpecular;
 
-            for ( int i = 0; i < NUM_DIR_LIGHTS; i ++ ) {
-
-                directionalLight = directionalLights[ i ];
-
-                getDirectionalLightInfo( directionalLight, geometry, directLight );
-
-                RE_Direct_BlinnPhong( directLight, geometry, material, reflectedLight );
-
+                res.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );
+            
+                res.directSpecular += irradiance * BRDF_BlinnPhong( directLight.direction, geometry.viewDir, geometry.normal, material.specularColor, material.specularShininess ) * material.specularStrength;
+                return res;
             }
 
-        #endif
-        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;
+            @fragment
+            fn main(
+                ${basic.itemVary_value(uvItem,indexObj)}
+                ${basic.itemVary_value(normalItem,indexObj)}
+                ${basic.customVary_value("vViewPosition","vec3<f32>",indexObj)}
+            ) -> @location(0) vec4<f32> {
+                var baseColor:vec4<f32>;
+                ${basic.getColo_frag(shaderOptions.bindValues.get("texture"),shaderOptions.bindValues.get("color"))}
 
-        gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+                var diffuse = baseColor.xyz;
+                var emissive = vec3<f32>(0.0,0.0,0.0);
+                var specular = vec3<f32>(0.04,0.04,0.04);
+                var shininess = 30.;
+                var opacity = 1.;
+                var specularStrength = 1.;
+
+                var diffuseColor = vec4<f32>( diffuse, opacity );
+                var reflectedLight:ReflectedLight;
+                reflectedLight.directDiffuse = vec3<f32>( 0.0 );
+                reflectedLight.directSpecular = vec3<f32>( 0.0 );
+                reflectedLight.indirectDiffuse = vec3<f32>( 0.0 );
+                reflectedLight.indirectSpecular = vec3<f32>( 0.0 );
+
+                var totalEmissiveRadiance = emissive;
+
+                var material:BlinnPhongMaterial;
+                material.diffuseColor = diffuse;
+                material.specularColor = specular;
+                material.specularShininess = shininess;
+                material.specularStrength = specularStrength;
+
+                var geometry:GeometricContext;
+
+                geometry.position = - vViewPosition;
+                geometry.normal = normal;
+                //geometry.viewDir = ( isOrthographic ) ? vec3( 0, 0, 1 ) : normalize( vViewPosition );
+                geometry.viewDir = normalize( vViewPosition );
+
+
+                var directionalLight:DirectionalLight;
+
+                directionalLight.direction = vec3<f32>(0.,1.,1.);
+                directionalLight.color = vec3<f32>(1.,1.,1.);
+
+                var directLight:IncidentLight;
+                directLight.color = directionalLight.color;
+                directLight.direction = directionalLight.direction;
+                directLight.visible = true;
+
+                //getDirectionalLightInfo( directionalLight, geometry, directLight );
+
+                reflectedLight = RE_Direct_BlinnPhong( directLight, geometry, material, reflectedLight );
+
+                var outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;
+
+                var finalColor = vec4( outgoingLight, diffuseColor.a );
+
+                return finalColor;
+            }
+        `;
+        const test = `
+
+            #define saturate( a ) clamp( a, 0.0, 1.0 )
+
         `;
     }
 }

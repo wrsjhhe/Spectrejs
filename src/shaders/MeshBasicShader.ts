@@ -1,5 +1,4 @@
 import { Material } from "../materials/Material";
-import { CommonUtils } from "../utils/CommonUtils";
 import { Shader } from "./Shader";
 import * as basic from "./ShaderBasic"
 
@@ -20,13 +19,13 @@ export class MeshBasicShader extends Shader {
 
             struct VertexOutput {
                 @builtin(position) Position : vec4<f32>,
-                ${basic.varyValue(uvItem,indexObj)}
+                ${basic.itemVary_value(uvItem,indexObj)}
             }
 
             @vertex
             fn main(
             @location(0) position : vec3<f32>,
-            ${basic.location_uv_vert(uvItem)}
+            ${basic.location_vert(uvItem)}
             ) -> VertexOutput {
                 var output : VertexOutput;
                 ${basic.transform_vert()}
@@ -43,16 +42,20 @@ export class MeshBasicShader extends Shader {
         const uvItem = shaderOptions.locationValues.get("uv");
 
         this._fragmentShaderCode = `
-            ${basic.bind_buffer_frag(shaderOptions.bindValues.get("parameters"))}
-            ${basic.bind_buffer_frag(shaderOptions.bindValues.get("color"))}
-            ${basic.bind_sampler_frag(shaderOptions.bindValues.get("colorSampler"))}
-            ${basic.bind_sampler_frag(shaderOptions.bindValues.get("texture"))}
+            ${basic.bind_value_frag(shaderOptions.bindValues.get("parameters"))}
+            ${basic.bind_value_frag(shaderOptions.bindValues.get("color"))}
+            ${basic.bind_value_frag(shaderOptions.bindValues.get("colorSampler"))}
+            ${basic.bind_value_frag(shaderOptions.bindValues.get("texture"))}
             
+
+
             @fragment
             fn main(
-                ${basic.varyValue(uvItem,indexObj)}
+                ${basic.itemVary_value(uvItem,indexObj)}
             ) -> @location(0) vec4<f32> {
+                var baseColor:vec4<f32>;
                 ${basic.getColo_frag(shaderOptions.bindValues.get("texture"),shaderOptions.bindValues.get("color"))}
+                return baseColor;
             }
 
         `;

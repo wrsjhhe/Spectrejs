@@ -1,4 +1,5 @@
-import { ShaderItem } from "../core/Environment";
+import { BindType } from "../Constants";
+import { BindShaderItem, ShaderItem } from "../core/Environment";
 
 export interface IndexObj {
     index:number
@@ -13,28 +14,22 @@ export function location_transform_vert(){
             `;
 }
 
-export function location_normal_vert(item:ShaderItem){
+export function location_vert(item:ShaderItem){
     if(item)
-        return `@location(${item.index}) normal : vec3<f32>,`
+        return `@location(${item.index}) ${item.name} : ${item.itemType},`;
     return "";
 } 
 
-export function location_uv_vert(item:ShaderItem){
-    if(item)
-        return `@location(${item.index}) uv : vec2<f32>,`;
-    return "";
-} 
-
-export function varyValue(item:ShaderItem | string,index:IndexObj){
+export function itemVary_value(item:ShaderItem,index:IndexObj){
     if(item){
-        if(typeof item === "string"){
-            return `@location(${index.index++}) ${item} : vec2<f32>,`;
-        }else{
-            return `@location(${index.index++}) ${item.name} : vec2<f32>,`;
-        }
+        return `@location(${index.index++}) ${item.name} : ${item.itemType},`;
     }
-        
+    
     return "";
+}
+
+export function customVary_value(name:string,itemType:string,indexObj:IndexObj){
+    return `@location(${indexObj.index++}) ${name} : ${itemType},`;
 }
 
 export function transform_vert(){
@@ -50,31 +45,19 @@ export function uv_vert(item:ShaderItem){
     return "";
 }
 
-export function bind_buffer_frag (item:ShaderItem){
+export function bind_value_frag (item:BindShaderItem){
     if(item)
-        return `@group(1) @binding(${item.index}) var<uniform> ${item.name} : ${item.itemType};`;
-    return "";
-}
-
-export function bind_texture_frag (item:ShaderItem){
-    if(item)
-        return `@group(1) @binding(${item.index}) var ${item.name} : ${item.itemType};`;
-    return "";
-}
-
-export function bind_sampler_frag (item:ShaderItem){
-    if(item)
-        return `@group(1) @binding(${item.index}) var ${item.name} : ${item.itemType};`;
+        return `@group(1) @binding(${item.index}) var${item.bindType === BindType.buffer?"<uniform>":""} ${item.name} : ${item.itemType};`;
     return "";
 }
 
 export function getColo_frag(textureItem:ShaderItem,colorItem:ShaderItem){
     if(textureItem)
-        return `return textureSample(texture, colorSampler, uv);`;
+        return `baseColor = textureSample(texture, colorSampler, uv);`;
     else{
         if(colorItem.itemType === "vec3<f32>")
-            return `return vec4(color,1.0);`;
+            return `baseColor = vec4(color,1.0);`;
         else
-            return `return color;`;
+            return `baseColor = color;`;
     }
 }

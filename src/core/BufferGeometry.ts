@@ -1,5 +1,6 @@
 import { MathUtils } from "../math/MathUtils";
 import { BufferAttribute } from "./BufferAttribute";
+import { AttributeShaderItem } from "./Environment";
 import { GPUBufferWrapper } from "./GPUBufferWrapper";
 
 export class BufferGeometry {
@@ -46,11 +47,12 @@ export class BufferGeometry {
         return bufferLayouts;
     }
 
-    public setVertexBuffer(passEncoder: GPURenderPassEncoder,) {
-        let index = 0;
-        for (const attribute of this._attributes.values()) {
-            passEncoder.setVertexBuffer(index, attribute.buffer.buffer);
-            ++index;
+    public setVertexBuffer(passEncoder: GPURenderPassEncoder,locationValues: Map<string,AttributeShaderItem>) {
+
+        for(const value of locationValues.values()){
+            const attr = this._attributes.get(value.name);
+            if(attr)
+                passEncoder.setVertexBuffer(value.index, attr.buffer.buffer);
         }
     }
 

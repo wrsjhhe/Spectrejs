@@ -9,6 +9,7 @@ export { BufferGeometry } from "./core/BufferGeometry";
 
 export { BoxGeometry } from "./geometries/BoxGeometry";
 export { PlaneGeometry } from "./geometries/PlaneGeometry";
+export { SphereGeometry } from "./geometries/SphereGeometry";
 
 export { Material } from "./materials/Material";
 export { MeshPhongMaterial } from "./materials/MeshPhongMaterial";

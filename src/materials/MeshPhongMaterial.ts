@@ -1,5 +1,6 @@
 import { BindType } from "../Constants";
 import { Color } from "../math/Color";
+import { MeshPhongShader } from "../shaders/MeshPhongShader";
 import { Material } from "./Material";
 
 export class MeshPhongMaterial extends Material{
@@ -9,12 +10,16 @@ export class MeshPhongMaterial extends Material{
     
     constructor(){
         super();
+
+        this._shader = new MeshPhongShader(this);
     }
 
     protected _setDefaultShaderOptions(){
         super._setDefaultShaderOptions();
         
-        this._setValue(this._shaderOptions.locationValues,"normal",null);
+        this._setValue(this._shaderOptions.locationValues,"normal","vec3<f32>");
+
+        
 
         
     }

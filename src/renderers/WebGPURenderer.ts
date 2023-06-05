@@ -180,7 +180,7 @@ export class WebGPURenderer {
 
         const geometry = object.geometry;
         geometry.update();
-        geometry.setVertexBuffer(passEncoder);
+        geometry.setVertexBuffer(passEncoder,object.material.shaderOptions.locationValues);
         if (geometry.indices) {
             passEncoder.setIndexBuffer(geometry.indices.buffer.buffer, GPUIndexFormat.Uint32);
             passEncoder.drawIndexedIndirect(object.geometry.drawBuffer.buffer, 0);
