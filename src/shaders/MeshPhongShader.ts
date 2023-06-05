@@ -16,14 +16,20 @@ export class MeshPhongShader extends ShaderBase {
     }
     protected _createFragmentShader(): void {
         this._fragmentShaderCode = `
-            uniform vec3 diffuse;
-            uniform vec3 emissive;
-            uniform vec3 specular;
-            uniform float shininess;
-            uniform float opacity;
+            var diffuse = color.xyz;
+            var emissive = vec3<f32>(0.0,0.0,0.0);
+            var emissive = vec3<f32>(0.04,0.04,0.04);
+            var shininess = 30.;
+            var opacity = 1.;
+
+            // uniform vec3 diffuse;
+            // uniform vec3 emissive;
+            // uniform vec3 specular;
+            // uniform float shininess;
+            // uniform float opacity;
 
             BlinnPhongMaterial material;
-            material.diffuseColor = diffuseColor.rgb;
+            material.diffuseColor = diffuse;
             material.specularColor = specular;
             material.specularShininess = shininess;
             material.specularStrength = specularStrength;
@@ -34,29 +40,31 @@ export class MeshPhongShader extends ShaderBase {
             geometry.normal = normal;
             geometry.viewDir = ( isOrthographic ) ? vec3( 0, 0, 1 ) : normalize( vViewPosition );
 
+            void RE_Direct_BlinnPhong( const in IncidentLight directLight, const in GeometricContext geometry, const in BlinnPhongMaterial material, inout ReflectedLight reflectedLight ) {
+
+                float dotNL = saturate( dot( geometry.normal, directLight.direction ) );
+                vec3 irradiance = dotNL * directLight.color;
+            
+                reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );
+            
+                reflectedLight.directSpecular += irradiance * BRDF_BlinnPhong( directLight.direction, geometry.viewDir, geometry.normal, material.specularColor, material.specularShininess ) * material.specularStrength;
+            
+            }
+
+            const num_dir_lights = 0u;
             #if ( NUM_DIR_LIGHTS > 0 ) && defined( RE_Direct )
 
             DirectionalLight directionalLight;
-            #if defined( USE_SHADOWMAP ) && NUM_DIR_LIGHT_SHADOWS > 0
-            DirectionalLightShadow directionalLightShadow;
-            #endif
 
-            #pragma unroll_loop_start
             for ( int i = 0; i < NUM_DIR_LIGHTS; i ++ ) {
 
                 directionalLight = directionalLights[ i ];
 
                 getDirectionalLightInfo( directionalLight, geometry, directLight );
 
-                #if defined( USE_SHADOWMAP ) && ( UNROLLED_LOOP_INDEX < NUM_DIR_LIGHT_SHADOWS )
-                directionalLightShadow = directionalLightShadows[ i ];
-                directLight.color *= ( directLight.visible && receiveShadow ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;
-                #endif
-
-                RE_Direct( directLight, geometry, material, reflectedLight );
+                RE_Direct_BlinnPhong( directLight, geometry, material, reflectedLight );
 
             }
-            #pragma unroll_loop_end
 
         #endif
         `;

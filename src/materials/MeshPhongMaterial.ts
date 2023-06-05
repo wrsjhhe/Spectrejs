@@ -1,3 +1,4 @@
+import { BindType } from "../Constants";
 import { Color } from "../math/Color";
 import { Material } from "./Material";
 
@@ -9,4 +10,15 @@ export class MeshPhongMaterial extends Material{
     constructor(){
         super();
     }
+
+    protected _setDefaultShaderOptions(){
+        super._setDefaultShaderOptions();
+        
+        this._setValue(this._shaderOptions.locationValues,"normal");
+
+        
+    }
+
+
+
 }

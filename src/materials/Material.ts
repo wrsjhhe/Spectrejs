@@ -43,9 +43,6 @@ export class Material {
         this._pipeline = new Pipleline(this);
         this._shader = new MeshBasicShader(this);
 
-        const parametersUniform = new BufferUniform("parameters", this._parameters, GPUShaderStage.FRAGMENT);
-        this._uniforms.set("parameters", parametersUniform);
-
         this.color = new Color(1.0, 1.0, 1.0);
     }
 
@@ -129,20 +126,33 @@ export class Material {
         return entriesGroup;
     }
 
-    private _setDefaultShaderOptions(){
-        this._shaderOptions.locationValues.set("position",{
-            index:this._shaderOptions.locationValues.size
-        });
+    protected _setDefaultShaderOptions(){
+        this._setValue(this._shaderOptions.locationValues,"position");
 
-        this._shaderOptions.locationValues.set("normal",{
-            index:this._shaderOptions.locationValues.size
-        });
-
-        this._shaderOptions.bindValues.set("parameters",{
-            index:this._shaderOptions.bindValues.size,
-            bindType:BindType.buffer
-        });
+        this._uniforms.set("parameters", new BufferUniform("parameters", this._parameters, GPUShaderStage.FRAGMENT));
+        this._setValue(this._shaderOptions.bindValues,"parameters",BindType.buffer);
     }
+
+    protected _setValue(map:Map<string,ShaderItem>,name:string,type? : BindType,size? : number){
+        map.set(name,{
+            index:this._shaderOptions.bindValues.size,
+            bindType:type,
+            itemSize:size
+        });
+        let index = 0;
+        for(const value of map.values()){
+            value.index = index++;
+        }
+    }
+
+    protected _deleteValue(map:Map<string,ShaderItem>,name:string){
+        map.delete(name);
+        let index = 0;
+        for(const value of map.values()){
+            value.index = index++;
+        }
+    }
+
 
     public set color(v: Color) {
         this._color = v;
@@ -152,27 +162,19 @@ export class Material {
             colorBuffer.set(this._color.toArray());
             colorBuffer[3] = this._opacity;
         }
-            
 
-        let colorUniform = this._uniforms.get("color") as BufferUniform;
+        const colorUniform = this._uniforms.get("color") as BufferUniform;
         if(!colorUniform){
-            this._shaderOptions.bindValues.set("color",{
-                index:this._shaderOptions.bindValues.size,
-                bindType:BindType.buffer,
-                itemSize:colorBuffer.length
-            });
+            this._setValue(this._shaderOptions.bindValues,"color",BindType.buffer,colorBuffer.length);
 
-            colorUniform = new BufferUniform("color", colorBuffer, GPUShaderStage.FRAGMENT);
-            this._uniforms.set("color", colorUniform);
+            this._uniforms.set("color", new BufferUniform("color", colorBuffer, GPUShaderStage.FRAGMENT));
         }else if(colorBuffer.length * colorBuffer.BYTES_PER_ELEMENT !== colorUniform.buffer.size){
             this._shaderOptions.bindValues.get("color").itemSize = colorBuffer.length;
 
-            colorUniform = new BufferUniform("color", colorBuffer, GPUShaderStage.FRAGMENT);
-            this._uniforms.set("color", colorUniform);
+            this._uniforms.set("color", new BufferUniform("color", colorBuffer, GPUShaderStage.FRAGMENT));
         } 
         else{
-            const bufferUnform = this._uniforms.get("color") as BufferUniform;
-            bufferUnform.data = colorBuffer;
+            colorUniform.data = colorBuffer;
         }
     }
 
@@ -190,31 +192,20 @@ export class Material {
             this._uniforms.delete("sampler");
             this._uniforms.delete("texture");
 
-            this._shaderOptions.locationValues.delete("uv");
-            this._shaderOptions.bindValues.delete("sampler");
-            this._shaderOptions.bindValues.delete("texture");
+            this._deleteValue(this._shaderOptions.locationValues,"uv");
+            this._deleteValue(this._shaderOptions.bindValues,"sampler");
+            this._deleteValue(this._shaderOptions.bindValues,"texture");
 
             this.pipeline.needsCompile = true;
 
         }else if(v !== null && this._map === null){
-            this._shaderOptions.locationValues.set("uv",{
-                index:this._shaderOptions.locationValues.size
-            });
+            this._setValue(this._shaderOptions.locationValues,"uv");
 
-            this._shaderOptions.bindValues.set("sampler",{
-                index:this._shaderOptions.bindValues.size,
-                bindType:BindType.sampler
-            });
-            const samplerUniform = new SamplerUniform("sampler", GPUShaderStage.FRAGMENT);
-            this._uniforms.set("sampler", samplerUniform);
+            this._setValue(this._shaderOptions.bindValues,"sampler",BindType.sampler);
+            this._uniforms.set("sampler", new SamplerUniform("sampler", GPUShaderStage.FRAGMENT));
    
-            
-            this._shaderOptions.bindValues.set("texture",{
-                index:this._shaderOptions.bindValues.size,
-                bindType:BindType.texture
-            });
-            const textureUniform = new TextureUniform("texture", v, GPUShaderStage.FRAGMENT);
-            this._uniforms.set("texture", textureUniform);
+            this._setValue(this._shaderOptions.bindValues,"texture",BindType.texture);
+            this._uniforms.set("texture", new TextureUniform("texture", v, GPUShaderStage.FRAGMENT));
 
             this.pipeline.needsCompile = true;
 

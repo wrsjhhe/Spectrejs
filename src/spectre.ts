@@ -11,6 +11,7 @@ export { BoxGeometry } from "./geometries/BoxGeometry";
 export { PlaneGeometry } from "./geometries/PlaneGeometry";
 
 export { Material } from "./materials/Material";
+export { MeshPhongMaterial } from "./materials/MeshPhongMaterial";
 
 export { Mesh } from "./objects/Mesh";
 
