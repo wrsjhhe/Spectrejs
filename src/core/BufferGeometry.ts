@@ -1,3 +1,4 @@
+import { MathUtils } from "../math/MathUtils";
 import { BufferAttribute } from "./BufferAttribute";
 import { GPUBufferWrapper } from "./GPUBufferWrapper";
 
@@ -6,7 +7,11 @@ export class BufferGeometry {
     private _indices: BufferAttribute = null;
     private _drawBuffer: GPUBufferWrapper = null;
 
-    constructor() {}
+    public uuid: string;
+
+    constructor() {
+        this.uuid = MathUtils.generateUUID();
+    }
 
     public update() {
         this.updateDrawBuffer();
@@ -41,7 +46,7 @@ export class BufferGeometry {
         return bufferLayouts;
     }
 
-    public setVertexBuffer(passEncoder: GPURenderPassEncoder) {
+    public setVertexBuffer(passEncoder: GPURenderPassEncoder,) {
         let index = 0;
         for (const attribute of this._attributes.values()) {
             passEncoder.setVertexBuffer(index, attribute.buffer.buffer);

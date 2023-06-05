@@ -1,4 +1,4 @@
-import { GPUVertexFormat } from "../Constants";
+import { BindType, GPUVertexFormat } from "../Constants";
 
 export class Context{
     private static _activeDevice:GPUDevice;
@@ -58,3 +58,16 @@ export const VertexBufferLayoutInfo = {
 		format:GPUVertexFormat.Float32x2
 	}
 };
+
+export interface ShaderItem {
+    index: number;
+    itemSize?:number
+}
+
+export interface AttributeShaderItem extends ShaderItem {
+    size:number
+}
+
+export interface BindShaderItem extends ShaderItem {
+    bindType?:BindType,
+}

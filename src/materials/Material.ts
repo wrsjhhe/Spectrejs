@@ -8,12 +8,8 @@ import { TextureUniform } from "../core/binds/BindTexture";
 import { MathUtils } from "../math/MathUtils";
 import { Pipleline } from "../core/Pipeline";
 import { MeshBasicShader } from "../shaders/MeshBasicShader";
+import { AttributeShaderItem, BindShaderItem, ShaderItem } from "../core/Environment";
 
-export interface ShaderItem {
-    index: number;
-    bindType?:BindType,
-    itemSize?:number
-}
 export class Material {
 
     private _uniforms: Map<string, BindValue> = new Map();
@@ -27,8 +23,8 @@ export class Material {
     protected _shader: MeshBasicShader;
 
     protected _shaderOptions = {
-        locationValues: new Map<string,ShaderItem>(),
-        bindValues: new Map<string,ShaderItem>()
+        locationValues: new Map<string,AttributeShaderItem>(),
+        bindValues: new Map<string,BindShaderItem>()
     };
 
     public uuid: string;
@@ -133,7 +129,7 @@ export class Material {
         this._setValue(this._shaderOptions.bindValues,"parameters",BindType.buffer);
     }
 
-    protected _setValue(map:Map<string,ShaderItem>,name:string,type? : BindType,size? : number){
+    protected _setValue(map:Map<string,BindShaderItem>,name:string,type? : BindType,size? : number){
         map.set(name,{
             index:this._shaderOptions.bindValues.size,
             bindType:type,

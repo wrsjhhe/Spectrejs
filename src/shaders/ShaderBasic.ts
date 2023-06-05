@@ -1,4 +1,4 @@
-import { ShaderItem } from "../materials/Material";
+import { ShaderItem } from "../core/Environment";
 
 export function location_transform_vert(){
     return `

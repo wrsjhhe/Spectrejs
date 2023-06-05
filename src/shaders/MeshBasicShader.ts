@@ -1,9 +1,9 @@
 import { Material } from "../materials/Material";
 import { CommonUtils } from "../utils/CommonUtils";
-import { ShaderBase } from "./ShaderBase";
+import { Shader } from "./Shader";
 import * as basic from "./ShaderBasic"
 
-export class MeshBasicShader extends ShaderBase {
+export class MeshBasicShader extends Shader {
 
     constructor(material: Material) {
         super(material);
@@ -17,6 +17,7 @@ export class MeshBasicShader extends ShaderBase {
             struct VertexOutput {
                 @builtin(position) Position : vec4<f32>,
                 ${basic.out_uv_vert(shaderOptions.locationValues.get("uv"))}
+                ${basic.out_uv_vert(shaderOptions.locationValues.get("normal"))}
             }
 
             @vertex
@@ -27,7 +28,7 @@ export class MeshBasicShader extends ShaderBase {
             ) -> VertexOutput {
                 var output : VertexOutput;
                 ${basic.transform_vert()}
-                ${basic.uv_vert(shaderOptions.locationValues.get("uv"))}
+                output.normal = normal;
                 return output;
             }
         

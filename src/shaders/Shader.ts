@@ -1,6 +1,6 @@
 import { Material } from "../materials/Material";
 
-export abstract class ShaderBase{
+export abstract class Shader{
     protected _vertexShaderCode: string;
     protected _fragmentShaderCode: string;
     protected _material: Material;

@@ -57,13 +57,13 @@
             // }, 2000);
 
             let texutre = null;
-            setInterval(() => {
-                if(material.map){
-                    material.map = null;
-                }else{
-                    material.map = texutre;
-                }
-            }, 2000);
+            // setInterval(() => {
+            //     if(material.map){
+            //         material.map = null;
+            //     }else{
+            //         material.map = texutre;
+            //     }
+            // }, 2000);
 
            
             const loader = new Spectre.TextureLoader();
@@ -73,7 +73,8 @@
 
                 // onLoad callback
                 function (texture) {
-                    texutre = texture;
+                    //texutre = texture;
+                    material.map = texutre;
                 },
 
                 // onProgress callback currently not supported
