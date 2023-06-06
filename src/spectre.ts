@@ -1,3 +1,5 @@
+
+
 export * as GPUConstances from "./Constants";
 
 export * as Environment from "./core/Defines";
@@ -14,8 +16,8 @@ export { SphereGeometry } from "./geometries/SphereGeometry";
 export { MeshBasicMaterial } from "./materials/MeshBasicMaterial";
 export { MeshPhongMaterial } from "./materials/MeshPhongMaterial";
 
+export { Object3D } from "./core/Object3D";
 export { Mesh } from "./objects/Mesh";
-
 export { Scene } from "./core/Scene";
 
 export { Color } from "./math/Color";

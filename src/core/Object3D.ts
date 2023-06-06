@@ -5,6 +5,10 @@ import { Euler } from '../math/Euler';
 import * as MathUtils from '../math/MathUtils';
 import { Color } from '../math/Color';
 import { Camera } from '../cameras/Camera';
+import { Material } from '../materials/Material';
+import { CommonUtils } from '../utils/CommonUtils';
+
+//import { Scene } from './Scene';
 
 let _object3DId = 0;
 
@@ -70,6 +74,9 @@ export class Object3D {
 	public instanceMatrix : Matrix4;
 	public instanceColor : Color ;
 
+
+	protected _renderableObjects = new Map<Material,Array<any>>();
+    protected _lights = new Map<string,any>();
 
 	constructor() {
 
@@ -265,18 +272,6 @@ export class Object3D {
 
 	add( object:Object3D ) {
 
-		if ( arguments.length > 1 ) {
-
-			for ( let i = 0; i < arguments.length; i ++ ) {
-
-				this.add( arguments[ i ] );
-
-			}
-
-			return this;
-
-		}
-
 		if ( object === this ) {
 
 			console.error( 'THREE.Object3D.add: object can\'t be added as a child of itself.', object );
@@ -284,40 +279,24 @@ export class Object3D {
 
 		}
 
-		if ( object) {
+		if ( object.parent !== null ) {
 
-			if ( object.parent !== null ) {
-
-				object.parent.remove( object );
-
-			}
-
-			object._parent = this;
-			this.children.push( object );
-
-		} else {
-
-			console.error( 'THREE.Object3D.add: object not an instance of THREE.Object3D.', object );
+			object.parent.remove( object );
 
 		}
+
+		object._parent = this;
+		this.children.push( object );
+
+		object.traverseAncestors((parent)=>{
+			parent._handleAdded(object);
+		});
 
 		return this;
 
 	}
 
 	remove( object:Object3D ) {
-
-		if ( arguments.length > 1 ) {
-
-			for ( let i = 0; i < arguments.length; i ++ ) {
-
-				this.remove( arguments[ i ] );
-
-			}
-
-			return this;
-
-		}
 
 		const index = this.children.indexOf( object );
 
@@ -328,9 +307,70 @@ export class Object3D {
 
 		}
 
+		object.traverseAncestors((parent)=>{
+
+			parent._handleRemoved(object);
+			
+		});
+
 		return this;
 
 	}
+
+
+	
+    private _handleAdded(object: Object3D){
+        object.traverse((child)=>{
+            if((child as any).renderable){
+                this._addRenderableObject(child);
+			}else if(child.type === "Light"){
+                this._addLight(child);
+            }
+        })
+    }
+
+
+    private _handleRemoved(object: Object3D){
+        object.traverse((child)=>{
+			if((child as any).renderable){
+                this._removeRenderableObject(child);
+            }else if(child.type === "Light"){
+                this._removeLight(child);
+            }
+        })
+    }
+
+    private _addRenderableObject(renderableObj: any){
+        const material = renderableObj.material;
+        const objs = this._renderableObjects.get(material);
+        if(objs){
+            objs.push(renderableObj);
+        }else{
+            this._renderableObjects.set(material,[]);
+            this._renderableObjects.get(material).push(renderableObj);
+        }
+    }
+
+    private _removeRenderableObject(renderableObj: any){
+        const material = renderableObj.material;
+        const arr = this._renderableObjects.get(material);
+        if(arr){
+            CommonUtils.removeArrayItemByValue(arr,renderableObj);
+        }
+    }
+
+    private _addLight(light:any){
+        this._lights.set(light.uuid,light);
+    }
+
+    private _removeLight(light:any){
+        this._lights.delete(light.uuid);
+    }
+
+    public get renderableObj(){
+        return this._renderableObjects;
+    }
+
 
 	removeFromParent() {
 
@@ -431,7 +471,7 @@ export class Object3D {
 
 	raycast( /* raycaster, intersects */ ) {}
 
-	traverse( callback:Function ) {
+	traverse( callback:(object:Object3D)=>void ) {
 
 		callback( this );
 
@@ -445,7 +485,7 @@ export class Object3D {
 
 	}
 
-	traverseVisible( callback:Function ) {
+	traverseVisible( callback:(object:Object3D)=>void ) {
 
 		if ( this.visible === false ) return;
 
@@ -461,7 +501,7 @@ export class Object3D {
 
 	}
 
-	traverseAncestors( callback:Function ) {
+	traverseAncestors( callback:(object:Object3D)=>void ) {
 
 		const parent = this.parent;
 

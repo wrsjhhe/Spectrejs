@@ -14,6 +14,10 @@ export class RenderableObject extends Object3D {
         return object instanceof RenderableObject;
     }
 
+    public get renderable(){
+        return true;
+    }
+
     protected _geometry: BufferGeometry;
     protected _material: Material;
 
