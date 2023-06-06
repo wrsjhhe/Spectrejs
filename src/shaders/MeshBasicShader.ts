@@ -12,7 +12,7 @@ export class MeshBasicShader extends Shader {
         const shaderOptions = this._material.shaderOptions;
         const indexObj = {index:1} as basic.IndexObj;
 
-        const uvItem = shaderOptions.locationValues.get("uv");
+        const uvItem = shaderOptions.attributeValues.get("uv");
 
         this._vertexShaderCode = `
             ${basic.location_transform_vert()}
@@ -39,7 +39,7 @@ export class MeshBasicShader extends Shader {
     protected override  _createFragmentShader(){
         const shaderOptions = this._material.shaderOptions;
         const indexObj = {index:1} as basic.IndexObj;
-        const uvItem = shaderOptions.locationValues.get("uv");
+        const uvItem = shaderOptions.attributeValues.get("uv");
 
         this._fragmentShaderCode = `
             ${basic.bind_value_frag(shaderOptions.bindValues.get("parameters"))}

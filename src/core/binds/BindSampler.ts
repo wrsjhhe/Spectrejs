@@ -1,12 +1,12 @@
-import { BindType } from "../../Constants";
-import { Context } from "../Environment";
+import { BindType } from "../Defines";
+import { Context } from "../ResourceManagers";
 import { BindValue } from "./BindValue";
 
-export class SamplerUniform extends BindValue{
+export class BindSampler extends BindValue{
     private _sampler : GPUSampler;
 
-    constructor(name:string,flags:GPUShaderStageFlags){
-        super(name,flags);
+    constructor(name:string){
+        super(name);
 
         this._sampler = Context.activeDevice.createSampler({
             magFilter: 'linear',

@@ -1,12 +1,5 @@
 export type NumberArrayType = Float32Array | Int32Array | Int8Array | Uint32Array | Uint16Array | Uint8Array;
 
-export enum BindType{
-	buffer = 1,
-	sampler = 2,
-	texture = 3
-}
-
-
 export const GPUPrimitiveTopology = {
 	PointList: 'point-list' as GPUPrimitiveTopology,
 	LineList: 'line-list' as GPUPrimitiveTopology,

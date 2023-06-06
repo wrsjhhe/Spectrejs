@@ -1,3 +1,5 @@
+import { GlobalGroupLayoutInfo, ObjectGroupLayoutInfo } from "./Defines";
+
 export class Cache {
 
 	public static enabled = false;
@@ -36,6 +38,18 @@ export class Cache {
 
 	}
 
+}
+
+export class Context{
+    private static _activeDevice:GPUDevice;
+    public static get activeDevice(): GPUDevice{
+        return Context._activeDevice;
+    }
+
+    public static set activeDevice(v:GPUDevice) {
+
+        Context._activeDevice = v;
+    }
 }
 
 export class DelayDestroyer{

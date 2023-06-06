@@ -2,9 +2,9 @@ import { Camera } from "../cameras/Camera";
 import { GPUBlendFactor, GPUCompareFunction, GPUCullMode, GPUPrimitiveTopology, GPUTextureFormat } from "../Constants";
 import { Material } from "../materials/Material";
 import { WebGPURenderer } from "../renderers/WebGPURenderer";
-import { BindGroupLayoutIndexInfo, Context, GlobalGroupLayoutInfo, ObjectGroupLayoutInfo, VertexBufferLayoutInfo } from "./Environment";
+import { BindGroupLayoutIndexInfo, GlobalGroupLayoutInfo, ObjectGroupLayoutInfo } from "./Defines";
 import { RenderableObject } from "./RenderableObject";
-
+import { Cache, Context } from "./ResourceManagers"
 
 export class Pipleline {
     private _material: Material;
@@ -21,6 +21,8 @@ export class Pipleline {
 
     constructor(material: Material) {
         this._material = material;
+
+        Cache.add("pipelineObjectBindGroup",this._objectBindGroups);
     }
 
     public compilePipeline(renderer: WebGPURenderer) {
@@ -97,17 +99,15 @@ export class Pipleline {
     private _createVertexBufferLayouts() {
         this._vertexBufferLayouts.length = 0;
 
-        for (const [key,value] of this._material.shaderOptions.locationValues) {
+        for (const value of this._material.shaderOptions.attributeValues.values()) {
 
             this._vertexBufferLayouts.push({
-                arrayStride:
-                    (VertexBufferLayoutInfo as any)[key].byteLength *
-                    (VertexBufferLayoutInfo as any)[key].itemSize,
+                arrayStride:value.itemSize,
                 attributes: [
                     {
                         shaderLocation: value.index,
                         offset: 0,
-                        format: (VertexBufferLayoutInfo as any)[key].format,
+                        format: value.format,
                     },
                 ],
             });
@@ -119,8 +119,8 @@ export class Pipleline {
         const entries = new Array<GPUBindGroupLayoutEntry>();
         for (const key in GlobalGroupLayoutInfo) {
             entries.push({
-                binding: (GlobalGroupLayoutInfo as any)[key].binding,
-                visibility: (GlobalGroupLayoutInfo as any)[key].flags,
+                binding: (GlobalGroupLayoutInfo as any)[key].index,
+                visibility: (GlobalGroupLayoutInfo as any)[key].visibility,
                 buffer: {
                     type: "uniform",
                 },
@@ -147,8 +147,8 @@ export class Pipleline {
         const entries = new Array<GPUBindGroupLayoutEntry>();
         for (const key in ObjectGroupLayoutInfo) {
             entries.push({
-                binding: (ObjectGroupLayoutInfo as any)[key].binding,
-                visibility: (ObjectGroupLayoutInfo as any)[key].flags,
+                binding: (ObjectGroupLayoutInfo as any)[key].index,
+                visibility: (ObjectGroupLayoutInfo as any)[key].visibility,
                 buffer: {
                     type: "uniform",
                 },
@@ -176,7 +176,7 @@ export class Pipleline {
         const group = new Array<GPUBindGroupEntry>();
         for (const key in GlobalGroupLayoutInfo) {
             group.push({
-                binding: (GlobalGroupLayoutInfo as any)[key].binding,
+                binding: (GlobalGroupLayoutInfo as any)[key].index,
                 resource: {
                     buffer: camera.uniforms.get(key).buffer,
                 },
@@ -208,7 +208,7 @@ export class Pipleline {
         const group = new Array<GPUBindGroupEntry>();
         for (const key in ObjectGroupLayoutInfo) {
             group.push({
-                binding: (ObjectGroupLayoutInfo as any)[key].binding,
+                binding: (ObjectGroupLayoutInfo as any)[key].index,
                 resource: {
                     buffer: object.uniforms.get(key).buffer,
                 },

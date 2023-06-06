@@ -1,4 +1,4 @@
-import { Context } from "./Environment";
+import { Context } from "./ResourceManagers";
 
 export class GPUBufferWrapper{
 

@@ -1,8 +1,8 @@
 import { BufferGeometry } from "./BufferGeometry";
 import { Material } from "../materials/Material";
 import { Object3D } from "./Object3D";
-import { BufferUniform } from "./binds/BindBuffer";
-import { IdentifyMatrix4 } from "../utils/ConstantsValues";
+import { BindBuffer } from "./binds/BindBuffer";
+import { IdentifyMatrix4 } from "../utils/TMPValues";
 
 const u_modelTranform = "matrixWorld";
 export class RenderableObject extends Object3D {
@@ -18,7 +18,7 @@ export class RenderableObject extends Object3D {
     protected _material: Material;
 
     private _pipeline: GPURenderPipeline;
-    private _uniforms: Map<string, BufferUniform> = new Map();
+    private _uniforms: Map<string, BindBuffer> = new Map();
 
     constructor(geometry: BufferGeometry, material: Material) {
         super();
@@ -47,7 +47,7 @@ export class RenderableObject extends Object3D {
 
     private _initInitialUniform() {
 
-        const tranformUniform = new BufferUniform(u_modelTranform, IdentifyMatrix4.toArray(), GPUShaderStage.VERTEX);
+        const tranformUniform = new BindBuffer(u_modelTranform, IdentifyMatrix4.toArray());
         this._uniforms.set(u_modelTranform, tranformUniform);
     }
 

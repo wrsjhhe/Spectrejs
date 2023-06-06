@@ -1,17 +1,16 @@
-import { BindType } from "../../Constants";
 import { Texture } from "../../textures/Texture";
-import { Context } from "../Environment";
-import { DelayDestroyer } from "../ResourceManagers";
+import { BindType } from "../Defines";
+import { Context, DelayDestroyer } from "../ResourceManagers";
 import { BindValue } from "./BindValue";
 
-export class TextureUniform extends BindValue {
+export class BindTexture extends BindValue {
     private _texture: Texture;
     private _textureBuffer: GPUTexture;
 
     public changed = false;
 
-    constructor(name: string, texture: Texture, flags: GPUShaderStageFlags) {
-        super(name, flags);
+    constructor(name: string, texture: Texture) {
+        super(name);
 
         this._texture = texture;
         createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {

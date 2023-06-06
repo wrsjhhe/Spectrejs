@@ -1,5 +1,5 @@
 import { Object3D } from "../core/Object3D";
-import { Color } from "../spectre";
+import { Color } from "../math/Color";
 
 export class Light extends Object3D {
     
@@ -11,7 +11,6 @@ export class Light extends Object3D {
 		return object instanceof Light;
 	}
 
-
     private _color:Color;
     private _intensity:number;
 
@@ -20,5 +19,13 @@ export class Light extends Object3D {
 
         this._color = color;
         this._intensity = intensity;
+    }
+
+    public update(){
+
+    }
+
+    public get color(){
+        return this._color;
     }
 }

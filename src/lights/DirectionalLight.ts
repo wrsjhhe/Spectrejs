@@ -1,6 +1,9 @@
 import { Light } from './Light';
-import { Object3D } from '../core/Object3D.js';
-import { Color } from '../spectre';
+import { BindBuffer } from '../core/binds/BindBuffer';
+import *  as TMPValues from '../utils/TMPValues';
+import { Color } from '../math/Color';
+import { Object3D } from '../core/Object3D';
+
 
 class DirectionalLight extends Light {
 
@@ -14,6 +17,8 @@ class DirectionalLight extends Light {
 
 	private _target = new Object3D();
 
+	private _uniform: BindBuffer;
+
 	constructor( color:Color, intensity = 1 ) {
 
 		super( color, intensity );
@@ -23,6 +28,26 @@ class DirectionalLight extends Light {
 
 		//this.shadow = new DirectionalLightShadow();
 
+		const arrayBuffer = new Float32Array(6);
+		arrayBuffer.set(this.color.toArray());
+
+		const normal = TMPValues.Vector0.subVectors(this._target.position,this.position);
+		arrayBuffer.set(normal.toArray(),3);
+
+		this._uniform = new BindBuffer("color",arrayBuffer);
+		
+	}
+
+	public get uniform(){
+		return this._uniform;
+	}
+
+	public set target(v:Object3D){
+		this._target = v;
+	}
+
+	public get target(){
+		return this._target;
 	}
 
 	dispose() {

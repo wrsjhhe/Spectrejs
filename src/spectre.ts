@@ -1,6 +1,6 @@
 export * as GPUConstances from "./Constants";
 
-export * as Environment from "./core/Environment";
+export * as Environment from "./core/Defines";
 
 export { WebGPURenderer } from "./renderers/WebGPURenderer";
 
@@ -11,7 +11,7 @@ export { BoxGeometry } from "./geometries/BoxGeometry";
 export { PlaneGeometry } from "./geometries/PlaneGeometry";
 export { SphereGeometry } from "./geometries/SphereGeometry";
 
-export { Material } from "./materials/Material";
+export { MeshBasicMaterial } from "./materials/MeshBasicMaterial";
 export { MeshPhongMaterial } from "./materials/MeshPhongMaterial";
 
 export { Mesh } from "./objects/Mesh";
@@ -35,4 +35,4 @@ export { FileLoader } from "./loaders/FileLoader";
 export { ImageLoader } from "./loaders/ImageLoader";
 export { TextureLoader } from "./loaders/TextureLoader";
 
-export * as ConstantsValues from "./utils/ConstantsValues";
+export * as ConstantsValues from "./utils/TMPValues";

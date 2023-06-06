@@ -1,14 +1,15 @@
-import { BindType, NumberArrayType } from "../../Constants";
+import { NumberArrayType } from "../../Constants";
+import { BindType } from "../Defines";
 import { GPUBufferWrapper } from "../GPUBufferWrapper";
 import { DelayDestroyer } from "../ResourceManagers";
 import { BindValue } from "./BindValue";
 
-export class BufferUniform extends BindValue{
+export class BindBuffer extends BindValue{
     private _buffer : GPUBufferWrapper;
     private _data : NumberArrayType;
 
-    constructor(name:string,data:NumberArrayType,flags:GPUShaderStageFlags){
-        super(name,flags);
+    constructor(name:string,data:NumberArrayType){
+        super(name);
         this._buffer = new GPUBufferWrapper(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,data);
         this._data = data;
     }

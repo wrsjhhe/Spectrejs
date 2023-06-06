@@ -1,6 +1,6 @@
 import { MathUtils } from "../math/MathUtils";
 import { BufferAttribute } from "./BufferAttribute";
-import { AttributeShaderItem } from "./Environment";
+import { AttributeShaderItem } from "./Defines";
 import { GPUBufferWrapper } from "./GPUBufferWrapper";
 
 export class BufferGeometry {

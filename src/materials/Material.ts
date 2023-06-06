@@ -1,19 +1,17 @@
 import { BindValue } from "../core/binds/BindValue";
 import { Color } from "../math/Color";
 import { Texture } from "../textures/Texture";
-import { BindType, GPUBufferBindingType, GPUSamplerBindingType } from "../Constants";
-import { BufferUniform } from "../core/binds/BindBuffer";
-import { SamplerUniform } from "../core/binds/BindSampler";
-import { TextureUniform } from "../core/binds/BindTexture";
+import { GPUBufferBindingType, GPUSamplerBindingType, GPUVertexFormat } from "../Constants";
+import { BindBuffer } from "../core/binds/BindBuffer";
+import { BindSampler } from "../core/binds/BindSampler";
+import { BindTexture } from "../core/binds/BindTexture";
 import { MathUtils } from "../math/MathUtils";
 import { Pipleline } from "../core/Pipeline";
-import { MeshBasicShader } from "../shaders/MeshBasicShader";
-import { AttributeShaderItem, BindShaderItem, ShaderItem } from "../core/Environment";
+import { AttributeShaderItem, BindShaderItem, BindType, ShaderItem } from "../core/Defines";
 import { Shader } from "../shaders/Shader";
 
-export class Material {
+export abstract class Material {
 
-    private _uniforms: Map<string, BindValue> = new Map();
     private _color: Color;
     private _map: Texture = null;
     private _parameters = new Uint32Array(4);
@@ -21,10 +19,10 @@ export class Material {
     private _transparent = false;
     private _opacity = 1;
 
+    protected _uniforms: Map<string, BindValue> = new Map();
     protected _shader: Shader;
-
     protected _shaderOptions = {
-        locationValues: new Map<string,AttributeShaderItem>(),
+        attributeValues: new Map<string,AttributeShaderItem>(),
         bindValues: new Map<string,BindShaderItem>()
     };
 
@@ -32,13 +30,15 @@ export class Material {
     public needsCreateBindGroup = true;
     public needsCompile = true;
 
-
-
     constructor() {
         this.uuid = MathUtils.generateUUID();
-        this._setDefaultShaderOptions();
+
         this._pipeline = new Pipleline(this);
-        this._shader = new MeshBasicShader(this);
+
+        this._setAttributeValue("position","vec3<f32>",GPUVertexFormat.Float32x3,4*3);
+
+        this._uniforms.set("parameters", new BindBuffer("parameters", this._parameters));
+        this._setBindValue("parameters","vec4<u32>",BindType.buffer, GPUShaderStage.FRAGMENT);
 
         this.color = new Color(1.0, 1.0, 1.0);
     }
@@ -47,7 +47,7 @@ export class Material {
         for (const uniform of this.uniforms.values()) {
             uniform.update();
             if (uniform.type === BindType.texture) {
-                const textureUniform = uniform as TextureUniform;
+                const textureUniform = uniform as BindTexture;
                 if (textureUniform.changed && !this.needsCreateBindGroup) {
                     this.needsCreateBindGroup = true;
                     textureUniform.changed = false;
@@ -61,29 +61,27 @@ export class Material {
         const entriesLayout: Array<GPUBindGroupLayoutEntry> = [];
         for(const [name,bindOption] of this._shaderOptions.bindValues){
             if(bindOption.bindType === BindType.buffer){
-                const bufferUnform = this.uniforms.get(name) as BufferUniform;
+                const bufferUnform = this.uniforms.get(name) as BindBuffer;
                 entriesLayout.push({
                     binding: bindOption.index,
-                    visibility: bufferUnform.flags,
+                    visibility: bindOption.visibility,
                     buffer: {
                         type: GPUBufferBindingType.Uniform,
                         minBindingSize: bufferUnform.buffer.size,
                     },
                 });
             }else if(bindOption.bindType === BindType.sampler){
-                const samplerUnform = this.uniforms.get(name) as SamplerUniform;
                 entriesLayout.push({
                     binding: bindOption.index,
-                    visibility: samplerUnform.flags,
+                    visibility: bindOption.visibility,
                     sampler: {
                         type: GPUSamplerBindingType.Filtering,
                     },
                 });
             }else if(bindOption.bindType === BindType.texture){
-                const textureUnform = this.uniforms.get(name) as TextureUniform;
                 entriesLayout.push({
                     binding: bindOption.index,
-                    visibility: textureUnform.flags,
+                    visibility: bindOption.visibility,
                     texture: {},
                 });
             }
@@ -97,7 +95,7 @@ export class Material {
 
         for(const [name,bindOption] of this._shaderOptions.bindValues){
             if(bindOption.bindType === BindType.buffer){
-                const bufferUnform = this.uniforms.get(name) as BufferUniform;
+                const bufferUnform = this.uniforms.get(name) as BindBuffer;
                 entriesGroup.push({
                     binding: bindOption.index,
                     resource: {
@@ -105,13 +103,13 @@ export class Material {
                     },
                 });
             }else if(bindOption.bindType === BindType.sampler){
-                const samplerUnform = this.uniforms.get(name) as SamplerUniform;
+                const samplerUnform = this.uniforms.get(name) as BindSampler;
                 entriesGroup.push({
                     binding: bindOption.index,
                     resource: samplerUnform.sampler,
                 });
             }else if(bindOption.bindType === BindType.texture){
-                const textureUnform = this.uniforms.get(name) as TextureUniform;
+                const textureUnform = this.uniforms.get(name) as BindTexture;
                 entriesGroup.push({
                     binding: bindOption.index,
                     resource: textureUnform.textureBuffer.createView(),
@@ -123,19 +121,29 @@ export class Material {
         return entriesGroup;
     }
 
-    protected _setDefaultShaderOptions(){
-        this._setValue(this._shaderOptions.locationValues,"position","vec3<f32>",null);
-
-        this._uniforms.set("parameters", new BufferUniform("parameters", this._parameters, GPUShaderStage.FRAGMENT));
-        this._setValue(this._shaderOptions.bindValues,"parameters","vec4<u32>",BindType.buffer);
+    protected _setAttributeValue(name:string,itemType : string,format:GPUVertexFormat,itemSize:number){
+        const map = this.shaderOptions.attributeValues;
+        map.set(name,{
+            name:name,
+            index:this._shaderOptions.bindValues.size,
+            format:format,
+            shaderItemType:itemType,
+            itemSize:itemSize
+        });
+        let index = 0;
+        for(const value of map.values()){
+            value.index = index++;
+        }
     }
 
-    protected _setValue(map:Map<string,BindShaderItem>,name:string,itemType : string,bindType? : BindType){
+    protected _setBindValue(name:string,itemType : string,bindType : BindType,  visibility:GPUShaderStageFlags){
+        const map = this.shaderOptions.bindValues;
         map.set(name,{
             name:name,
             index:this._shaderOptions.bindValues.size,
             bindType:bindType,
-            itemType:itemType
+            shaderItemType:itemType,
+            visibility:visibility
         });
         let index = 0;
         for(const value of map.values()){
@@ -151,6 +159,9 @@ export class Material {
         }
     }
 
+    public get applyLight(){
+        return false;
+    }
 
     public set color(v: Color) {
         this._color = v;
@@ -167,15 +178,15 @@ export class Material {
             itemType = "vec3<f32>";
         }
 
-        const colorUniform = this._uniforms.get("color") as BufferUniform;
+        const colorUniform = this._uniforms.get("color") as BindBuffer;
         if(!colorUniform){
-            this._setValue(this._shaderOptions.bindValues,"color",itemType,BindType.buffer);
+            this._setBindValue("color",itemType,BindType.buffer, GPUShaderStage.FRAGMENT);
 
-            this._uniforms.set("color", new BufferUniform("color", colorBuffer, GPUShaderStage.FRAGMENT));
+            this._uniforms.set("color", new BindBuffer("color", colorBuffer));
         }else if(colorBuffer.length * colorBuffer.BYTES_PER_ELEMENT !== colorUniform.buffer.size){
-            this._shaderOptions.bindValues.get("color").itemType = itemType;
+            this._shaderOptions.bindValues.get("color").shaderItemType = itemType;
 
-            this._uniforms.set("color", new BufferUniform("color", colorBuffer, GPUShaderStage.FRAGMENT));
+            this._uniforms.set("color", new BindBuffer("color", colorBuffer));
         } 
         else{
             colorUniform.data = colorBuffer;
@@ -196,24 +207,24 @@ export class Material {
             this._uniforms.delete("colorSampler");
             this._uniforms.delete("texture");
 
-            this._deleteValue(this._shaderOptions.locationValues,"uv");
+            this._deleteValue(this._shaderOptions.attributeValues,"uv");
             this._deleteValue(this._shaderOptions.bindValues,"colorSampler");
             this._deleteValue(this._shaderOptions.bindValues,"texture");
 
             this.pipeline.needsCompile = true;
 
         }else if(v !== null && this._map === null){
-            this._setValue(this._shaderOptions.locationValues,"uv","vec2<f32>",null);
+            this._setAttributeValue("uv","vec2<f32>",GPUVertexFormat.Float32x2,4*2);
 
-            this._setValue(this._shaderOptions.bindValues,"colorSampler","sampler",BindType.sampler);
-            this._uniforms.set("colorSampler", new SamplerUniform("colorSampler", GPUShaderStage.FRAGMENT));
+            this._setBindValue("colorSampler","sampler",BindType.sampler, GPUShaderStage.FRAGMENT);
+            this._uniforms.set("colorSampler", new BindSampler("colorSampler"));
    
-            this._setValue(this._shaderOptions.bindValues,"texture","texture_2d<f32>",BindType.texture);
-            this._uniforms.set("texture", new TextureUniform("texture", v, GPUShaderStage.FRAGMENT));
+            this._setBindValue("texture","texture_2d<f32>",BindType.texture, GPUShaderStage.FRAGMENT);
+            this._uniforms.set("texture", new BindTexture("texture", v));
 
             this.pipeline.needsCompile = true;
 
-            (this._uniforms.get("texture") as TextureUniform).texture = v;
+            (this._uniforms.get("texture") as BindTexture).texture = v;
         }
 
         this.needsCreateBindGroup = true;

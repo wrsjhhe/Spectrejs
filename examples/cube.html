@@ -47,7 +47,7 @@
             camera.lookAt(new Spectre.Vector3(0, 0, 0));
 
             const controls = new Spectre.OrbitControls(camera, renderer.domElement);
-            const material = new Spectre.Material();
+            const material = new Spectre.MeshBasicMaterial();
             material.color = new Spectre.Color(1, 0, 0);
             material.transparent = true;
             material.opacity = 0.5;
