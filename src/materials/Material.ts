@@ -9,9 +9,9 @@ import { MathUtils } from "../math/MathUtils";
 import { Pipleline } from "../core/Pipeline";
 import { AttributeShaderItem, BindShaderItem, BindType, ShaderItem } from "../core/Defines";
 import { Shader } from "../shaders/Shader";
+import { Light } from "../lights/Light";
 
 export abstract class Material {
-
     private _color: Color;
     private _map: Texture = null;
     private _parameters = new Uint32Array(4);
@@ -22,8 +22,8 @@ export abstract class Material {
     protected _uniforms: Map<string, BindValue> = new Map();
     protected _shader: Shader;
     protected _shaderOptions = {
-        attributeValues: new Map<string,AttributeShaderItem>(),
-        bindValues: new Map<string,BindShaderItem>()
+        attributeValues: new Map<string, AttributeShaderItem>(),
+        bindValues: new Map<string, BindShaderItem>(),
     };
 
     public uuid: string;
@@ -35,10 +35,10 @@ export abstract class Material {
 
         this._pipeline = new Pipleline(this);
 
-        this._setAttributeValue("position","vec3<f32>",GPUVertexFormat.Float32x3,4*3);
+        this._setAttributeValue("position", "vec3<f32>", GPUVertexFormat.Float32x3, 4 * 3);
 
         this._uniforms.set("parameters", new BindBuffer("parameters", this._parameters));
-        this._setBindValue("parameters","vec4<u32>",BindType.buffer, GPUShaderStage.FRAGMENT);
+        this._setBindValue("parameters", "vec4<u32>", BindType.buffer, GPUShaderStage.FRAGMENT);
 
         this.color = new Color(1.0, 1.0, 1.0);
     }
@@ -56,21 +56,20 @@ export abstract class Material {
         }
     }
 
+    public setLights(lights: IterableIterator<Light>) {}
 
     public getBindLayout() {
         const entriesLayout: Array<GPUBindGroupLayoutEntry> = [];
-        for(const [name,bindOption] of this._shaderOptions.bindValues){
-            if(bindOption.bindType === BindType.buffer){
-                const bufferUnform = this.uniforms.get(name) as BindBuffer;
+        for (const bindOption of this._shaderOptions.bindValues.values()) {
+            if (bindOption.bindType === BindType.buffer) {
                 entriesLayout.push({
                     binding: bindOption.index,
                     visibility: bindOption.visibility,
                     buffer: {
-                        type: GPUBufferBindingType.Uniform,
-                        minBindingSize: bufferUnform.buffer.size,
+                        type: GPUBufferBindingType.Uniform
                     },
                 });
-            }else if(bindOption.bindType === BindType.sampler){
+            } else if (bindOption.bindType === BindType.sampler) {
                 entriesLayout.push({
                     binding: bindOption.index,
                     visibility: bindOption.visibility,
@@ -78,7 +77,7 @@ export abstract class Material {
                         type: GPUSamplerBindingType.Filtering,
                     },
                 });
-            }else if(bindOption.bindType === BindType.texture){
+            } else if (bindOption.bindType === BindType.texture) {
                 entriesLayout.push({
                     binding: bindOption.index,
                     visibility: bindOption.visibility,
@@ -86,15 +85,15 @@ export abstract class Material {
                 });
             }
         }
-        
+
         return entriesLayout;
     }
 
     public getBindGroup() {
         const entriesGroup = new Array<GPUBindGroupEntry>();
 
-        for(const [name,bindOption] of this._shaderOptions.bindValues){
-            if(bindOption.bindType === BindType.buffer){
+        for (const [name, bindOption] of this._shaderOptions.bindValues) {
+            if (bindOption.bindType === BindType.buffer) {
                 const bufferUnform = this.uniforms.get(name) as BindBuffer;
                 entriesGroup.push({
                     binding: bindOption.index,
@@ -102,13 +101,13 @@ export abstract class Material {
                         buffer: bufferUnform.buffer,
                     },
                 });
-            }else if(bindOption.bindType === BindType.sampler){
+            } else if (bindOption.bindType === BindType.sampler) {
                 const samplerUnform = this.uniforms.get(name) as BindSampler;
                 entriesGroup.push({
                     binding: bindOption.index,
                     resource: samplerUnform.sampler,
                 });
-            }else if(bindOption.bindType === BindType.texture){
+            } else if (bindOption.bindType === BindType.texture) {
                 const textureUnform = this.uniforms.get(name) as BindTexture;
                 entriesGroup.push({
                     binding: bindOption.index,
@@ -121,45 +120,45 @@ export abstract class Material {
         return entriesGroup;
     }
 
-    protected _setAttributeValue(name:string,itemType : string,format:GPUVertexFormat,itemSize:number){
+    protected _setAttributeValue(name: string, itemType: string, format: GPUVertexFormat, itemSize: number) {
         const map = this.shaderOptions.attributeValues;
-        map.set(name,{
-            name:name,
-            index:this._shaderOptions.bindValues.size,
-            format:format,
-            shaderItemType:itemType,
-            itemSize:itemSize
+        map.set(name, {
+            name: name,
+            index: this._shaderOptions.bindValues.size,
+            format: format,
+            shaderItemType: itemType,
+            itemSize: itemSize,
         });
         let index = 0;
-        for(const value of map.values()){
+        for (const value of map.values()) {
             value.index = index++;
         }
     }
 
-    protected _setBindValue(name:string,itemType : string,bindType : BindType,  visibility:GPUShaderStageFlags){
+    protected _setBindValue(name: string, itemType: string, bindType: BindType, visibility: GPUShaderStageFlags) {
         const map = this.shaderOptions.bindValues;
-        map.set(name,{
-            name:name,
-            index:this._shaderOptions.bindValues.size,
-            bindType:bindType,
-            shaderItemType:itemType,
-            visibility:visibility
+        map.set(name, {
+            name: name,
+            index: this._shaderOptions.bindValues.size,
+            bindType: bindType,
+            shaderItemType: itemType,
+            visibility: visibility,
         });
         let index = 0;
-        for(const value of map.values()){
+        for (const value of map.values()) {
             value.index = index++;
         }
     }
 
-    protected _deleteValue(map:Map<string,ShaderItem>,name:string){
+    protected _deleteValue(map: Map<string, ShaderItem>, name: string) {
         map.delete(name);
         let index = 0;
-        for(const value of map.values()){
+        for (const value of map.values()) {
             value.index = index++;
         }
     }
 
-    public get applyLight(){
+    public get applyLight() {
         return false;
     }
 
@@ -168,27 +167,26 @@ export abstract class Material {
 
         let colorBuffer;
         let itemType;
-        if(this._transparent){
+        if (this._transparent) {
             colorBuffer = new Float32Array(4);
             itemType = "vec4<f32>";
             colorBuffer.set(this._color.toArray());
             colorBuffer[3] = this._opacity;
-        }else{
+        } else {
             colorBuffer = this._color.toArray();
             itemType = "vec3<f32>";
         }
 
         const colorUniform = this._uniforms.get("color") as BindBuffer;
-        if(!colorUniform){
-            this._setBindValue("color",itemType,BindType.buffer, GPUShaderStage.FRAGMENT);
+        if (!colorUniform) {
+            this._setBindValue("color", itemType, BindType.buffer, GPUShaderStage.FRAGMENT);
 
             this._uniforms.set("color", new BindBuffer("color", colorBuffer));
-        }else if(colorBuffer.length * colorBuffer.BYTES_PER_ELEMENT !== colorUniform.buffer.size){
+        } else if (colorBuffer.length * colorBuffer.BYTES_PER_ELEMENT !== colorUniform.buffer.size) {
             this._shaderOptions.bindValues.get("color").shaderItemType = itemType;
 
             this._uniforms.set("color", new BindBuffer("color", colorBuffer));
-        } 
-        else{
+        } else {
             colorUniform.data = colorBuffer;
         }
     }
@@ -198,28 +196,26 @@ export abstract class Material {
     }
 
     public set map(v: Texture | null) {
-        if(v === this._map)
-            return;
+        if (v === this._map) return;
 
-        if(v === null && this._map !== null){
+        if (v === null && this._map !== null) {
             this._uniforms.get("colorSampler").destroy();
             this._uniforms.get("texture").destroy();
             this._uniforms.delete("colorSampler");
             this._uniforms.delete("texture");
 
-            this._deleteValue(this._shaderOptions.attributeValues,"uv");
-            this._deleteValue(this._shaderOptions.bindValues,"colorSampler");
-            this._deleteValue(this._shaderOptions.bindValues,"texture");
+            this._deleteValue(this._shaderOptions.attributeValues, "uv");
+            this._deleteValue(this._shaderOptions.bindValues, "colorSampler");
+            this._deleteValue(this._shaderOptions.bindValues, "texture");
 
             this.pipeline.needsCompile = true;
+        } else if (v !== null && this._map === null) {
+            this._setAttributeValue("uv", "vec2<f32>", GPUVertexFormat.Float32x2, 4 * 2);
 
-        }else if(v !== null && this._map === null){
-            this._setAttributeValue("uv","vec2<f32>",GPUVertexFormat.Float32x2,4*2);
-
-            this._setBindValue("colorSampler","sampler",BindType.sampler, GPUShaderStage.FRAGMENT);
+            this._setBindValue("colorSampler", "sampler", BindType.sampler, GPUShaderStage.FRAGMENT);
             this._uniforms.set("colorSampler", new BindSampler("colorSampler"));
-   
-            this._setBindValue("texture","texture_2d<f32>",BindType.texture, GPUShaderStage.FRAGMENT);
+
+            this._setBindValue("texture", "texture_2d<f32>", BindType.texture, GPUShaderStage.FRAGMENT);
             this._uniforms.set("texture", new BindTexture("texture", v));
 
             this.pipeline.needsCompile = true;
@@ -234,10 +230,9 @@ export abstract class Material {
     public get map() {
         return this._map;
     }
-    
-    public set transparent(v:boolean){
-        if(this._transparent === v)
-            return;
+
+    public set transparent(v: boolean) {
+        if (this._transparent === v) return;
 
         this.pipeline.needsCompile = true;
         this.needsCreateBindGroup = true;
@@ -245,16 +240,16 @@ export abstract class Material {
         this.color = this._color;
     }
 
-    public get transparent(){
+    public get transparent() {
         return this._transparent;
     }
 
-    public set opacity(v:number){
+    public set opacity(v: number) {
         this._opacity = v;
         this.color = this._color;
     }
 
-    public get opacity(){
+    public get opacity() {
         return this._opacity;
     }
 

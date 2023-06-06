@@ -1,5 +1,3 @@
-import { GlobalGroupLayoutInfo, ObjectGroupLayoutInfo } from "./Defines";
-
 export class Cache {
 
 	public static enabled = false;

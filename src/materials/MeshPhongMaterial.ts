@@ -28,12 +28,11 @@ export class MeshPhongMaterial extends Material{
         this._setBindValue("shininess","f32",BindType.buffer, GPUShaderStage.FRAGMENT);
     }
 
-    public setLights(lights:Array<Light>){
-        for(let i = 0;i < lights.length;++i){
-            const light = lights[i];
+    public override setLights(lights:IterableIterator<Light>){
+        for(const light of lights){
             if(DirectionalLight.Is(light)){
                 const dirLight = light as DirectionalLight;
-                
+                dirLight.uniform;
             }
         }
     }

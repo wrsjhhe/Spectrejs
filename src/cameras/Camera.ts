@@ -16,6 +16,10 @@ export class Camera extends Object3D {
 		return object instanceof Camera;
 	}
 
+	public get isCamera(){
+		return true;
+	}
+
 	public matrixWorldInverse = new Matrix4();
 
 	public projectionMatrix = new Matrix4();

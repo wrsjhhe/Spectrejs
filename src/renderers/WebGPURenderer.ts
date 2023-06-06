@@ -141,31 +141,12 @@ export class WebGPURenderer {
         (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget = resolveTarget;
         (this._renderPassDescriptor.depthStencilAttachment as GPURenderPassDepthStencilAttachment).view = this._depthBuffer.createView();
 
-        const lights = new Array<Light>();
-
-        // for (let i = 0; i < scene.children.length; ++i) {
-        //     const child = scene.children[i];
-        //     if(RenderableObject.Is(child)){
-        //         const renderableObj = child as RenderableObject;
-        //         const objs = this._materialObjects.get(renderableObj.material);
-        //         if(objs){
-        //             objs.push(renderableObj);
-        //         }else{
-        //             this._materialObjects.set(renderableObj.material,[]);
-        //             this._materialObjects.get(renderableObj.material).push(renderableObj);
-        //         }
-        //     }else if(Light.Is(child)){
-        //         lights.push(child as Light);
-        //     }
-            
-        // }
-
-        const materialObjects = scene.renderableObj;
+        const materialObjects = scene.renderableObjs;
 
         const passEncoder = commandEncoder.beginRenderPass(this._renderPassDescriptor);
 
         for(const [material,objects] of materialObjects){
-            this._renderSamePipeline(passEncoder, material,objects,camera,lights);
+            this._renderSamePipeline(passEncoder, material,objects,camera);
         }
 
         passEncoder.end();
@@ -173,10 +154,7 @@ export class WebGPURenderer {
         this.device.queue.submit([commandEncoder.finish()]);
     }
 
-    private _renderSamePipeline(passEncoder: GPURenderPassEncoder, material:Material,objects:Array<RenderableObject>,camera: Camera,lights:Array<Light>){
-        if(material.applyLight){
-            
-        }
+    private _renderSamePipeline(passEncoder: GPURenderPassEncoder, material:Material,objects:Array<RenderableObject>,camera: Camera){
         
         material.pipeline.compilePipeline(this);
         passEncoder.setPipeline(material.pipeline.pipeline);

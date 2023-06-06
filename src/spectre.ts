@@ -16,10 +16,6 @@ export { SphereGeometry } from "./geometries/SphereGeometry";
 export { MeshBasicMaterial } from "./materials/MeshBasicMaterial";
 export { MeshPhongMaterial } from "./materials/MeshPhongMaterial";
 
-export { Object3D } from "./core/Object3D";
-export { Mesh } from "./objects/Mesh";
-export { Scene } from "./core/Scene";
-
 export { Color } from "./math/Color";
 export { Euler } from "./math/Euler";
 export { Matrix3 } from "./math/Matrix3";
@@ -27,6 +23,10 @@ export { Matrix4 } from "./math/Matrix4";
 export { Quaternion } from "./math/Quaternion";
 export { Vector2 } from "./math/Vector2";
 export { Vector3 } from "./math/Vector3";
+
+export { Object3D } from "./core/Object3D";
+export { Mesh } from "./objects/Mesh";
+export { Scene } from "./core/Scene";
 
 export { PerspectiveCamera } from "./cameras/PerspectiveCamera";
 export { OrthographicCamera } from './cameras/OrthographicCamera'

@@ -4,9 +4,9 @@ import { Matrix4 } from '../math/Matrix4';
 import { Euler } from '../math/Euler';
 import * as MathUtils from '../math/MathUtils';
 import { Color } from '../math/Color';
-import { Camera } from '../cameras/Camera';
 import { Material } from '../materials/Material';
 import { CommonUtils } from '../utils/CommonUtils';
+
 
 //import { Scene } from './Scene';
 
@@ -73,10 +73,6 @@ export class Object3D {
 	public count = 0;
 	public instanceMatrix : Matrix4;
 	public instanceColor : Color ;
-
-
-	protected _renderableObjects = new Map<Material,Array<any>>();
-    protected _lights = new Map<string,any>();
 
 	constructor() {
 
@@ -248,7 +244,7 @@ export class Object3D {
 
 		_position.setFromMatrixPosition( this.matrixWorld );
 
-		if ( Camera.Is(this) || this.type === "Light" ) {
+		if ( (this as any).isCamera || (this as any).isLight) {
 
 			_m1.lookAt( _position, _target, this.up );
 
@@ -279,6 +275,13 @@ export class Object3D {
 
 		}
 
+		if ( (object as any).isScene ) {
+
+			console.error( 'THREE.Object3D.add: scene can\'t be added.', object );
+			return this;
+
+		}
+
 		if ( object.parent !== null ) {
 
 			object.parent.remove( object );
@@ -289,7 +292,8 @@ export class Object3D {
 		this.children.push( object );
 
 		object.traverseAncestors((parent)=>{
-			parent._handleAdded(object);
+			if((parent as any).isScene)
+				(parent as any).handleAdded(object);
 		});
 
 		return this;
@@ -308,68 +312,13 @@ export class Object3D {
 		}
 
 		object.traverseAncestors((parent)=>{
-
-			parent._handleRemoved(object);
-			
+			if((parent as any).isScene)
+				(parent as any)._handleRemoved(object);
 		});
 
 		return this;
 
 	}
-
-
-	
-    private _handleAdded(object: Object3D){
-        object.traverse((child)=>{
-            if((child as any).renderable){
-                this._addRenderableObject(child);
-			}else if(child.type === "Light"){
-                this._addLight(child);
-            }
-        })
-    }
-
-
-    private _handleRemoved(object: Object3D){
-        object.traverse((child)=>{
-			if((child as any).renderable){
-                this._removeRenderableObject(child);
-            }else if(child.type === "Light"){
-                this._removeLight(child);
-            }
-        })
-    }
-
-    private _addRenderableObject(renderableObj: any){
-        const material = renderableObj.material;
-        const objs = this._renderableObjects.get(material);
-        if(objs){
-            objs.push(renderableObj);
-        }else{
-            this._renderableObjects.set(material,[]);
-            this._renderableObjects.get(material).push(renderableObj);
-        }
-    }
-
-    private _removeRenderableObject(renderableObj: any){
-        const material = renderableObj.material;
-        const arr = this._renderableObjects.get(material);
-        if(arr){
-            CommonUtils.removeArrayItemByValue(arr,renderableObj);
-        }
-    }
-
-    private _addLight(light:any){
-        this._lights.set(light.uuid,light);
-    }
-
-    private _removeLight(light:any){
-        this._lights.delete(light.uuid);
-    }
-
-    public get renderableObj(){
-        return this._renderableObjects;
-    }
 
 
 	removeFromParent() {

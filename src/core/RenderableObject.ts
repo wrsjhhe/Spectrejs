@@ -14,7 +14,7 @@ export class RenderableObject extends Object3D {
         return object instanceof RenderableObject;
     }
 
-    public get renderable(){
+    public get isRenderableObject(){
         return true;
     }
 

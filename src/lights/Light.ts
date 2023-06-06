@@ -11,6 +11,10 @@ export class Light extends Object3D {
 		return object instanceof Light;
 	}
 
+    public get isLight(){
+        return true;
+    }
+
     private _color:Color;
     private _intensity:number;
 
