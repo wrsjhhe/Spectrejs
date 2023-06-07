@@ -46,6 +46,10 @@ export class DirectionalLight extends Light {
 		return this._direction;
 	}
 
+	public get target(){
+		return this._target;
+	}
+
 	dispose() {
 
 		//this.shadow.dispose();
