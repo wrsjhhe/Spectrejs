@@ -1419,6 +1419,22 @@ class BufferAttribute {
             }
         }
     }
+    getX(index) {
+        const x = this.array[index * this.itemSize];
+        return x;
+    }
+    getY(index) {
+        const y = this.array[index * this.itemSize + 1];
+        return y;
+    }
+    getZ(index) {
+        const z = this.array[index * this.itemSize + 2];
+        return z;
+    }
+    getW(index) {
+        const w = this.array[index * this.itemSize + 3];
+        return w;
+    }
     _parseFormat() {
         this._itemSize = this._itemSize;
         this._byteLength = this._array.BYTES_PER_ELEMENT;
@@ -1475,16 +1491,24 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   BufferGeometry: () => (/* binding */ BufferGeometry)
 /* harmony export */ });
-/* harmony import */ var _math_MathUtils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math/MathUtils */ "./src/math/MathUtils.ts");
-/* harmony import */ var _GPUBufferWrapper__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./GPUBufferWrapper */ "./src/core/GPUBufferWrapper.ts");
+/* harmony import */ var _math_Box3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math/Box3 */ "./src/math/Box3.ts");
+/* harmony import */ var _math_MathUtils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math/MathUtils */ "./src/math/MathUtils.ts");
+/* harmony import */ var _math_Sphere__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../math/Sphere */ "./src/math/Sphere.ts");
+/* harmony import */ var _math_Vector3__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../math/Vector3 */ "./src/math/Vector3.ts");
+/* harmony import */ var _GPUBufferWrapper__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./GPUBufferWrapper */ "./src/core/GPUBufferWrapper.ts");
 
 
+
+
+
+const _box = /*@__PURE__*/ new _math_Box3__WEBPACK_IMPORTED_MODULE_0__.Box3();
+const _vector = /*@__PURE__*/ new _math_Vector3__WEBPACK_IMPORTED_MODULE_3__.Vector3();
 class BufferGeometry {
     constructor() {
         this._attributes = new Map();
         this._indices = null;
         this._drawBuffer = null;
-        this.uuid = _math_MathUtils__WEBPACK_IMPORTED_MODULE_0__.MathUtils.generateUUID();
+        this.uuid = _math_MathUtils__WEBPACK_IMPORTED_MODULE_1__.MathUtils.generateUUID();
     }
     update() {
         this.updateDrawBuffer();
@@ -1556,7 +1580,55 @@ class BufferGeometry {
                 parameters[2] = 0; // The firstVertex value
                 parameters[3] = 0; // The firstInstance value
             }
-            this._drawBuffer = new _GPUBufferWrapper__WEBPACK_IMPORTED_MODULE_1__.GPUBufferWrapper(GPUBufferUsage.COPY_DST | GPUBufferUsage.INDIRECT, parameters);
+            this._drawBuffer = new _GPUBufferWrapper__WEBPACK_IMPORTED_MODULE_4__.GPUBufferWrapper(GPUBufferUsage.COPY_DST | GPUBufferUsage.INDIRECT, parameters);
+        }
+    }
+    computeBoundingSphere() {
+        if (this.boundingSphere === null) {
+            this._boundingSphere = new _math_Sphere__WEBPACK_IMPORTED_MODULE_2__.Sphere();
+        }
+        const position = this.attributes.get("position");
+        if (position) {
+            console.error('THREE.BufferGeometry.computeBoundingSphere(): GLBufferAttribute requires a manual bounding sphere. Alternatively set "mesh.frustumCulled" to "false".', this);
+            this.boundingSphere.set(new _math_Vector3__WEBPACK_IMPORTED_MODULE_3__.Vector3(), Infinity);
+            return;
+        }
+        if (position) {
+            // first, find the center of the bounding sphere
+            const center = this.boundingSphere.center;
+            _box.setFromBufferAttribute(position);
+            _box.getCenter(center);
+            // second, try to find a boundingSphere with a radius smaller than the
+            // boundingSphere of the boundingBox: sqrt(3) smaller in the best case
+            let maxRadiusSq = 0;
+            for (let i = 0, il = position.count; i < il; i++) {
+                _vector.fromBufferAttribute(position, i);
+                maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(_vector));
+            }
+            this.boundingSphere.radius = Math.sqrt(maxRadiusSq);
+            if (isNaN(this.boundingSphere.radius)) {
+                console.error('THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The "position" attribute is likely to have NaN values.', this);
+            }
+        }
+    }
+    computeBoundingBox() {
+        if (this._boundingBox === null) {
+            this._boundingBox = new _math_Box3__WEBPACK_IMPORTED_MODULE_0__.Box3();
+        }
+        const position = this.attributes.get("position");
+        if (position) {
+            console.error('THREE.BufferGeometry.computeBoundingBox(): GLBufferAttribute requires a manual bounding box. Alternatively set "mesh.frustumCulled" to "false".', this);
+            this._boundingBox.set(new _math_Vector3__WEBPACK_IMPORTED_MODULE_3__.Vector3(-Infinity, -Infinity, -Infinity), new _math_Vector3__WEBPACK_IMPORTED_MODULE_3__.Vector3(+Infinity, +Infinity, +Infinity));
+            return;
+        }
+        if (position !== undefined) {
+            this._boundingBox.setFromBufferAttribute(position);
+        }
+        else {
+            this._boundingBox.makeEmpty();
+        }
+        if (isNaN(this._boundingBox.min.x) || isNaN(this._boundingBox.min.y) || isNaN(this._boundingBox.min.z)) {
+            console.error('THREE.BufferGeometry.computeBoundingBox(): Computed min/max have NaN values. The "position" attribute is likely to have NaN values.', this);
         }
     }
     get attributes() {
@@ -1567,6 +1639,18 @@ class BufferGeometry {
     }
     get drawBuffer() {
         return this._drawBuffer;
+    }
+    get boundingBox() {
+        if (this._boundingBox) {
+            this.computeBoundingBox();
+        }
+        return this._boundingBox;
+    }
+    get boundingSphere() {
+        if (this._boundingSphere) {
+            this.computeBoundingSphere();
+        }
+        return this._boundingSphere;
     }
 }
 
@@ -1691,6 +1775,7 @@ class Object3D {
         return object instanceof Object3D;
     }
     constructor() {
+        this.uuid = _math_MathUtils__WEBPACK_IMPORTED_MODULE_4__.generateUUID();
         this._position = new _math_Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
         this._rotation = new _math_Euler__WEBPACK_IMPORTED_MODULE_3__.Euler();
         this._scale = new _math_Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3(1, 1, 1);
@@ -1709,7 +1794,6 @@ class Object3D {
         this.isInstancedMesh = false;
         this.count = 0;
         Object.defineProperty(this, 'id', { value: _object3DId++ });
-        this.uuid = _math_MathUtils__WEBPACK_IMPORTED_MODULE_4__.generateUUID();
         this.name = '';
         this._parent = null;
         this._children = [];
@@ -2291,6 +2375,14 @@ class RenderableObject extends _Object3D__WEBPACK_IMPORTED_MODULE_0__.Object3D {
             uniform.update();
         }
     }
+    computeBoundingSphere() {
+        this._boundingSphere.copy(this.geometry.boundingSphere);
+        this._boundingSphere.applyMatrix4(this.matrixWorld);
+    }
+    computeBoundingBox() {
+        this._boundingBox.copy(this.geometry.boundingBox);
+        this._boundingBox.applyMatrix4(this.matrixWorld);
+    }
     get pipeline() {
         return this._pipeline;
     }
@@ -2302,6 +2394,12 @@ class RenderableObject extends _Object3D__WEBPACK_IMPORTED_MODULE_0__.Object3D {
     }
     get uniforms() {
         return this._uniforms;
+    }
+    get boundingBox() {
+        return this._boundingBox;
+    }
+    get boundingSphere() {
+        return this._boundingSphere;
     }
 }
 
@@ -3114,6 +3212,9 @@ class DirectionalLight extends _Light__WEBPACK_IMPORTED_MODULE_0__.Light {
     get direction() {
         return this._direction;
     }
+    get target() {
+        return this._target;
+    }
     dispose() {
         //this.shadow.dispose();
     }
@@ -3138,7 +3239,34 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   DirectionalLightShadow: () => (/* binding */ DirectionalLightShadow)
 /* harmony export */ });
-class DirectionalLightShadow {
+/* harmony import */ var _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../cameras/OrthographicCamera */ "./src/cameras/OrthographicCamera.ts");
+/* harmony import */ var _math_Matrix4__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math/Matrix4 */ "./src/math/Matrix4.ts");
+/* harmony import */ var _math_Vector3__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../math/Vector3 */ "./src/math/Vector3.ts");
+/* harmony import */ var _LightShadow__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./LightShadow */ "./src/lights/LightShadow.ts");
+
+
+
+
+const _projScreenMatrix = /*@__PURE__*/ new _math_Matrix4__WEBPACK_IMPORTED_MODULE_1__.Matrix4();
+const _lightPositionWorld = /*@__PURE__*/ new _math_Vector3__WEBPACK_IMPORTED_MODULE_2__.Vector3();
+const _lookTarget = /*@__PURE__*/ new _math_Vector3__WEBPACK_IMPORTED_MODULE_2__.Vector3();
+class DirectionalLightShadow extends _LightShadow__WEBPACK_IMPORTED_MODULE_3__.LightShadow {
+    constructor() {
+        super(new _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_0__.OrthographicCamera(-5, 5, 5, -5, 0.5, 500));
+    }
+    updateMatrices(light) {
+        const shadowCamera = this.camera;
+        const shadowMatrix = this.matrix;
+        _lightPositionWorld.setFromMatrixPosition(light.matrixWorld);
+        shadowCamera.position.copy(_lightPositionWorld);
+        _lookTarget.setFromMatrixPosition(light.target.matrixWorld);
+        shadowCamera.lookAt(_lookTarget);
+        shadowCamera.updateMatrixWorld();
+        _projScreenMatrix.multiplyMatrices(shadowCamera.projectionMatrix, shadowCamera.matrixWorldInverse);
+        this._frustum.setFromProjectionMatrix(_projScreenMatrix);
+        shadowMatrix.set(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
+        shadowMatrix.multiply(_projScreenMatrix);
+    }
 }
 
 
@@ -3175,6 +3303,77 @@ class Light extends _core_Object3D__WEBPACK_IMPORTED_MODULE_0__.Object3D {
     }
     get color() {
         return this._color;
+    }
+}
+
+
+/***/ }),
+
+/***/ "./src/lights/LightShadow.ts":
+/*!***********************************!*\
+  !*** ./src/lights/LightShadow.ts ***!
+  \***********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   LightShadow: () => (/* binding */ LightShadow)
+/* harmony export */ });
+/* harmony import */ var _math_Matrix4__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math/Matrix4 */ "./src/math/Matrix4.ts");
+/* harmony import */ var _math_Vector2__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math/Vector2 */ "./src/math/Vector2.ts");
+/* harmony import */ var _math_Vector4__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../math/Vector4 */ "./src/math/Vector4.ts");
+/* harmony import */ var _math_Frustum__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../math/Frustum */ "./src/math/Frustum.ts");
+
+
+
+
+class LightShadow {
+    constructor(camera) {
+        this.bias = 0;
+        this.normalBias = 0;
+        this.radius = 0;
+        this.blurSamples = 0;
+        this.mapSize = new _math_Vector2__WEBPACK_IMPORTED_MODULE_1__.Vector2(512, 512);
+        this.matrix = new _math_Matrix4__WEBPACK_IMPORTED_MODULE_0__.Matrix4();
+        this.autoUpdate = true;
+        this.needsUpdate = false;
+        this._frustum = new _math_Frustum__WEBPACK_IMPORTED_MODULE_3__.Frustum();
+        this._frameExtents = new _math_Vector2__WEBPACK_IMPORTED_MODULE_1__.Vector2(1, 1);
+        this._viewportCount = 1;
+        this._viewports = [new _math_Vector4__WEBPACK_IMPORTED_MODULE_2__.Vector4(0, 0, 1, 1)];
+        this.camera = camera;
+        // this.map = null;
+        // this.mapPass = null;
+    }
+    getViewportCount() {
+        return this._viewportCount;
+    }
+    getFrustum() {
+        return this._frustum;
+    }
+    getViewport(viewportIndex) {
+        return this._viewports[viewportIndex];
+    }
+    getFrameExtents() {
+        return this._frameExtents;
+    }
+    dispose() {
+        // if (this.map) {
+        //     this.map.dispose();
+        // }
+        // if (this.mapPass) {
+        //     this.mapPass.dispose();
+        // }
+    }
+    copy(source) {
+        this.camera = source.camera.clone();
+        this.bias = source.bias;
+        this.radius = source.radius;
+        this.mapSize.copy(source.mapSize);
+        return this;
+    }
+    clone() {
+        return new LightShadow().copy(this);
     }
 }
 
@@ -3946,6 +4145,332 @@ class MeshPhongMaterial extends _Material__WEBPACK_IMPORTED_MODULE_5__.Material 
         this._shininess = v;
         this._uniforms.get("specular").data = new Float32Array([v]);
     }
+}
+
+
+/***/ }),
+
+/***/ "./src/math/Box3.ts":
+/*!**************************!*\
+  !*** ./src/math/Box3.ts ***!
+  \**************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Box3: () => (/* binding */ Box3)
+/* harmony export */ });
+/* harmony import */ var _core_RenderableObject__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../core/RenderableObject */ "./src/core/RenderableObject.ts");
+/* harmony import */ var _Vector3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Vector3 */ "./src/math/Vector3.ts");
+
+
+class Box3 {
+    constructor(min = new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3(+Infinity, +Infinity, +Infinity), max = new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3(-Infinity, -Infinity, -Infinity)) {
+        this.min = min;
+        this.max = max;
+    }
+    set(min, max) {
+        this.min.copy(min);
+        this.max.copy(max);
+        return this;
+    }
+    setFromArray(array) {
+        this.makeEmpty();
+        for (let i = 0, il = array.length; i < il; i += 3) {
+            this.expandByPoint(_vector.fromArray(array, i));
+        }
+        return this;
+    }
+    setFromBufferAttribute(attribute) {
+        this.makeEmpty();
+        for (let i = 0, il = attribute.count; i < il; i++) {
+            this.expandByPoint(_vector.fromBufferAttribute(attribute, i));
+        }
+        return this;
+    }
+    setFromPoints(points) {
+        this.makeEmpty();
+        for (let i = 0, il = points.length; i < il; i++) {
+            this.expandByPoint(points[i]);
+        }
+        return this;
+    }
+    setFromCenterAndSize(center, size) {
+        const halfSize = _vector.copy(size).multiplyScalar(0.5);
+        this.min.copy(center).sub(halfSize);
+        this.max.copy(center).add(halfSize);
+        return this;
+    }
+    setFromObject(object, precise = false) {
+        this.makeEmpty();
+        return this.expandByObject(object, precise);
+    }
+    clone() {
+        return new Box3().copy(this);
+    }
+    copy(box) {
+        this.min.copy(box.min);
+        this.max.copy(box.max);
+        return this;
+    }
+    makeEmpty() {
+        this.min.x = this.min.y = this.min.z = +Infinity;
+        this.max.x = this.max.y = this.max.z = -Infinity;
+        return this;
+    }
+    isEmpty() {
+        // this is a more robust check for empty than ( volume <= 0 ) because volume can get positive with two negative axes
+        return (this.max.x < this.min.x) || (this.max.y < this.min.y) || (this.max.z < this.min.z);
+    }
+    getCenter(target) {
+        return this.isEmpty() ? target.set(0, 0, 0) : target.addVectors(this.min, this.max).multiplyScalar(0.5);
+    }
+    getSize(target) {
+        return this.isEmpty() ? target.set(0, 0, 0) : target.subVectors(this.max, this.min);
+    }
+    expandByPoint(point) {
+        this.min.min(point);
+        this.max.max(point);
+        return this;
+    }
+    expandByVector(vector) {
+        this.min.sub(vector);
+        this.max.add(vector);
+        return this;
+    }
+    expandByScalar(scalar) {
+        this.min.addScalar(-scalar);
+        this.max.addScalar(scalar);
+        return this;
+    }
+    expandByObject(object, precise = false) {
+        // Computes the world-axis-aligned bounding box of an object (including its children),
+        // accounting for both the object's, and children's, world transforms
+        object.updateWorldMatrix(false, false);
+        if (object.boundingBox !== undefined) {
+            if (object.boundingBox === null) {
+                object.computeBoundingBox();
+            }
+            _box.copy(object.boundingBox);
+            _box.applyMatrix4(object.matrixWorld);
+            this.union(_box);
+        }
+        else {
+            const geometry = object.geometry;
+            if (geometry !== undefined) {
+                if (precise && geometry.attributes !== undefined && geometry.attributes.get("position") !== undefined) {
+                    const position = geometry.attributes.get("position");
+                    for (let i = 0, l = position.count; i < l; i++) {
+                        _vector.fromBufferAttribute(position, i).applyMatrix4(object.matrixWorld);
+                        this.expandByPoint(_vector);
+                    }
+                }
+                else {
+                    if (geometry.boundingBox === null) {
+                        geometry.computeBoundingBox();
+                    }
+                    _box.copy(geometry.boundingBox);
+                    _box.applyMatrix4(object.matrixWorld);
+                    this.union(_box);
+                }
+            }
+        }
+        const children = object.children;
+        for (let i = 0, l = children.length; i < l; i++) {
+            if (_core_RenderableObject__WEBPACK_IMPORTED_MODULE_0__.RenderableObject.Is(children[i]))
+                this.expandByObject(children[i], precise);
+        }
+        return this;
+    }
+    containsPoint(point) {
+        return point.x < this.min.x || point.x > this.max.x ||
+            point.y < this.min.y || point.y > this.max.y ||
+            point.z < this.min.z || point.z > this.max.z ? false : true;
+    }
+    containsBox(box) {
+        return this.min.x <= box.min.x && box.max.x <= this.max.x &&
+            this.min.y <= box.min.y && box.max.y <= this.max.y &&
+            this.min.z <= box.min.z && box.max.z <= this.max.z;
+    }
+    getParameter(point, target) {
+        // This can potentially have a divide by zero if the box
+        // has a size dimension of 0.
+        return target.set((point.x - this.min.x) / (this.max.x - this.min.x), (point.y - this.min.y) / (this.max.y - this.min.y), (point.z - this.min.z) / (this.max.z - this.min.z));
+    }
+    intersectsBox(box) {
+        // using 6 splitting planes to rule out intersections.
+        return box.max.x < this.min.x || box.min.x > this.max.x ||
+            box.max.y < this.min.y || box.min.y > this.max.y ||
+            box.max.z < this.min.z || box.min.z > this.max.z ? false : true;
+    }
+    intersectsSphere(sphere) {
+        // Find the point on the AABB closest to the sphere center.
+        this.clampPoint(sphere.center, _vector);
+        // If that point is inside the sphere, the AABB and sphere intersect.
+        return _vector.distanceToSquared(sphere.center) <= (sphere.radius * sphere.radius);
+    }
+    intersectsPlane(plane) {
+        // We compute the minimum and maximum dot product values. If those values
+        // are on the same side (back or front) of the plane, then there is no intersection.
+        let min, max;
+        if (plane.normal.x > 0) {
+            min = plane.normal.x * this.min.x;
+            max = plane.normal.x * this.max.x;
+        }
+        else {
+            min = plane.normal.x * this.max.x;
+            max = plane.normal.x * this.min.x;
+        }
+        if (plane.normal.y > 0) {
+            min += plane.normal.y * this.min.y;
+            max += plane.normal.y * this.max.y;
+        }
+        else {
+            min += plane.normal.y * this.max.y;
+            max += plane.normal.y * this.min.y;
+        }
+        if (plane.normal.z > 0) {
+            min += plane.normal.z * this.min.z;
+            max += plane.normal.z * this.max.z;
+        }
+        else {
+            min += plane.normal.z * this.max.z;
+            max += plane.normal.z * this.min.z;
+        }
+        return (min <= -plane.constant && max >= -plane.constant);
+    }
+    intersectsTriangle(triangle) {
+        if (this.isEmpty()) {
+            return false;
+        }
+        // compute box center and extents
+        this.getCenter(_center);
+        _extents.subVectors(this.max, _center);
+        // translate triangle to aabb origin
+        _v0.subVectors(triangle.a, _center);
+        _v1.subVectors(triangle.b, _center);
+        _v2.subVectors(triangle.c, _center);
+        // compute edge vectors for triangle
+        _f0.subVectors(_v1, _v0);
+        _f1.subVectors(_v2, _v1);
+        _f2.subVectors(_v0, _v2);
+        // test against axes that are given by cross product combinations of the edges of the triangle and the edges of the aabb
+        // make an axis testing of each of the 3 sides of the aabb against each of the 3 sides of the triangle = 9 axis of separation
+        // axis_ij = u_i x f_j (u0, u1, u2 = face normals of aabb = x,y,z axes vectors since aabb is axis aligned)
+        let axes = [
+            0, -_f0.z, _f0.y, 0, -_f1.z, _f1.y, 0, -_f2.z, _f2.y,
+            _f0.z, 0, -_f0.x, _f1.z, 0, -_f1.x, _f2.z, 0, -_f2.x,
+            -_f0.y, _f0.x, 0, -_f1.y, _f1.x, 0, -_f2.y, _f2.x, 0
+        ];
+        if (!satForAxes(axes, _v0, _v1, _v2, _extents)) {
+            return false;
+        }
+        // test 3 face normals from the aabb
+        axes = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+        if (!satForAxes(axes, _v0, _v1, _v2, _extents)) {
+            return false;
+        }
+        // finally testing the face normal of the triangle
+        // use already existing triangle edge vectors here
+        _triangleNormal.crossVectors(_f0, _f1);
+        axes = [_triangleNormal.x, _triangleNormal.y, _triangleNormal.z];
+        return satForAxes(axes, _v0, _v1, _v2, _extents);
+    }
+    clampPoint(point, target) {
+        return target.copy(point).clamp(this.min, this.max);
+    }
+    distanceToPoint(point) {
+        return this.clampPoint(point, _vector).distanceTo(point);
+    }
+    getBoundingSphere(target) {
+        if (this.isEmpty()) {
+            target.makeEmpty();
+        }
+        else {
+            this.getCenter(target.center);
+            target.radius = this.getSize(_vector).length() * 0.5;
+        }
+        return target;
+    }
+    intersect(box) {
+        this.min.max(box.min);
+        this.max.min(box.max);
+        // ensure that if there is no overlap, the result is fully empty, not slightly empty with non-inf/+inf values that will cause subsequence intersects to erroneously return valid values.
+        if (this.isEmpty())
+            this.makeEmpty();
+        return this;
+    }
+    union(box) {
+        this.min.min(box.min);
+        this.max.max(box.max);
+        return this;
+    }
+    applyMatrix4(matrix) {
+        // transform of empty box is an empty box.
+        if (this.isEmpty())
+            return this;
+        // NOTE: I am using a binary pattern to specify all 2^3 combinations below
+        _points[0].set(this.min.x, this.min.y, this.min.z).applyMatrix4(matrix); // 000
+        _points[1].set(this.min.x, this.min.y, this.max.z).applyMatrix4(matrix); // 001
+        _points[2].set(this.min.x, this.max.y, this.min.z).applyMatrix4(matrix); // 010
+        _points[3].set(this.min.x, this.max.y, this.max.z).applyMatrix4(matrix); // 011
+        _points[4].set(this.max.x, this.min.y, this.min.z).applyMatrix4(matrix); // 100
+        _points[5].set(this.max.x, this.min.y, this.max.z).applyMatrix4(matrix); // 101
+        _points[6].set(this.max.x, this.max.y, this.min.z).applyMatrix4(matrix); // 110
+        _points[7].set(this.max.x, this.max.y, this.max.z).applyMatrix4(matrix); // 111
+        this.setFromPoints(_points);
+        return this;
+    }
+    translate(offset) {
+        this.min.add(offset);
+        this.max.add(offset);
+        return this;
+    }
+    equals(box) {
+        return box.min.equals(this.min) && box.max.equals(this.max);
+    }
+}
+const _points = [
+    /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3(),
+    /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3(),
+    /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3(),
+    /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3(),
+    /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3(),
+    /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3(),
+    /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3(),
+    /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3()
+];
+const _vector = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+const _box = /*@__PURE__*/ new Box3();
+// triangle centered vertices
+const _v0 = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+const _v1 = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+const _v2 = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+// triangle edge vectors
+const _f0 = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+const _f1 = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+const _f2 = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+const _center = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+const _extents = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+const _triangleNormal = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+const _testAxis = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+function satForAxes(axes, v0, v1, v2, extents) {
+    for (let i = 0, j = axes.length - 3; i <= j; i += 3) {
+        _testAxis.fromArray(axes, i);
+        // project the aabb onto the separating axis
+        const r = extents.x * Math.abs(_testAxis.x) + extents.y * Math.abs(_testAxis.y) + extents.z * Math.abs(_testAxis.z);
+        // project all 3 vertices of the triangle onto the separating axis
+        const p0 = v0.dot(_testAxis);
+        const p1 = v1.dot(_testAxis);
+        const p2 = v2.dot(_testAxis);
+        // actual test, basically see if either of the most extreme of the triangle points intersects r
+        if (Math.max(-Math.max(p0, p1, p2), Math.min(p0, p1, p2)) > r) {
+            // points of the projected triangle are outside the projected half-length of the aabb
+            // the axis is separating and we can exit
+            return false;
+        }
+    }
+    return true;
 }
 
 
@@ -4777,6 +5302,124 @@ class Euler {
     }
 }
 Euler.DEFAULT_ORDER = 'XYZ';
+
+
+
+/***/ }),
+
+/***/ "./src/math/Frustum.ts":
+/*!*****************************!*\
+  !*** ./src/math/Frustum.ts ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Frustum: () => (/* binding */ Frustum)
+/* harmony export */ });
+/* harmony import */ var _Plane__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Plane */ "./src/math/Plane.ts");
+/* harmony import */ var _Sphere__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Sphere */ "./src/math/Sphere.ts");
+/* harmony import */ var _Vector3__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Vector3 */ "./src/math/Vector3.ts");
+
+
+
+const _sphere = /*@__PURE__*/ new _Sphere__WEBPACK_IMPORTED_MODULE_1__.Sphere();
+const _vector = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_2__.Vector3();
+class Frustum {
+    constructor(p0 = new _Plane__WEBPACK_IMPORTED_MODULE_0__.Plane(), p1 = new _Plane__WEBPACK_IMPORTED_MODULE_0__.Plane(), p2 = new _Plane__WEBPACK_IMPORTED_MODULE_0__.Plane(), p3 = new _Plane__WEBPACK_IMPORTED_MODULE_0__.Plane(), p4 = new _Plane__WEBPACK_IMPORTED_MODULE_0__.Plane(), p5 = new _Plane__WEBPACK_IMPORTED_MODULE_0__.Plane()) {
+        this.planes = [p0, p1, p2, p3, p4, p5];
+    }
+    set(p0, p1, p2, p3, p4, p5) {
+        const planes = this.planes;
+        planes[0].copy(p0);
+        planes[1].copy(p1);
+        planes[2].copy(p2);
+        planes[3].copy(p3);
+        planes[4].copy(p4);
+        planes[5].copy(p5);
+        return this;
+    }
+    copy(frustum) {
+        const planes = this.planes;
+        for (let i = 0; i < 6; i++) {
+            planes[i].copy(frustum.planes[i]);
+        }
+        return this;
+    }
+    setFromProjectionMatrix(m) {
+        const planes = this.planes;
+        const me = m.elements;
+        const me0 = me[0], me1 = me[1], me2 = me[2], me3 = me[3];
+        const me4 = me[4], me5 = me[5], me6 = me[6], me7 = me[7];
+        const me8 = me[8], me9 = me[9], me10 = me[10], me11 = me[11];
+        const me12 = me[12], me13 = me[13], me14 = me[14], me15 = me[15];
+        planes[0].setComponents(me3 - me0, me7 - me4, me11 - me8, me15 - me12).normalize();
+        planes[1].setComponents(me3 + me0, me7 + me4, me11 + me8, me15 + me12).normalize();
+        planes[2].setComponents(me3 + me1, me7 + me5, me11 + me9, me15 + me13).normalize();
+        planes[3].setComponents(me3 - me1, me7 - me5, me11 - me9, me15 - me13).normalize();
+        planes[4].setComponents(me3 - me2, me7 - me6, me11 - me10, me15 - me14).normalize();
+        planes[5].setComponents(me3 + me2, me7 + me6, me11 + me10, me15 + me14).normalize();
+        return this;
+    }
+    intersectsObject(object) {
+        if (object.boundingSphere !== undefined) {
+            if (object.boundingSphere === null)
+                object.computeBoundingSphere();
+            _sphere.copy(object.boundingSphere).applyMatrix4(object.matrixWorld);
+        }
+        else {
+            const geometry = object.geometry;
+            if (geometry.boundingSphere === null)
+                geometry.computeBoundingSphere();
+            _sphere.copy(geometry.boundingSphere).applyMatrix4(object.matrixWorld);
+        }
+        return this.intersectsSphere(_sphere);
+    }
+    // intersectsSprite( sprite ) {
+    // 	_sphere.center.set( 0, 0, 0 );
+    // 	_sphere.radius = 0.7071067811865476;
+    // 	_sphere.applyMatrix4( sprite.matrixWorld );
+    // 	return this.intersectsSphere( _sphere );
+    // }
+    intersectsSphere(sphere) {
+        const planes = this.planes;
+        const center = sphere.center;
+        const negRadius = -sphere.radius;
+        for (let i = 0; i < 6; i++) {
+            const distance = planes[i].distanceToPoint(center);
+            if (distance < negRadius) {
+                return false;
+            }
+        }
+        return true;
+    }
+    intersectsBox(box) {
+        const planes = this.planes;
+        for (let i = 0; i < 6; i++) {
+            const plane = planes[i];
+            // corner at max distance
+            _vector.x = plane.normal.x > 0 ? box.max.x : box.min.x;
+            _vector.y = plane.normal.y > 0 ? box.max.y : box.min.y;
+            _vector.z = plane.normal.z > 0 ? box.max.z : box.min.z;
+            if (plane.distanceToPoint(_vector) < 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+    containsPoint(point) {
+        const planes = this.planes;
+        for (let i = 0; i < 6; i++) {
+            if (planes[i].distanceToPoint(point) < 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+    clone() {
+        return new Frustum().copy(this);
+    }
+}
 
 
 
@@ -5821,6 +6464,129 @@ const _y = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_0__.Vector3();
 const _z = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_0__.Vector3();
 
 
+/***/ }),
+
+/***/ "./src/math/Plane.ts":
+/*!***************************!*\
+  !*** ./src/math/Plane.ts ***!
+  \***************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Plane: () => (/* binding */ Plane)
+/* harmony export */ });
+/* harmony import */ var _Matrix3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Matrix3 */ "./src/math/Matrix3.ts");
+/* harmony import */ var _Vector3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Vector3 */ "./src/math/Vector3.ts");
+
+
+const _vector1 = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+const _vector2 = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+const _normalMatrix = /*@__PURE__*/ new _Matrix3__WEBPACK_IMPORTED_MODULE_0__.Matrix3();
+class Plane {
+    constructor(normal = new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3(1, 0, 0), constant = 0) {
+        // normal is assumed to be normalized
+        this.normal = normal;
+        this.constant = constant;
+    }
+    set(normal, constant) {
+        this.normal.copy(normal);
+        this.constant = constant;
+        return this;
+    }
+    setComponents(x, y, z, w) {
+        this.normal.set(x, y, z);
+        this.constant = w;
+        return this;
+    }
+    setFromNormalAndCoplanarPoint(normal, point) {
+        this.normal.copy(normal);
+        this.constant = -point.dot(this.normal);
+        return this;
+    }
+    setFromCoplanarPoints(a, b, c) {
+        const normal = _vector1.subVectors(c, b).cross(_vector2.subVectors(a, b)).normalize();
+        // Q: should an error be thrown if normal is zero (e.g. degenerate plane)?
+        this.setFromNormalAndCoplanarPoint(normal, a);
+        return this;
+    }
+    copy(plane) {
+        this.normal.copy(plane.normal);
+        this.constant = plane.constant;
+        return this;
+    }
+    normalize() {
+        // Note: will lead to a divide by zero if the plane is invalid.
+        const inverseNormalLength = 1.0 / this.normal.length();
+        this.normal.multiplyScalar(inverseNormalLength);
+        this.constant *= inverseNormalLength;
+        return this;
+    }
+    negate() {
+        this.constant *= -1;
+        this.normal.negate();
+        return this;
+    }
+    distanceToPoint(point) {
+        return this.normal.dot(point) + this.constant;
+    }
+    distanceToSphere(sphere) {
+        return this.distanceToPoint(sphere.center) - sphere.radius;
+    }
+    projectPoint(point, target) {
+        return target.copy(point).addScaledVector(this.normal, -this.distanceToPoint(point));
+    }
+    intersectLine(line, target) {
+        const direction = line.delta(_vector1);
+        const denominator = this.normal.dot(direction);
+        if (denominator === 0) {
+            // line is coplanar, return origin
+            if (this.distanceToPoint(line.start) === 0) {
+                return target.copy(line.start);
+            }
+            // Unsure if this is the correct method to handle this case.
+            return null;
+        }
+        const t = -(line.start.dot(this.normal) + this.constant) / denominator;
+        if (t < 0 || t > 1) {
+            return null;
+        }
+        return target.copy(line.start).addScaledVector(direction, t);
+    }
+    intersectsLine(line) {
+        // Note: this tests if a line intersects the plane, not whether it (or its end-points) are coplanar with it.
+        const startSign = this.distanceToPoint(line.start);
+        const endSign = this.distanceToPoint(line.end);
+        return (startSign < 0 && endSign > 0) || (endSign < 0 && startSign > 0);
+    }
+    intersectsBox(box) {
+        return box.intersectsPlane(this);
+    }
+    intersectsSphere(sphere) {
+        return sphere.intersectsPlane(this);
+    }
+    coplanarPoint(target) {
+        return target.copy(this.normal).multiplyScalar(-this.constant);
+    }
+    applyMatrix4(matrix, optionalNormalMatrix) {
+        const normalMatrix = optionalNormalMatrix || _normalMatrix.getNormalMatrix(matrix);
+        const referencePoint = this.coplanarPoint(_vector1).applyMatrix4(matrix);
+        const normal = this.normal.applyMatrix3(normalMatrix).normalize();
+        this.constant = -referencePoint.dot(normal);
+        return this;
+    }
+    translate(offset) {
+        this.constant -= offset.dot(this.normal);
+        return this;
+    }
+    equals(plane) {
+        return plane.normal.equals(this.normal) && (plane.constant === this.constant);
+    }
+    clone() {
+        return new Plane().copy(this);
+    }
+}
+
 
 /***/ }),
 
@@ -6255,6 +7021,151 @@ class Quaternion {
     }
 }
 
+
+
+/***/ }),
+
+/***/ "./src/math/Sphere.ts":
+/*!****************************!*\
+  !*** ./src/math/Sphere.ts ***!
+  \****************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Sphere: () => (/* binding */ Sphere)
+/* harmony export */ });
+/* harmony import */ var _Box3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Box3 */ "./src/math/Box3.ts");
+/* harmony import */ var _Vector3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Vector3 */ "./src/math/Vector3.ts");
+
+
+const _box = /*@__PURE__*/ new _Box3__WEBPACK_IMPORTED_MODULE_0__.Box3();
+const _v1 = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+const _v2 = /*@__PURE__*/ new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+class Sphere {
+    constructor(center = new _Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3(), radius = -1) {
+        this.center = center;
+        this.radius = radius;
+    }
+    set(center, radius) {
+        this.center.copy(center);
+        this.radius = radius;
+        return this;
+    }
+    setFromPoints(points, optionalCenter) {
+        const center = this.center;
+        if (optionalCenter !== undefined) {
+            center.copy(optionalCenter);
+        }
+        else {
+            _box.setFromPoints(points).getCenter(center);
+        }
+        let maxRadiusSq = 0;
+        for (let i = 0, il = points.length; i < il; i++) {
+            maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(points[i]));
+        }
+        this.radius = Math.sqrt(maxRadiusSq);
+        return this;
+    }
+    copy(sphere) {
+        this.center.copy(sphere.center);
+        this.radius = sphere.radius;
+        return this;
+    }
+    isEmpty() {
+        return (this.radius < 0);
+    }
+    makeEmpty() {
+        this.center.set(0, 0, 0);
+        this.radius = -1;
+        return this;
+    }
+    containsPoint(point) {
+        return (point.distanceToSquared(this.center) <= (this.radius * this.radius));
+    }
+    distanceToPoint(point) {
+        return (point.distanceTo(this.center) - this.radius);
+    }
+    intersectsSphere(sphere) {
+        const radiusSum = this.radius + sphere.radius;
+        return sphere.center.distanceToSquared(this.center) <= (radiusSum * radiusSum);
+    }
+    intersectsBox(box) {
+        return box.intersectsSphere(this);
+    }
+    intersectsPlane(plane) {
+        return Math.abs(plane.distanceToPoint(this.center)) <= this.radius;
+    }
+    clampPoint(point, target) {
+        const deltaLengthSq = this.center.distanceToSquared(point);
+        target.copy(point);
+        if (deltaLengthSq > (this.radius * this.radius)) {
+            target.sub(this.center).normalize();
+            target.multiplyScalar(this.radius).add(this.center);
+        }
+        return target;
+    }
+    getBoundingBox(target) {
+        if (this.isEmpty()) {
+            // Empty sphere produces empty bounding box
+            target.makeEmpty();
+            return target;
+        }
+        target.set(this.center, this.center);
+        target.expandByScalar(this.radius);
+        return target;
+    }
+    applyMatrix4(matrix) {
+        this.center.applyMatrix4(matrix);
+        this.radius = this.radius * matrix.getMaxScaleOnAxis();
+        return this;
+    }
+    translate(offset) {
+        this.center.add(offset);
+        return this;
+    }
+    expandByPoint(point) {
+        if (this.isEmpty()) {
+            this.center.copy(point);
+            this.radius = 0;
+            return this;
+        }
+        _v1.subVectors(point, this.center);
+        const lengthSq = _v1.lengthSq();
+        if (lengthSq > (this.radius * this.radius)) {
+            // calculate the minimal sphere
+            const length = Math.sqrt(lengthSq);
+            const delta = (length - this.radius) * 0.5;
+            this.center.addScaledVector(_v1, delta / length);
+            this.radius += delta;
+        }
+        return this;
+    }
+    union(sphere) {
+        if (sphere.isEmpty()) {
+            return this;
+        }
+        if (this.isEmpty()) {
+            this.copy(sphere);
+            return this;
+        }
+        if (this.center.equals(sphere.center) === true) {
+            this.radius = Math.max(this.radius, sphere.radius);
+        }
+        else {
+            _v2.subVectors(sphere.center, this.center).setLength(sphere.radius);
+            this.expandByPoint(_v1.copy(sphere.center).add(_v2));
+            this.expandByPoint(_v1.copy(sphere.center).sub(_v2));
+        }
+        return this;
+    }
+    equals(sphere) {
+        return sphere.center.equals(this.center) && (sphere.radius === this.radius);
+    }
+    clone() {
+        return new Sphere().copy(this);
+    }
+}
 
 
 /***/ }),
@@ -7018,12 +7929,12 @@ class Vector3 {
         array[offset + 2] = this.z;
         return array;
     }
-    // fromBufferAttribute( attribute, index ) {
-    // 	this.x = attribute.getX( index );
-    // 	this.y = attribute.getY( index );
-    // 	this.z = attribute.getZ( index );
-    // 	return this;
-    // }
+    fromBufferAttribute(attribute, index) {
+        this.x = attribute.getX(index);
+        this.y = attribute.getY(index);
+        this.z = attribute.getZ(index);
+        return this;
+    }
     random() {
         this.x = Math.random();
         this.y = Math.random();
@@ -7049,6 +7960,421 @@ class Vector3 {
 const _vector = /*@__PURE__*/ new Vector3();
 const _quaternion = /*@__PURE__*/ new _Quaternion__WEBPACK_IMPORTED_MODULE_1__.Quaternion();
 
+
+
+/***/ }),
+
+/***/ "./src/math/Vector4.ts":
+/*!*****************************!*\
+  !*** ./src/math/Vector4.ts ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Vector4: () => (/* binding */ Vector4)
+/* harmony export */ });
+class Vector4 {
+    constructor(x = 0, y = 0, z = 0, w = 1) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.w = w;
+    }
+    get width() {
+        return this.z;
+    }
+    set width(value) {
+        this.z = value;
+    }
+    get height() {
+        return this.w;
+    }
+    set height(value) {
+        this.w = value;
+    }
+    set(x, y, z, w) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.w = w;
+        return this;
+    }
+    setScalar(scalar) {
+        this.x = scalar;
+        this.y = scalar;
+        this.z = scalar;
+        this.w = scalar;
+        return this;
+    }
+    setX(x) {
+        this.x = x;
+        return this;
+    }
+    setY(y) {
+        this.y = y;
+        return this;
+    }
+    setZ(z) {
+        this.z = z;
+        return this;
+    }
+    setW(w) {
+        this.w = w;
+        return this;
+    }
+    setComponent(index, value) {
+        switch (index) {
+            case 0:
+                this.x = value;
+                break;
+            case 1:
+                this.y = value;
+                break;
+            case 2:
+                this.z = value;
+                break;
+            case 3:
+                this.w = value;
+                break;
+            default: throw new Error('index is out of range: ' + index);
+        }
+        return this;
+    }
+    getComponent(index) {
+        switch (index) {
+            case 0: return this.x;
+            case 1: return this.y;
+            case 2: return this.z;
+            case 3: return this.w;
+            default: throw new Error('index is out of range: ' + index);
+        }
+    }
+    clone() {
+        return new Vector4(this.x, this.y, this.z, this.w);
+    }
+    copy(v) {
+        this.x = v.x;
+        this.y = v.y;
+        this.z = v.z;
+        this.w = (v.w !== undefined) ? v.w : 1;
+        return this;
+    }
+    add(v) {
+        this.x += v.x;
+        this.y += v.y;
+        this.z += v.z;
+        this.w += v.w;
+        return this;
+    }
+    addScalar(s) {
+        this.x += s;
+        this.y += s;
+        this.z += s;
+        this.w += s;
+        return this;
+    }
+    addVectors(a, b) {
+        this.x = a.x + b.x;
+        this.y = a.y + b.y;
+        this.z = a.z + b.z;
+        this.w = a.w + b.w;
+        return this;
+    }
+    addScaledVector(v, s) {
+        this.x += v.x * s;
+        this.y += v.y * s;
+        this.z += v.z * s;
+        this.w += v.w * s;
+        return this;
+    }
+    sub(v) {
+        this.x -= v.x;
+        this.y -= v.y;
+        this.z -= v.z;
+        this.w -= v.w;
+        return this;
+    }
+    subScalar(s) {
+        this.x -= s;
+        this.y -= s;
+        this.z -= s;
+        this.w -= s;
+        return this;
+    }
+    subVectors(a, b) {
+        this.x = a.x - b.x;
+        this.y = a.y - b.y;
+        this.z = a.z - b.z;
+        this.w = a.w - b.w;
+        return this;
+    }
+    multiply(v) {
+        this.x *= v.x;
+        this.y *= v.y;
+        this.z *= v.z;
+        this.w *= v.w;
+        return this;
+    }
+    multiplyScalar(scalar) {
+        this.x *= scalar;
+        this.y *= scalar;
+        this.z *= scalar;
+        this.w *= scalar;
+        return this;
+    }
+    applyMatrix4(m) {
+        const x = this.x, y = this.y, z = this.z, w = this.w;
+        const e = m.elements;
+        this.x = e[0] * x + e[4] * y + e[8] * z + e[12] * w;
+        this.y = e[1] * x + e[5] * y + e[9] * z + e[13] * w;
+        this.z = e[2] * x + e[6] * y + e[10] * z + e[14] * w;
+        this.w = e[3] * x + e[7] * y + e[11] * z + e[15] * w;
+        return this;
+    }
+    divideScalar(scalar) {
+        return this.multiplyScalar(1 / scalar);
+    }
+    setAxisAngleFromQuaternion(q) {
+        // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/index.htm
+        // q is assumed to be normalized
+        this.w = 2 * Math.acos(q.w);
+        const s = Math.sqrt(1 - q.w * q.w);
+        if (s < 0.0001) {
+            this.x = 1;
+            this.y = 0;
+            this.z = 0;
+        }
+        else {
+            this.x = q.x / s;
+            this.y = q.y / s;
+            this.z = q.z / s;
+        }
+        return this;
+    }
+    setAxisAngleFromRotationMatrix(m) {
+        // http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToAngle/index.htm
+        // assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
+        let angle, x, y, z; // variables for result
+        const epsilon = 0.01, // margin to allow for rounding errors
+        epsilon2 = 0.1, // margin to distinguish between 0 and 180 degrees
+        te = m.elements, m11 = te[0], m12 = te[4], m13 = te[8], m21 = te[1], m22 = te[5], m23 = te[9], m31 = te[2], m32 = te[6], m33 = te[10];
+        if ((Math.abs(m12 - m21) < epsilon) &&
+            (Math.abs(m13 - m31) < epsilon) &&
+            (Math.abs(m23 - m32) < epsilon)) {
+            // singularity found
+            // first check for identity matrix which must have +1 for all terms
+            // in leading diagonal and zero in other terms
+            if ((Math.abs(m12 + m21) < epsilon2) &&
+                (Math.abs(m13 + m31) < epsilon2) &&
+                (Math.abs(m23 + m32) < epsilon2) &&
+                (Math.abs(m11 + m22 + m33 - 3) < epsilon2)) {
+                // this singularity is identity matrix so angle = 0
+                this.set(1, 0, 0, 0);
+                return this; // zero angle, arbitrary axis
+            }
+            // otherwise this singularity is angle = 180
+            angle = Math.PI;
+            const xx = (m11 + 1) / 2;
+            const yy = (m22 + 1) / 2;
+            const zz = (m33 + 1) / 2;
+            const xy = (m12 + m21) / 4;
+            const xz = (m13 + m31) / 4;
+            const yz = (m23 + m32) / 4;
+            if ((xx > yy) && (xx > zz)) {
+                // m11 is the largest diagonal term
+                if (xx < epsilon) {
+                    x = 0;
+                    y = 0.707106781;
+                    z = 0.707106781;
+                }
+                else {
+                    x = Math.sqrt(xx);
+                    y = xy / x;
+                    z = xz / x;
+                }
+            }
+            else if (yy > zz) {
+                // m22 is the largest diagonal term
+                if (yy < epsilon) {
+                    x = 0.707106781;
+                    y = 0;
+                    z = 0.707106781;
+                }
+                else {
+                    y = Math.sqrt(yy);
+                    x = xy / y;
+                    z = yz / y;
+                }
+            }
+            else {
+                // m33 is the largest diagonal term so base result on this
+                if (zz < epsilon) {
+                    x = 0.707106781;
+                    y = 0.707106781;
+                    z = 0;
+                }
+                else {
+                    z = Math.sqrt(zz);
+                    x = xz / z;
+                    y = yz / z;
+                }
+            }
+            this.set(x, y, z, angle);
+            return this; // return 180 deg rotation
+        }
+        // as we have reached here there are no singularities so we can handle normally
+        let s = Math.sqrt((m32 - m23) * (m32 - m23) +
+            (m13 - m31) * (m13 - m31) +
+            (m21 - m12) * (m21 - m12)); // used to normalize
+        if (Math.abs(s) < 0.001)
+            s = 1;
+        // prevent divide by zero, should not happen if matrix is orthogonal and should be
+        // caught by singularity test above, but I've left it in just in case
+        this.x = (m32 - m23) / s;
+        this.y = (m13 - m31) / s;
+        this.z = (m21 - m12) / s;
+        this.w = Math.acos((m11 + m22 + m33 - 1) / 2);
+        return this;
+    }
+    min(v) {
+        this.x = Math.min(this.x, v.x);
+        this.y = Math.min(this.y, v.y);
+        this.z = Math.min(this.z, v.z);
+        this.w = Math.min(this.w, v.w);
+        return this;
+    }
+    max(v) {
+        this.x = Math.max(this.x, v.x);
+        this.y = Math.max(this.y, v.y);
+        this.z = Math.max(this.z, v.z);
+        this.w = Math.max(this.w, v.w);
+        return this;
+    }
+    clamp(min, max) {
+        // assumes min < max, componentwise
+        this.x = Math.max(min.x, Math.min(max.x, this.x));
+        this.y = Math.max(min.y, Math.min(max.y, this.y));
+        this.z = Math.max(min.z, Math.min(max.z, this.z));
+        this.w = Math.max(min.w, Math.min(max.w, this.w));
+        return this;
+    }
+    clampScalar(minVal, maxVal) {
+        this.x = Math.max(minVal, Math.min(maxVal, this.x));
+        this.y = Math.max(minVal, Math.min(maxVal, this.y));
+        this.z = Math.max(minVal, Math.min(maxVal, this.z));
+        this.w = Math.max(minVal, Math.min(maxVal, this.w));
+        return this;
+    }
+    clampLength(min, max) {
+        const length = this.length();
+        return this.divideScalar(length || 1).multiplyScalar(Math.max(min, Math.min(max, length)));
+    }
+    floor() {
+        this.x = Math.floor(this.x);
+        this.y = Math.floor(this.y);
+        this.z = Math.floor(this.z);
+        this.w = Math.floor(this.w);
+        return this;
+    }
+    ceil() {
+        this.x = Math.ceil(this.x);
+        this.y = Math.ceil(this.y);
+        this.z = Math.ceil(this.z);
+        this.w = Math.ceil(this.w);
+        return this;
+    }
+    round() {
+        this.x = Math.round(this.x);
+        this.y = Math.round(this.y);
+        this.z = Math.round(this.z);
+        this.w = Math.round(this.w);
+        return this;
+    }
+    roundToZero() {
+        this.x = (this.x < 0) ? Math.ceil(this.x) : Math.floor(this.x);
+        this.y = (this.y < 0) ? Math.ceil(this.y) : Math.floor(this.y);
+        this.z = (this.z < 0) ? Math.ceil(this.z) : Math.floor(this.z);
+        this.w = (this.w < 0) ? Math.ceil(this.w) : Math.floor(this.w);
+        return this;
+    }
+    negate() {
+        this.x = -this.x;
+        this.y = -this.y;
+        this.z = -this.z;
+        this.w = -this.w;
+        return this;
+    }
+    dot(v) {
+        return this.x * v.x + this.y * v.y + this.z * v.z + this.w * v.w;
+    }
+    lengthSq() {
+        return this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w;
+    }
+    length() {
+        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w);
+    }
+    manhattanLength() {
+        return Math.abs(this.x) + Math.abs(this.y) + Math.abs(this.z) + Math.abs(this.w);
+    }
+    normalize() {
+        return this.divideScalar(this.length() || 1);
+    }
+    setLength(length) {
+        return this.normalize().multiplyScalar(length);
+    }
+    lerp(v, alpha) {
+        this.x += (v.x - this.x) * alpha;
+        this.y += (v.y - this.y) * alpha;
+        this.z += (v.z - this.z) * alpha;
+        this.w += (v.w - this.w) * alpha;
+        return this;
+    }
+    lerpVectors(v1, v2, alpha) {
+        this.x = v1.x + (v2.x - v1.x) * alpha;
+        this.y = v1.y + (v2.y - v1.y) * alpha;
+        this.z = v1.z + (v2.z - v1.z) * alpha;
+        this.w = v1.w + (v2.w - v1.w) * alpha;
+        return this;
+    }
+    equals(v) {
+        return ((v.x === this.x) && (v.y === this.y) && (v.z === this.z) && (v.w === this.w));
+    }
+    fromArray(array, offset = 0) {
+        this.x = array[offset];
+        this.y = array[offset + 1];
+        this.z = array[offset + 2];
+        this.w = array[offset + 3];
+        return this;
+    }
+    toArray(array = new Float32Array(4), offset = 0) {
+        array[offset] = this.x;
+        array[offset + 1] = this.y;
+        array[offset + 2] = this.z;
+        array[offset + 3] = this.w;
+        return array;
+    }
+    fromBufferAttribute(attribute, index) {
+        this.x = attribute.getX(index);
+        this.y = attribute.getY(index);
+        this.z = attribute.getZ(index);
+        this.w = attribute.getW(index);
+        return this;
+    }
+    random() {
+        this.x = Math.random();
+        this.y = Math.random();
+        this.z = Math.random();
+        this.w = Math.random();
+        return this;
+    }
+    *[Symbol.iterator]() {
+        yield this.x;
+        yield this.y;
+        yield this.z;
+        yield this.w;
+    }
+}
 
 
 /***/ }),
