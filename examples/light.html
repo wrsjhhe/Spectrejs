@@ -31,6 +31,7 @@
         let scene;
         let mesh;
         let camera;
+        let directionalLight;
         async function init() {
             container = document.getElementById("container");
             renderer = new Spectre.WebGPURenderer({
@@ -52,21 +53,23 @@
             const geometry = new Spectre.SphereGeometry(100);
             const mesh = new Spectre.Mesh(geometry, material);
 
-            const directionalLight1 = new Spectre.DirectionalLight(new Spectre.Color(1,1,0));
-            scene.add(directionalLight1);
-            setTimeout(() => {
-                const directionalLight2 = new Spectre.DirectionalLight(new Spectre.Color(1,0,0));
-                directionalLight2.direction = new Spectre.Vector3(0,-1,0); 
-                scene.add(directionalLight2);
-            }, 2000);
+            directionalLight = new Spectre.DirectionalLight(new Spectre.Color(1,1,0));
+            scene.add(directionalLight);
             
-
             scene.add(mesh);
         }
 
+        let k = 0.01;
         function frame() {
             renderer.render(scene, camera);
             render();
+
+    
+            directionalLight.direction.x += k;
+            if(directionalLight.direction.x >= 1 || directionalLight.direction.x <= -1){
+                k = -k;
+            }
+            directionalLight.needsUpdate = true;
         }
 
         function render() {

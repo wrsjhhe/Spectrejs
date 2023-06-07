@@ -54,11 +54,14 @@ export class Scene extends Object3D {
 
     public update(camrea:Camera):boolean{
         this._lastSetCamera = camrea;
+
         if(this.needsRecreateBind){
             this._createLayout();
             this._createBindGroup();
             this.needsRecreateBind = false;
             return true;
+        }else{
+            this._updateLightsUniform();
         }
         return false;
     }
@@ -116,6 +119,29 @@ export class Scene extends Object3D {
             });
         }
     }
+
+    private _updateLightsUniform(){
+        const dirLightsBuffer = new Float32Array(8*this._directionalLights.size);
+        let offset = 0;
+        let needsUpdate = false;
+        for(const dirLight of this._directionalLights.values()){  
+            if(dirLight.needsUpdate)
+                needsUpdate = true;
+
+            dirLightsBuffer.set(dirLight.color.toArray(),offset);
+            offset+=4;
+
+            const normal = dirLight.direction;
+            dirLightsBuffer.set(normal.toArray(),offset);
+            offset+=4;
+        }
+
+        if(needsUpdate){
+            this._directionalLightBuffer.data = dirLightsBuffer;
+            this._directionalLightBuffer.update();
+        }
+    }
+
 
     private _createLayout(){
         this._bindValues.clear();

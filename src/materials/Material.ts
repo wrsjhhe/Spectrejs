@@ -54,8 +54,6 @@ export abstract class Material {
         }
     }
 
-    public setLights(lights: IterableIterator<Light>) {}
-
     public getBindLayout() {
         const entriesLayout: Array<GPUBindGroupLayoutEntry> = [];
         for (const bindOption of this._shaderOptions.bindValues.values()) {
@@ -109,7 +107,7 @@ export abstract class Material {
                 const textureUnform = this.uniforms.get(bindOption.name) as BindTexture;
                 entriesGroup.push({
                     binding: bindOption.index,
-                    resource: textureUnform.textureBuffer.createView(),
+                    resource: textureUnform.texutureView,
                 });
             }
         }

@@ -6,6 +6,7 @@ import { BindValue } from "./BindValue";
 export class BindTexture extends BindValue {
     private _texture: Texture;
     private _textureBuffer: GPUTexture;
+    private _texutureView : GPUTextureView;
 
     public changed = false;
 
@@ -25,6 +26,7 @@ export class BindTexture extends BindValue {
                 { texture: this._textureBuffer },
                 [imageBitmap.width, imageBitmap.height]
             );
+            this._texutureView = this._textureBuffer.createView();
         });
         this._needsUpdate = false;
     }
@@ -46,6 +48,7 @@ export class BindTexture extends BindValue {
                     { texture: this._textureBuffer },
                     [imageBitmap.width, imageBitmap.height]
                 );
+                this._texutureView = this._textureBuffer.createView();
                 this.changed = true;
             });
 
@@ -74,7 +77,7 @@ export class BindTexture extends BindValue {
         return BindType.sampler;
     }
 
-    public get textureBuffer() {
-        return this._textureBuffer;
+    public get texutureView() {
+        return this._texutureView;
     }
 }

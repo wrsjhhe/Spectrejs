@@ -28,15 +28,6 @@ export class MeshPhongMaterial extends Material{
         this._setBindValue("shininess","f32",BindType.buffer, GPUShaderStage.FRAGMENT);
     }
 
-    public override setLights(lights:IterableIterator<Light>){
-        for(const light of lights){
-            if(DirectionalLight.Is(light)){
-                const dirLight = light as DirectionalLight;
-                dirLight.uniform;
-            }
-        }
-    }
-
     public override get applyLight(){
         return false;
     }

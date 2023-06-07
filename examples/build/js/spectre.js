@@ -2430,6 +2430,9 @@ class Scene extends _Object3D__WEBPACK_IMPORTED_MODULE_4__.Object3D {
             this.needsRecreateBind = false;
             return true;
         }
+        else {
+            this._updateLightsUniform();
+        }
         return false;
     }
     getBindLayout() {
@@ -2479,6 +2482,24 @@ class Scene extends _Object3D__WEBPACK_IMPORTED_MODULE_4__.Object3D {
                     buffer: this._directionalLightBuffer.buffer,
                 },
             });
+        }
+    }
+    _updateLightsUniform() {
+        const dirLightsBuffer = new Float32Array(8 * this._directionalLights.size);
+        let offset = 0;
+        let needsUpdate = false;
+        for (const dirLight of this._directionalLights.values()) {
+            if (dirLight.needsUpdate)
+                needsUpdate = true;
+            dirLightsBuffer.set(dirLight.color.toArray(), offset);
+            offset += 4;
+            const normal = dirLight.direction;
+            dirLightsBuffer.set(normal.toArray(), offset);
+            offset += 4;
+        }
+        if (needsUpdate) {
+            this._directionalLightBuffer.data = dirLightsBuffer;
+            this._directionalLightBuffer.update();
         }
     }
     _createLayout() {
@@ -2695,6 +2716,7 @@ class BindTexture extends _BindValue__WEBPACK_IMPORTED_MODULE_2__.BindValue {
                 usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
             });
             _ResourceManagers__WEBPACK_IMPORTED_MODULE_1__.Context.activeDevice.queue.copyExternalImageToTexture({ source: imageBitmap }, { texture: this._textureBuffer }, [imageBitmap.width, imageBitmap.height]);
+            this._texutureView = this._textureBuffer.createView();
         });
         this._needsUpdate = false;
     }
@@ -2710,6 +2732,7 @@ class BindTexture extends _BindValue__WEBPACK_IMPORTED_MODULE_2__.BindValue {
                     usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
                 });
                 _ResourceManagers__WEBPACK_IMPORTED_MODULE_1__.Context.activeDevice.queue.copyExternalImageToTexture({ source: imageBitmap }, { texture: this._textureBuffer }, [imageBitmap.width, imageBitmap.height]);
+                this._texutureView = this._textureBuffer.createView();
                 this.changed = true;
             });
             this._needsUpdate = false;
@@ -2732,8 +2755,8 @@ class BindTexture extends _BindValue__WEBPACK_IMPORTED_MODULE_2__.BindValue {
     get type() {
         return _Defines__WEBPACK_IMPORTED_MODULE_0__.BindType.sampler;
     }
-    get textureBuffer() {
-        return this._textureBuffer;
+    get texutureView() {
+        return this._texutureView;
     }
 }
 
@@ -3065,15 +3088,14 @@ class DirectionalLight extends _Light__WEBPACK_IMPORTED_MODULE_0__.Light {
     constructor(color, intensity = 1) {
         super(color, intensity);
         this._direction = new _spectre__WEBPACK_IMPORTED_MODULE_2__.Vector3();
+        this.needsUpdate = false;
         this.updateMatrix();
         //this.shadow = new DirectionalLightShadow();
         this._direction.copy(_core_Object3D__WEBPACK_IMPORTED_MODULE_1__.Object3D.DEFAULT_UP);
     }
-    get uniform() {
-        return this._uniform;
-    }
     set direction(v) {
         this._direction.copy(v);
+        this.needsUpdate = true;
     }
     get direction() {
         return this._direction;
@@ -3627,7 +3649,6 @@ class Material {
             }
         }
     }
-    setLights(lights) { }
     getBindLayout() {
         const entriesLayout = [];
         for (const bindOption of this._shaderOptions.bindValues.values()) {
@@ -3682,7 +3703,7 @@ class Material {
                 const textureUnform = this.uniforms.get(bindOption.name);
                 entriesGroup.push({
                     binding: bindOption.index,
-                    resource: textureUnform.textureBuffer.createView(),
+                    resource: textureUnform.texutureView,
                 });
             }
         }
@@ -3856,24 +3877,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Constants */ "./src/Constants.ts");
 /* harmony import */ var _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/binds/BindBuffer */ "./src/core/binds/BindBuffer.ts");
 /* harmony import */ var _core_Defines__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../core/Defines */ "./src/core/Defines.ts");
-/* harmony import */ var _lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../lights/DirectionalLight */ "./src/lights/DirectionalLight.ts");
-/* harmony import */ var _math_Color__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../math/Color */ "./src/math/Color.ts");
-/* harmony import */ var _shaders_MeshPhongShader__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../shaders/MeshPhongShader */ "./src/shaders/MeshPhongShader.ts");
-/* harmony import */ var _Material__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./Material */ "./src/materials/Material.ts");
+/* harmony import */ var _math_Color__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../math/Color */ "./src/math/Color.ts");
+/* harmony import */ var _shaders_MeshPhongShader__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../shaders/MeshPhongShader */ "./src/shaders/MeshPhongShader.ts");
+/* harmony import */ var _Material__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./Material */ "./src/materials/Material.ts");
 
 
 
 
 
 
-
-class MeshPhongMaterial extends _Material__WEBPACK_IMPORTED_MODULE_6__.Material {
+class MeshPhongMaterial extends _Material__WEBPACK_IMPORTED_MODULE_5__.Material {
     constructor() {
         super();
-        this._specular = new _math_Color__WEBPACK_IMPORTED_MODULE_4__.Color(0x111111); //高光反射
-        this._emissive = new _math_Color__WEBPACK_IMPORTED_MODULE_4__.Color(0x000000); //自发光
+        this._specular = new _math_Color__WEBPACK_IMPORTED_MODULE_3__.Color(0x111111); //高光反射
+        this._emissive = new _math_Color__WEBPACK_IMPORTED_MODULE_3__.Color(0x000000); //自发光
         this._shininess = 30;
-        this._shader = new _shaders_MeshPhongShader__WEBPACK_IMPORTED_MODULE_5__.MeshPhongShader(this);
+        this._shader = new _shaders_MeshPhongShader__WEBPACK_IMPORTED_MODULE_4__.MeshPhongShader(this);
         this._setAttributeValue("normal", "vec3<f32>", _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUVertexFormat.Float32x3, 4 * 3);
         this._uniforms.set("specular", new _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__.BindBuffer("specular", this._specular.toArray()));
         this._setBindValue("specular", "vec3<f32>", _core_Defines__WEBPACK_IMPORTED_MODULE_2__.BindType.buffer, GPUShaderStage.FRAGMENT);
@@ -3881,14 +3900,6 @@ class MeshPhongMaterial extends _Material__WEBPACK_IMPORTED_MODULE_6__.Material 
         this._setBindValue("emissive", "vec3<f32>", _core_Defines__WEBPACK_IMPORTED_MODULE_2__.BindType.buffer, GPUShaderStage.FRAGMENT);
         this._uniforms.set("shininess", new _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__.BindBuffer("shininess", new Float32Array([this._shininess])));
         this._setBindValue("shininess", "f32", _core_Defines__WEBPACK_IMPORTED_MODULE_2__.BindType.buffer, GPUShaderStage.FRAGMENT);
-    }
-    setLights(lights) {
-        for (const light of lights) {
-            if (_lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_3__.DirectionalLight.Is(light)) {
-                const dirLight = light;
-                dirLight.uniform;
-            }
-        }
     }
     get applyLight() {
         return false;

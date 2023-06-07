@@ -15,9 +15,9 @@ export class DirectionalLight extends Light {
 		return object instanceof DirectionalLight;
 	}
 
-	private _uniform: BindBuffer;
-
 	private _direction = new Vector3();
+
+	public needsUpdate = false;
 
 	constructor( color:Color, intensity = 1 ) {
 
@@ -30,12 +30,9 @@ export class DirectionalLight extends Light {
 		this._direction.copy( Object3D.DEFAULT_UP);
 	}
 
-	public get uniform(){
-		return this._uniform;
-	}
-
 	public set direction(v:Vector3){
 		this._direction.copy(v);
+		this.needsUpdate = true;
 	}
 
 	public get direction(){
