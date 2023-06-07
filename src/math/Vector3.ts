@@ -1,3 +1,4 @@
+import { BufferAttribute } from '../spectre';
 import { Color } from './Color';
 import { Euler } from './Euler';
 import * as MathUtils from './MathUtils';
@@ -679,15 +680,15 @@ class Vector3 {
 
 	}
 
-	// fromBufferAttribute( attribute, index ) {
+	fromBufferAttribute( attribute:BufferAttribute, index:number ) {
 
-	// 	this.x = attribute.getX( index );
-	// 	this.y = attribute.getY( index );
-	// 	this.z = attribute.getZ( index );
+		this.x = attribute.getX( index );
+		this.y = attribute.getY( index );
+		this.z = attribute.getZ( index );
 
-	// 	return this;
+		return this;
 
-	// }
+	}
 
 	random() {
 

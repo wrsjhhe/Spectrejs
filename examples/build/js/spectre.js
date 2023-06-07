@@ -387,7 +387,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _core_Object3D__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../core/Object3D */ "./src/core/Object3D.ts");
 /* harmony import */ var _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/binds/BindBuffer */ "./src/core/binds/BindBuffer.ts");
 /* harmony import */ var _math_Matrix4__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../math/Matrix4 */ "./src/math/Matrix4.ts");
-/* harmony import */ var _utils_TMPValues__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils/TMPValues */ "./src/utils/TMPValues.ts");
+/* harmony import */ var _utils_TempValues__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils/TempValues */ "./src/utils/TempValues.ts");
 
 
 
@@ -450,7 +450,7 @@ class Camera extends _core_Object3D__WEBPACK_IMPORTED_MODULE_0__.Object3D {
         uniform.update();
     }
     _initInitialUniform() {
-        const matrixBuffer = _utils_TMPValues__WEBPACK_IMPORTED_MODULE_3__.IdentifyMatrix4.toArray();
+        const matrixBuffer = _utils_TempValues__WEBPACK_IMPORTED_MODULE_3__.IdentifyMatrix4.toArray();
         const projectionUniform = new _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__.BindBuffer(u_projection, matrixBuffer);
         this._uniforms.set(u_projection, projectionUniform);
         const viewUniform = new _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__.BindBuffer(u_view, matrixBuffer);
@@ -2249,7 +2249,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _Object3D__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Object3D */ "./src/core/Object3D.ts");
 /* harmony import */ var _binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./binds/BindBuffer */ "./src/core/binds/BindBuffer.ts");
-/* harmony import */ var _utils_TMPValues__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/TMPValues */ "./src/utils/TMPValues.ts");
+/* harmony import */ var _utils_TempValues__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/TempValues */ "./src/utils/TempValues.ts");
 
 
 
@@ -2283,7 +2283,7 @@ class RenderableObject extends _Object3D__WEBPACK_IMPORTED_MODULE_0__.Object3D {
         }
     }
     _initInitialUniform() {
-        const tranformUniform = new _binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__.BindBuffer(u_modelTranform, _utils_TMPValues__WEBPACK_IMPORTED_MODULE_2__.IdentifyMatrix4.toArray());
+        const tranformUniform = new _binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__.BindBuffer(u_modelTranform, _utils_TempValues__WEBPACK_IMPORTED_MODULE_2__.IdentifyMatrix4.toArray());
         this._uniforms.set(u_modelTranform, tranformUniform);
     }
     _updateUniformValue() {
@@ -2489,8 +2489,10 @@ class Scene extends _Object3D__WEBPACK_IMPORTED_MODULE_4__.Object3D {
         let offset = 0;
         let needsUpdate = false;
         for (const dirLight of this._directionalLights.values()) {
-            if (dirLight.needsUpdate)
+            if (dirLight.needsUpdate) {
                 needsUpdate = true;
+                dirLight.update();
+            }
             dirLightsBuffer.set(dirLight.color.toArray(), offset);
             offset += 4;
             const normal = dirLight.direction;
@@ -3075,6 +3077,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Light__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Light */ "./src/lights/Light.ts");
 /* harmony import */ var _core_Object3D__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/Object3D */ "./src/core/Object3D.ts");
 /* harmony import */ var _spectre__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../spectre */ "./src/spectre.ts");
+/* harmony import */ var _DirectionalLightShadow__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./DirectionalLightShadow */ "./src/lights/DirectionalLightShadow.ts");
+/* harmony import */ var _utils_TempValues__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../utils/TempValues */ "./src/utils/TempValues.ts");
+
+
 
 
 
@@ -3087,15 +3093,23 @@ class DirectionalLight extends _Light__WEBPACK_IMPORTED_MODULE_0__.Light {
     }
     constructor(color, intensity = 1) {
         super(color, intensity);
+        this._target = new _core_Object3D__WEBPACK_IMPORTED_MODULE_1__.Object3D();
+        this._shadow = new _DirectionalLightShadow__WEBPACK_IMPORTED_MODULE_3__.DirectionalLightShadow();
         this._direction = new _spectre__WEBPACK_IMPORTED_MODULE_2__.Vector3();
-        this.needsUpdate = false;
-        this.updateMatrix();
-        //this.shadow = new DirectionalLightShadow();
-        this._direction.copy(_core_Object3D__WEBPACK_IMPORTED_MODULE_1__.Object3D.DEFAULT_UP);
-    }
-    set direction(v) {
-        this._direction.copy(v);
         this.needsUpdate = true;
+        this.matrixAutoUpdate = true;
+        this.position.copy(_core_Object3D__WEBPACK_IMPORTED_MODULE_1__.Object3D.DEFAULT_UP);
+        this.updateMatrix();
+        this.update();
+    }
+    update() {
+        if (this.needsUpdate) {
+            this.updateMatrixWorld();
+            _utils_TempValues__WEBPACK_IMPORTED_MODULE_4__.Vector0.setFromMatrixPosition(this._target.matrixWorld);
+            _utils_TempValues__WEBPACK_IMPORTED_MODULE_4__.Vector1.setFromMatrixPosition(this.matrixWorld);
+            this._direction.subVectors(_utils_TempValues__WEBPACK_IMPORTED_MODULE_4__.Vector1, _utils_TempValues__WEBPACK_IMPORTED_MODULE_4__.Vector0);
+        }
+        this.needsUpdate = false;
     }
     get direction() {
         return this._direction;
@@ -3109,6 +3123,22 @@ class DirectionalLight extends _Light__WEBPACK_IMPORTED_MODULE_0__.Light {
         //this.shadow = source.shadow.clone();
         return this;
     }
+}
+
+
+/***/ }),
+
+/***/ "./src/lights/DirectionalLightShadow.ts":
+/*!**********************************************!*\
+  !*** ./src/lights/DirectionalLightShadow.ts ***!
+  \**********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   DirectionalLightShadow: () => (/* binding */ DirectionalLightShadow)
+/* harmony export */ });
+class DirectionalLightShadow {
 }
 
 
@@ -7677,7 +7707,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   BufferAttribute: () => (/* reexport safe */ _core_BufferAttribute__WEBPACK_IMPORTED_MODULE_3__.BufferAttribute),
 /* harmony export */   BufferGeometry: () => (/* reexport safe */ _core_BufferGeometry__WEBPACK_IMPORTED_MODULE_4__.BufferGeometry),
 /* harmony export */   Color: () => (/* reexport safe */ _math_Color__WEBPACK_IMPORTED_MODULE_10__.Color),
-/* harmony export */   ConstantsValues: () => (/* reexport module object */ _utils_TMPValues__WEBPACK_IMPORTED_MODULE_27__),
+/* harmony export */   ConstantsValues: () => (/* reexport module object */ _utils_TempValues__WEBPACK_IMPORTED_MODULE_27__),
 /* harmony export */   DirectionalLight: () => (/* reexport safe */ _lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_20__.DirectionalLight),
 /* harmony export */   Environment: () => (/* reexport module object */ _core_Defines__WEBPACK_IMPORTED_MODULE_1__),
 /* harmony export */   Euler: () => (/* reexport safe */ _math_Euler__WEBPACK_IMPORTED_MODULE_11__.Euler),
@@ -7729,7 +7759,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _loaders_FileLoader__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ./loaders/FileLoader */ "./src/loaders/FileLoader.ts");
 /* harmony import */ var _loaders_ImageLoader__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ./loaders/ImageLoader */ "./src/loaders/ImageLoader.ts");
 /* harmony import */ var _loaders_TextureLoader__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ./loaders/TextureLoader */ "./src/loaders/TextureLoader.ts");
-/* harmony import */ var _utils_TMPValues__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ./utils/TMPValues */ "./src/utils/TMPValues.ts");
+/* harmony import */ var _utils_TempValues__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ./utils/TempValues */ "./src/utils/TempValues.ts");
 
 
 
@@ -7988,16 +8018,17 @@ class CommonUtils {
 
 /***/ }),
 
-/***/ "./src/utils/TMPValues.ts":
-/*!********************************!*\
-  !*** ./src/utils/TMPValues.ts ***!
-  \********************************/
+/***/ "./src/utils/TempValues.ts":
+/*!*********************************!*\
+  !*** ./src/utils/TempValues.ts ***!
+  \*********************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   IdentifyMatrix4: () => (/* binding */ IdentifyMatrix4),
-/* harmony export */   Vector0: () => (/* binding */ Vector0)
+/* harmony export */   Vector0: () => (/* binding */ Vector0),
+/* harmony export */   Vector1: () => (/* binding */ Vector1)
 /* harmony export */ });
 /* harmony import */ var _math_Matrix4__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math/Matrix4 */ "./src/math/Matrix4.ts");
 /* harmony import */ var _math_Vector3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math/Vector3 */ "./src/math/Vector3.ts");
@@ -8005,6 +8036,7 @@ __webpack_require__.r(__webpack_exports__);
 
 const IdentifyMatrix4 = new _math_Matrix4__WEBPACK_IMPORTED_MODULE_0__.Matrix4();
 const Vector0 = new _math_Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
+const Vector1 = new _math_Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
 
 
 /***/ })

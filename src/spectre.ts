@@ -41,4 +41,4 @@ export { FileLoader } from "./loaders/FileLoader";
 export { ImageLoader } from "./loaders/ImageLoader";
 export { TextureLoader } from "./loaders/TextureLoader";
 
-export * as ConstantsValues from "./utils/TMPValues";
+export * as ConstantsValues from "./utils/TempValues";

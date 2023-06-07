@@ -40,6 +40,38 @@ export class BufferAttribute{
         
     }
 
+	public getX( index:number ) {
+
+		const x = this.array[ index * this.itemSize ];
+
+		return x;
+
+	}
+
+    public getY( index:number ) {
+
+		const y = this.array[ index * this.itemSize + 1 ];
+
+		return y;
+
+	}
+
+    public getZ( index:number ) {
+
+		const z = this.array[ index * this.itemSize + 2 ];
+
+		return z;
+
+	}
+
+    public getW( index:number ) {
+
+		const w = this.array[ index * this.itemSize + 3 ];
+
+		return w;
+
+	}
+    
     private _parseFormat(){
         this._itemSize = this._itemSize;
         this._byteLength = this._array.BYTES_PER_ELEMENT;

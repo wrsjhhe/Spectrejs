@@ -1,17 +1,24 @@
+import { Box3 } from "../math/Box3";
 import { MathUtils } from "../math/MathUtils";
+import { Sphere } from "../math/Sphere";
+import { Vector3 } from "../math/Vector3";
 import { BufferAttribute } from "./BufferAttribute";
 import { AttributeShaderItem } from "./Defines";
 import { GPUBufferWrapper } from "./GPUBufferWrapper";
+
+const _box = /*@__PURE__*/ new Box3();
+const _vector = /*@__PURE__*/ new Vector3();
 
 export class BufferGeometry {
     private _attributes: Map<string, BufferAttribute> = new Map();
     private _indices: BufferAttribute = null;
     private _drawBuffer: GPUBufferWrapper = null;
-
-    public uuid: string;
+    private _boundingBox:Box3;
+    private _boundingSphere:Sphere;
+    public readonly uuid = MathUtils.generateUUID();
 
     constructor() {
-        this.uuid = MathUtils.generateUUID();
+
     }
 
     public update() {
@@ -95,6 +102,98 @@ export class BufferGeometry {
             this._drawBuffer = new GPUBufferWrapper(GPUBufferUsage.COPY_DST | GPUBufferUsage.INDIRECT, parameters);
         }
     }
+           
+    public computeBoundingSphere(){
+        if ( this.boundingSphere === null ) {
+
+			this._boundingSphere = new Sphere();
+
+		}
+
+		const position = this.attributes.get("position");
+
+		if ( position) {
+
+			console.error( 'THREE.BufferGeometry.computeBoundingSphere(): GLBufferAttribute requires a manual bounding sphere. Alternatively set "mesh.frustumCulled" to "false".', this );
+
+			this.boundingSphere.set( new Vector3(), Infinity );
+
+			return;
+
+		}
+
+		if ( position ) {
+
+			// first, find the center of the bounding sphere
+
+			const center = this.boundingSphere.center;
+
+			_box.setFromBufferAttribute( position );
+
+			_box.getCenter( center );
+
+			// second, try to find a boundingSphere with a radius smaller than the
+			// boundingSphere of the boundingBox: sqrt(3) smaller in the best case
+
+			let maxRadiusSq = 0;
+
+			for ( let i = 0, il = position.count; i < il; i ++ ) {
+
+				_vector.fromBufferAttribute( position, i );
+
+				maxRadiusSq = Math.max( maxRadiusSq, center.distanceToSquared( _vector ) );
+
+			}
+
+			this.boundingSphere.radius = Math.sqrt( maxRadiusSq );
+
+			if ( isNaN( this.boundingSphere.radius ) ) {
+
+				console.error( 'THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The "position" attribute is likely to have NaN values.', this );
+
+			}
+
+		}
+    }
+
+    public computeBoundingBox(){
+        if ( this._boundingBox === null ) {
+
+			this._boundingBox = new Box3();
+
+		}
+
+		const position = this.attributes.get("position");
+
+		if ( position ) {
+
+			console.error( 'THREE.BufferGeometry.computeBoundingBox(): GLBufferAttribute requires a manual bounding box. Alternatively set "mesh.frustumCulled" to "false".', this );
+
+			this._boundingBox.set(
+				new Vector3( - Infinity, - Infinity, - Infinity ),
+				new Vector3( + Infinity, + Infinity, + Infinity )
+			);
+
+			return;
+
+		}
+
+		if ( position !== undefined ) {
+
+			this._boundingBox.setFromBufferAttribute( position );
+
+		} else {
+
+			this._boundingBox.makeEmpty();
+
+		}
+
+		if ( isNaN( this._boundingBox.min.x ) || isNaN( this._boundingBox.min.y ) || isNaN( this._boundingBox.min.z ) ) {
+
+			console.error( 'THREE.BufferGeometry.computeBoundingBox(): Computed min/max have NaN values. The "position" attribute is likely to have NaN values.', this );
+
+		}
+    }
 
     public get attributes() {
         return this._attributes;
@@ -106,5 +205,19 @@ export class BufferGeometry {
 
     get drawBuffer(): GPUBufferWrapper {
         return this._drawBuffer;
+    }
+
+    get boundingBox(){
+        if(this._boundingBox){
+            this.computeBoundingBox();
+        }
+        return this._boundingBox;
+    }
+
+    get boundingSphere(){
+        if(this._boundingSphere){
+            this.computeBoundingSphere();
+        }
+        return this._boundingSphere;
     }
 }

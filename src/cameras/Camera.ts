@@ -2,7 +2,7 @@ import { Object3D } from '../core/Object3D';
 import { BindBuffer } from '../core/binds/BindBuffer';
 import { Matrix4 } from '../math/Matrix4';
 import { Vector3 } from '../math/Vector3';
-import { IdentifyMatrix4 } from '../utils/TMPValues';
+import { IdentifyMatrix4 } from '../utils/TempValues';
 
 const u_projection = "projectionMatrix";
 const u_view = "matrixWorldInverse";

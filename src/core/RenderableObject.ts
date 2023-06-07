@@ -2,7 +2,9 @@ import { BufferGeometry } from "./BufferGeometry";
 import { Material } from "../materials/Material";
 import { Object3D } from "./Object3D";
 import { BindBuffer } from "./binds/BindBuffer";
-import { IdentifyMatrix4 } from "../utils/TMPValues";
+import { IdentifyMatrix4 } from "../utils/TempValues";
+import { Box3 } from "../math/Box3";
+import { Sphere } from "../math/Sphere";
 
 const u_modelTranform = "matrixWorld";
 export class RenderableObject extends Object3D {
@@ -23,6 +25,9 @@ export class RenderableObject extends Object3D {
 
     private _pipeline: GPURenderPipeline;
     private _uniforms: Map<string, BindBuffer> = new Map();
+
+    private _boundingBox: Box3;
+    private _boundingSphere: Sphere;
 
     constructor(geometry: BufferGeometry, material: Material) {
         super();
@@ -61,6 +66,16 @@ export class RenderableObject extends Object3D {
         }
     }
 
+    public computeBoundingSphere(){
+        this._boundingSphere.copy(this.geometry.boundingSphere);
+        this._boundingSphere.applyMatrix4(this.matrixWorld);
+    }
+
+    public computeBoundingBox(){
+        this._boundingBox.copy(this.geometry.boundingBox);
+        this._boundingBox.applyMatrix4(this.matrixWorld);
+    }
+
     public get pipeline() {
         return this._pipeline;
     }
@@ -77,4 +92,11 @@ export class RenderableObject extends Object3D {
         return this._uniforms;
     }
 
+    get boundingBox(){
+        return this._boundingBox;
+    }
+
+    get boundingSphere(){
+        return this._boundingSphere;
+    }
 }

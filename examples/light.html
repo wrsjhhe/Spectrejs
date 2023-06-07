@@ -64,9 +64,8 @@
             renderer.render(scene, camera);
             render();
 
-    
-            directionalLight.direction.x += k;
-            if(directionalLight.direction.x >= 1 || directionalLight.direction.x <= -1){
+            directionalLight.position.x += k;
+            if(directionalLight.position.x >= 1 || directionalLight.position.x <= -1){
                 k = -k;
             }
             directionalLight.needsUpdate = true;

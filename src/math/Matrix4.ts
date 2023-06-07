@@ -4,7 +4,7 @@ import { Quaternion } from "./Quaternion";
 import { Vector3 } from "./Vector3";
 
 
-class Matrix4 {
+export class Matrix4 {
     public elements = [
         1, 0, 0, 0,
         0, 1, 0, 0,
@@ -862,5 +862,3 @@ const _one = /*@__PURE__*/ new Vector3( 1, 1, 1 );
 const _x = /*@__PURE__*/ new Vector3();
 const _y = /*@__PURE__*/ new Vector3();
 const _z = /*@__PURE__*/ new Vector3();
-
-export { Matrix4 };

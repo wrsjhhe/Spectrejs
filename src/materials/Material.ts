@@ -26,10 +26,9 @@ export abstract class Material {
         bindValues: new Map<string, BindShaderItem>(),
     };
 
-    public uuid: string;
+    public readonly uuid = MathUtils.generateUUID();
 
     constructor() {
-        this.uuid = MathUtils.generateUUID();
 
         this._pipeline = new Pipleline(this);
 

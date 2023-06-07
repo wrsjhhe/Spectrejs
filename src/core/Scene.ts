@@ -125,9 +125,11 @@ export class Scene extends Object3D {
         let offset = 0;
         let needsUpdate = false;
         for(const dirLight of this._directionalLights.values()){  
-            if(dirLight.needsUpdate)
+            if(dirLight.needsUpdate){
                 needsUpdate = true;
-
+                dirLight.update();
+            }
+            
             dirLightsBuffer.set(dirLight.color.toArray(),offset);
             offset+=4;
 

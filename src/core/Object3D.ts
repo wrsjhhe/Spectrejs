@@ -37,7 +37,7 @@ export class Object3D {
 		return object instanceof Object3D;
 	}
 
-    public uuid : string;
+    public readonly uuid = MathUtils.generateUUID();
     public name : string;
     public up : Vector3;
 
@@ -75,8 +75,6 @@ export class Object3D {
 	constructor() {
 
 		Object.defineProperty( this, 'id', { value: _object3DId ++ } );
-
-		this.uuid = MathUtils.generateUUID();
 
 		this.name = '';
 
