@@ -12,7 +12,7 @@ export class OrthographicCamera extends Camera {
 	}
 
     public zoom = 1;
-    public view : any;
+    public view : any = null;
 
     public left = - 1;
     public right = 1;

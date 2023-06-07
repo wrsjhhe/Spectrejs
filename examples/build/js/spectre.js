@@ -486,6 +486,7 @@ class OrthographicCamera extends _Camera__WEBPACK_IMPORTED_MODULE_0__.Camera {
     constructor(left = -1, right = 1, top = 1, bottom = -1, near = 0.1, far = 2000) {
         super();
         this.zoom = 1;
+        this.view = null;
         this.left = -1;
         this.right = 1;
         this.top = 1;
