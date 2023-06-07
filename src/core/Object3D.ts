@@ -4,8 +4,6 @@ import { Matrix4 } from '../math/Matrix4';
 import { Euler } from '../math/Euler';
 import * as MathUtils from '../math/MathUtils';
 import { Color } from '../math/Color';
-import { Material } from '../materials/Material';
-import { CommonUtils } from '../utils/CommonUtils';
 
 
 //import { Scene } from './Scene';
@@ -28,8 +26,8 @@ const _zAxis = /*@__PURE__*/ new Vector3( 0, 0, 1 );
 export class Object3D {
 
     static DEFAULT_UP = /*@__PURE__*/ new Vector3( 0, 1, 0 );
-    static DEFAULT_MATRIX_AUTO_UPDATE = true;
-    static DEFAULT_MATRIX_WORLD_AUTO_UPDATE = true;
+    static DEFAULT_MATRIX_AUTO_UPDATE = false;
+    static DEFAULT_MATRIX_WORLD_AUTO_UPDATE = false;
 
     public get type(){
 		return "Object3D";
@@ -86,6 +84,21 @@ export class Object3D {
 		this._children = [];
 
 		this.up = Object3D.DEFAULT_UP.clone();
+
+		const onRotationChange = ( e:Euler) => {
+
+			this.quaternion.setFromEuler( e,false );
+
+		}
+
+		const onQuaternionChange = (q:Quaternion) => {
+
+			this.rotation.setFromQuaternion( q, undefined,false );
+
+		}
+		this._rotation.onChange( onRotationChange );
+		this._quaternion.onChange( onQuaternionChange );
+
 	}
 
     onBeforeRender( /* renderer, scene, camera, geometry, material, group */ ) {}

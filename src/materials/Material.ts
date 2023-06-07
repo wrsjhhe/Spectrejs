@@ -27,8 +27,6 @@ export abstract class Material {
     };
 
     public uuid: string;
-    public needsCreateBindGroup = true;
-    public needsCompile = true;
 
     constructor() {
         this.uuid = MathUtils.generateUUID();
@@ -48,8 +46,8 @@ export abstract class Material {
             uniform.update();
             if (uniform.type === BindType.texture) {
                 const textureUniform = uniform as BindTexture;
-                if (textureUniform.changed && !this.needsCreateBindGroup) {
-                    this.needsCreateBindGroup = true;
+                if (textureUniform.changed && !this.pipeline.needsCreateMatBindGroup) {
+                    this.pipeline.needsCreateMatBindGroup = true;
                     textureUniform.changed = false;
                 }
             }
@@ -92,9 +90,9 @@ export abstract class Material {
     public getBindGroup() {
         const entriesGroup = new Array<GPUBindGroupEntry>();
 
-        for (const [name, bindOption] of this._shaderOptions.bindValues) {
+        for (const bindOption of this._shaderOptions.bindValues.values()) {
             if (bindOption.bindType === BindType.buffer) {
-                const bufferUnform = this.uniforms.get(name) as BindBuffer;
+                const bufferUnform = this.uniforms.get(bindOption.name) as BindBuffer;
                 entriesGroup.push({
                     binding: bindOption.index,
                     resource: {
@@ -102,13 +100,13 @@ export abstract class Material {
                     },
                 });
             } else if (bindOption.bindType === BindType.sampler) {
-                const samplerUnform = this.uniforms.get(name) as BindSampler;
+                const samplerUnform = this.uniforms.get(bindOption.name) as BindSampler;
                 entriesGroup.push({
                     binding: bindOption.index,
                     resource: samplerUnform.sampler,
                 });
             } else if (bindOption.bindType === BindType.texture) {
-                const textureUnform = this.uniforms.get(name) as BindTexture;
+                const textureUnform = this.uniforms.get(bindOption.name) as BindTexture;
                 entriesGroup.push({
                     binding: bindOption.index,
                     resource: textureUnform.textureBuffer.createView(),
@@ -116,7 +114,6 @@ export abstract class Material {
             }
         }
 
-        this.needsCreateBindGroup = false;
         return entriesGroup;
     }
 
@@ -223,7 +220,7 @@ export abstract class Material {
             (this._uniforms.get("texture") as BindTexture).texture = v;
         }
 
-        this.needsCreateBindGroup = true;
+        this.pipeline.needsCreateMatBindGroup = true;
         this._map = v;
     }
 
@@ -235,7 +232,7 @@ export abstract class Material {
         if (this._transparent === v) return;
 
         this.pipeline.needsCompile = true;
-        this.needsCreateBindGroup = true;
+        this.pipeline.needsCreateMatBindGroup = true;
         this._transparent = v;
         this.color = this._color;
     }

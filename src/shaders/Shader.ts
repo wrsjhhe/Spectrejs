@@ -1,4 +1,5 @@
 import { Material } from "../materials/Material";
+import { Scene } from "../spectre";
 
 export abstract class Shader{
     protected _vertexShaderCode: string;
@@ -9,14 +10,14 @@ export abstract class Shader{
         this._material = material;
     }
 
-    public recreate() {
-        this._createVertexShader();
-        this._createFragmentShader();
+    public recreate(scene:Scene) {
+        this._createVertexShader(scene);
+        this._createFragmentShader(scene);
     }
 
-    protected abstract _createVertexShader():void;
+    protected abstract _createVertexShader(scene:Scene):void;
 
-    protected abstract _createFragmentShader():void;
+    protected abstract _createFragmentShader(scene:Scene):void;
 
     public get vertexShaderCode() {
         return this._vertexShaderCode;

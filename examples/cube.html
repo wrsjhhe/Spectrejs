@@ -119,8 +119,8 @@
             for (let i = 0, len = scene.children.length; i < len; i++) {
 
                 const mesh = scene.children[i];
-                mesh.rotateX(Math.random()*0.1);
-                mesh.rotateY(Math.random()*0.1);
+                mesh.rotation.x += 0.01;
+                mesh.rotation.y += 0.005;
                 mesh.updateMatrix();
 
             }    

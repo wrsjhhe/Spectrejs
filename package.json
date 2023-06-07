@@ -9,7 +9,7 @@
         "build:dev": "webpack --config webpack.dev.js",
         "lint": "eslint --ext .ts src/",
         "lint:fix": "eslint --fix --ext .ts src/",
-        "serve": "http-server ./examples -p 8081 -d False -i False"
+        "serve": "cd ./examples && http-server -p 8081 -d False -i False"
     },
     "keywords": [
         "webgpu",

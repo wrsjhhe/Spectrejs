@@ -33,7 +33,7 @@ export function customVary_value(name:string,itemType:string,indexObj:IndexObj){
 
 export function transform_vert(){
     return `
-            var mvPosition = viewMatrix * modelMatrix * vec4<f32>(position, 1.0);
+            var mvPosition = matrixWorldInverse * modelMatrix * vec4<f32>(position, 1.0);
             output.Position = projectionMatrix * mvPosition;
             `;
 }
@@ -44,13 +44,13 @@ export function uv_vert(item:ShaderItem){
     return "";
 }
 
-export function bind_value_frag (item:BindShaderItem){
+export function bind_value (groupIndex:number,item:BindShaderItem){
     if(item)
-        return `@group(1) @binding(${item.index}) var${item.bindType === BindType.buffer?"<uniform>":""} ${item.name} : ${item.shaderItemType};`;
+        return `@group(${groupIndex}) @binding(${item.index}) var${item.bindType === BindType.buffer?"<uniform>":""} ${item.name} : ${item.shaderItemType};`;
     return "";
 }
 
-export function getColo_frag(textureItem:ShaderItem,colorItem:ShaderItem){
+export function getColor_frag(textureItem:ShaderItem,colorItem:ShaderItem){
     if(textureItem)
         return `baseColor = textureSample(texture, colorSampler, uv);`;
     else{

@@ -31,7 +31,8 @@ export class Camera extends Object3D {
 	constructor() {
 
 		super();
-
+		this.matrixAutoUpdate = true;
+		this.matrixWorldNeedsUpdate = true;
 		this._initInitialUniform();
 	}
 

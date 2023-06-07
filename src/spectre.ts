@@ -25,8 +25,12 @@ export { Vector2 } from "./math/Vector2";
 export { Vector3 } from "./math/Vector3";
 
 export { Object3D } from "./core/Object3D";
-export { Mesh } from "./objects/Mesh";
 export { Scene } from "./core/Scene";
+
+export { Mesh } from "./objects/Mesh";
+
+export { DirectionalLight } from "./lights/DirectionalLight";
+
 
 export { PerspectiveCamera } from "./cameras/PerspectiveCamera";
 export { OrthographicCamera } from './cameras/OrthographicCamera'

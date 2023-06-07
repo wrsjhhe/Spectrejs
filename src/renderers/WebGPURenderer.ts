@@ -4,7 +4,6 @@ import { GPUIndexFormat, GPUTextureFormat } from "../Constants";
 import { RenderableObject } from "../core/RenderableObject";
 import { Context } from "../core/ResourceManagers";
 import { Scene } from "../core/Scene";
-import { Light } from "../lights/Light";
 import { Material } from "../materials/Material";
 import { Color } from "../math/Color";
 
@@ -131,6 +130,7 @@ export class WebGPURenderer {
             this._sizeChanged = false;
         }
         camera.update();
+        const sceneUpdated = scene.update(camera);
         //this._materialObjects.clear();
 
         const commandEncoder = this.device.createCommandEncoder();
@@ -146,7 +146,10 @@ export class WebGPURenderer {
         const passEncoder = commandEncoder.beginRenderPass(this._renderPassDescriptor);
 
         for(const [material,objects] of materialObjects){
-            this._renderSamePipeline(passEncoder, material,objects,camera);
+            if(sceneUpdated){
+                material.pipeline.needsCompile = true;
+            }
+            this._renderSamePipeline(passEncoder, material,objects,camera,scene);
         }
 
         passEncoder.end();
@@ -154,12 +157,12 @@ export class WebGPURenderer {
         this.device.queue.submit([commandEncoder.finish()]);
     }
 
-    private _renderSamePipeline(passEncoder: GPURenderPassEncoder, material:Material,objects:Array<RenderableObject>,camera: Camera){
+    private _renderSamePipeline(passEncoder: GPURenderPassEncoder, material:Material,objects:Array<RenderableObject>,camera: Camera,scene:Scene){
         
-        material.pipeline.compilePipeline(this);
+        material.pipeline.compilePipeline(this,scene);
         passEncoder.setPipeline(material.pipeline.pipeline);
-        material.pipeline.createBindGroups(camera);
-        material.pipeline.bindCommonUniform(passEncoder,camera);
+        material.pipeline.createCommonBindGroups(scene);
+        material.pipeline.bindCommonUniform(passEncoder);
         material.updateUniforms();
         for(let i = 0;i < objects.length;++i){
             material.pipeline.createObjectBindGroup(objects[i]);

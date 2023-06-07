@@ -1,49 +1,75 @@
+import { Camera } from "../cameras/Camera";
+import { GPUBufferBindingType, GPUSamplerBindingType } from "../Constants";
 import { DirectionalLight } from "../lights/DirectionalLight";
 import { Material } from "../materials/Material";
 import { CommonUtils } from "../utils/CommonUtils";
-import { BindType } from "./Defines";
+import { BindShaderItem, BindType } from "./Defines";
 import { Object3D } from "./Object3D";
 import { RenderableObject } from "./RenderableObject";
+import { BindBuffer } from "./binds/BindBuffer";
 
 const t_cameraBindValue = [
     {
-        name:"projectionMatrix",
-        index : 0,
-        shaderItemType:"mat4x4<f32>",
-        bindType : BindType.buffer,
-        visibility: GPUShaderStage.VERTEX
+        name: "projectionMatrix",
+        index: 0,
+        shaderItemType: "mat4x4<f32>",
+        bindType: BindType.buffer,
+        visibility: GPUShaderStage.VERTEX,
     },
     {
-        name:"matrixWorldInverse",
-        index : 1,
-        shaderItemType:"mat4x4<f32>",
-        bindType : BindType.buffer,
-        visibility: GPUShaderStage.VERTEX
-    }
+        name: "matrixWorldInverse",
+        index: 1,
+        shaderItemType: "mat4x4<f32>",
+        bindType: BindType.buffer,
+        visibility: GPUShaderStage.VERTEX,
+    },
 ];
 
 export class Scene extends Object3D {
-
-    public get type(){
-		return "Scene";
+    public get type() {
+        return "Scene";
     }
 
-	public static Is(object:Object3D){
-		return object instanceof Scene;
-	}
+    public static Is(object: Object3D) {
+        return object instanceof Scene;
+    }
 
     public get isScene() {
         return true;
     }
 
-    protected _renderableObjects = new Map<Material, Array<RenderableObject>>();
-    
-    private _directionLights = new Map<string,DirectionalLight>();
+    private _renderableObjects = new Map<Material, Array<RenderableObject>>();
 
-    public directionLightChanged = false;
+    private _directionalLights = new Map<string, DirectionalLight>();
+    private _directionalLightBuffer: BindBuffer;
+    private _bindValues = new Map<string, BindShaderItem>();
+    private _entriesLayout = new Array<GPUBindGroupLayoutEntry>();
+    private _entriesGroup = new Array<GPUBindGroupEntry>();
+    private _lastSetCamera : Camera = null;
+    public needsRecreateBind = true;
 
     constructor() {
         super();
+    }
+
+    public update(camrea:Camera):boolean{
+        this._lastSetCamera = camrea;
+        if(this.needsRecreateBind){
+            this._createLayout();
+            this._createBindGroup();
+            this.needsRecreateBind = false;
+            return true;
+        }
+        return false;
+    }
+
+    public getBindLayout() {
+        
+        return this._entriesLayout;
+    }
+
+    public getBindGroup() {
+        return this._entriesGroup;
     }
 
     public handleAdded(object: Object3D) {
@@ -51,7 +77,7 @@ export class Scene extends Object3D {
             if (RenderableObject.Is(child)) {
                 this._addRenderableObject(child as RenderableObject);
             } else if (DirectionalLight.Is(child)) {
-                this._addDirectionLight(child as DirectionalLight);
+                this._addDirectionalLight(child as DirectionalLight);
             }
         });
     }
@@ -64,6 +90,89 @@ export class Scene extends Object3D {
                 this._removeDirectionalLight(child as DirectionalLight);
             }
         });
+    }
+
+    private _createBindGroup(){
+        this._entriesGroup.length = 0;
+        this._entriesGroup.push({
+            binding: 0,
+            resource: {
+                buffer: this._lastSetCamera.uniforms.get("projectionMatrix").buffer,
+            },
+        });
+        this._entriesGroup.push({
+            binding: 1,
+            resource: {
+                buffer: this._lastSetCamera.uniforms.get("matrixWorldInverse").buffer,
+            },
+        });
+
+        if(this._directionalLights.size > 0){
+            this._entriesGroup.push({
+                binding: 2,
+                resource: {
+                    buffer: this._directionalLightBuffer.buffer,
+                },
+            });
+        }
+    }
+
+    private _createLayout(){
+        this._bindValues.clear();
+        this._entriesLayout.length = 0;
+        for(const cameraBind of t_cameraBindValue){
+            this._bindValues.set(cameraBind.name,cameraBind);
+        }
+
+        if(this._directionalLights.size > 0){
+            this._bindValues.set("directionalLights",{
+                name: "directionalLights",
+                index: this._bindValues.size,
+                shaderItemType: `array<DirectionalLight,${this._directionalLights.size}>`,
+                bindType: BindType.buffer,
+                visibility: GPUShaderStage.FRAGMENT,
+            });
+            if( this._directionalLightBuffer )
+                this._directionalLightBuffer.destroy();
+            
+            const arrayBuffer = new Float32Array(8*this._directionalLights.size);
+            let offset = 0;
+            for(const dirLight of this._directionalLights.values()){     
+                arrayBuffer.set(dirLight.color.toArray(),offset);
+                offset+=4;
+
+                const normal = dirLight.direction;
+                arrayBuffer.set(normal.toArray(),offset);
+                offset+=4;
+            }
+            this._directionalLightBuffer = new BindBuffer("directionalLight",arrayBuffer);
+        }
+
+        for (const bindOption of this._bindValues.values()) {
+            if (bindOption.bindType === BindType.buffer) {
+                this._entriesLayout.push({
+                    binding: bindOption.index,
+                    visibility: bindOption.visibility,
+                    buffer: {
+                        type: GPUBufferBindingType.Uniform
+                    },
+                });
+            } else if (bindOption.bindType === BindType.sampler) {
+                this._entriesLayout.push({
+                    binding: bindOption.index,
+                    visibility: bindOption.visibility,
+                    sampler: {
+                        type: GPUSamplerBindingType.Filtering,
+                    },
+                });
+            } else if (bindOption.bindType === BindType.texture) {
+                this._entriesLayout.push({
+                    binding: bindOption.index,
+                    visibility: bindOption.visibility,
+                    texture: {},
+                });
+            }
+        }
     }
 
     private _addRenderableObject(renderableObj: RenderableObject) {
@@ -85,20 +194,24 @@ export class Scene extends Object3D {
         }
     }
 
-    private _addDirectionLight(light: DirectionalLight) {
-        this._directionLights.set(light.uuid, light);
-        this.directionLightChanged = true;
+    private _addDirectionalLight(light: DirectionalLight) {
+        this._directionalLights.set(light.uuid, light);
+        this.needsRecreateBind = true;
     }
 
     private _removeDirectionalLight(light: DirectionalLight) {
-        this._directionLights.delete(light.uuid);
-        this.directionLightChanged = true;
+        this._directionalLights.delete(light.uuid);
+        this.needsRecreateBind = true;
     }
 
     public get renderableObjs() {
         return this._renderableObjects;
     }
-    public get directionLights() {
-        return this._directionLights;
+    public get directionalLights() {
+        return this._directionalLights;
+    }
+
+    public get bindValues(){
+        return this._bindValues;
     }
 }

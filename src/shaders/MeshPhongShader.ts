@@ -1,4 +1,5 @@
 import { Material } from "../materials/Material";
+import { Scene } from "../spectre";
 import { Shader } from "./Shader";
 import * as basic from "./ShaderBasic"
 
@@ -8,14 +9,17 @@ export class MeshPhongShader extends Shader {
         super(material);
     }
 
-    protected _createVertexShader(): void {
+    protected _createVertexShader(scene:Scene): void {
         const shaderOptions = this._material.shaderOptions;
         const indexObj = {index:1} as basic.IndexObj;
         const uvItem = shaderOptions.attributeValues.get("uv");
         const normalItem = shaderOptions.attributeValues.get("normal");
  
         this._vertexShaderCode = `
-            ${basic.location_transform_vert()}
+            ${basic.bind_value(0,scene.bindValues.get("projectionMatrix"))}
+            ${basic.bind_value(0,scene.bindValues.get("matrixWorldInverse"))}
+
+            @group(2) @binding(0) var<uniform> modelMatrix : mat4x4<f32>;
 
             struct VertexOutput {
                 @builtin(position) Position : vec4<f32>,
@@ -42,23 +46,13 @@ export class MeshPhongShader extends Shader {
     }
 
 
-    protected _createFragmentShader(): void {
+    protected _createFragmentShader(scene:Scene): void {
         const shaderOptions = this._material.shaderOptions;
         const indexObj = {index:1} as basic.IndexObj;
         const uvItem = shaderOptions.attributeValues.get("uv");
         const normalItem = shaderOptions.attributeValues.get("normal");
 
         this._fragmentShaderCode = `
-            ${basic.bind_value_frag(shaderOptions.bindValues.get("parameters"))}
-            ${basic.bind_value_frag(shaderOptions.bindValues.get("color"))}
-            ${basic.bind_value_frag(shaderOptions.bindValues.get("colorSampler"))}
-            ${basic.bind_value_frag(shaderOptions.bindValues.get("texture"))}
-            ${basic.bind_value_frag(shaderOptions.bindValues.get("specular"))}
-            ${basic.bind_value_frag(shaderOptions.bindValues.get("emissive"))}
-            ${basic.bind_value_frag(shaderOptions.bindValues.get("shininess"))}
-    
-
-
             const RECIPROCAL_PI = 0.3183098861837907;
             struct IncidentLight {
                 color:vec3<f32>,
@@ -89,8 +83,8 @@ export class MeshPhongShader extends Shader {
             };
 
             struct DirectionalLight {
-                direction:vec3<f32>,
-                color:vec3<f32>,
+                color:vec4<f32>,
+                direction:vec4<f32>,
             };
 
             fn saturate( a:f32 )->f32 {
@@ -155,6 +149,16 @@ export class MeshPhongShader extends Shader {
                 (*reflectedLight).directSpecular += irradiance * BRDF_BlinnPhong( directLight.direction, geometry.viewDir, geometry.normal, material.specularColor, material.specularShininess ) * material.specularStrength;
             }
 
+            ${basic.bind_value(0,scene.bindValues.get("directionalLights"))}
+
+            ${basic.bind_value(1,shaderOptions.bindValues.get("parameters"))}
+            ${basic.bind_value(1,shaderOptions.bindValues.get("color"))}
+            ${basic.bind_value(1,shaderOptions.bindValues.get("colorSampler"))}
+            ${basic.bind_value(1,shaderOptions.bindValues.get("texture"))}
+            ${basic.bind_value(1,shaderOptions.bindValues.get("specular"))}
+            ${basic.bind_value(1,shaderOptions.bindValues.get("emissive"))}
+            ${basic.bind_value(1,shaderOptions.bindValues.get("shininess"))}
+
             @fragment
             fn main(
                 ${basic.itemVary_value(uvItem,indexObj)}
@@ -162,7 +166,7 @@ export class MeshPhongShader extends Shader {
                 ${basic.customVary_value("vViewPosition","vec3<f32>",indexObj)}
             ) -> @location(0) vec4<f32> {
                 var baseColor:vec4<f32>;
-                ${basic.getColo_frag(shaderOptions.bindValues.get("texture"),shaderOptions.bindValues.get("color"))}
+                ${basic.getColor_frag(shaderOptions.bindValues.get("texture"),shaderOptions.bindValues.get("color"))}
 
                 var diffuse = baseColor.xyz;
                 // var emissive = vec3<f32>(0.0,0.0,0.0);
@@ -193,20 +197,34 @@ export class MeshPhongShader extends Shader {
                 //geometry.viewDir = ( isOrthographic ) ? vec3( 0, 0, 1 ) : normalize( vViewPosition );
                 geometry.viewDir = normalize( vViewPosition );
 
+                ${scene.directionalLights.size > 0?`
+                    for(var i = 0u;i < ${scene.directionalLights.size}u;i++){
+                        var directionalLight = directionalLights[i];
+        
+                        var directLight:IncidentLight;
+                        directLight.color = directionalLight.color.xyz;
+                        directLight.direction = directionalLight.direction.xyz;
+                        //directLight.direction = vec3<f32>(0.,1.,0.);
+                        directLight.visible = true;
+        
+                        RE_Direct_BlinnPhong( directLight, geometry, material, &reflectedLight );
+                    }
+                
+                `:``}
+                //var directionalLight:DirectionalLight;
+                
 
-                var directionalLight:DirectionalLight;
+                // directionalLight.direction = vec3<f32>(0.,1.,1.);
+                // directionalLight.color = vec3<f32>(1.,1.,1.);
 
-                directionalLight.direction = vec3<f32>(0.,1.,1.);
-                directionalLight.color = vec3<f32>(1.,1.,1.);
+                // var directLight:IncidentLight;
+                // directLight.color = directionalLight.color;
+                // directLight.direction = directionalLight.direction;
+                // directLight.visible = true;
 
-                var directLight:IncidentLight;
-                directLight.color = directionalLight.color;
-                directLight.direction = directionalLight.direction;
-                directLight.visible = true;
+                // //getDirectionalLightInfo( directionalLight, geometry, directLight );
 
-                //getDirectionalLightInfo( directionalLight, geometry, directLight );
-
-                RE_Direct_BlinnPhong( directLight, geometry, material, &reflectedLight );
+                // RE_Direct_BlinnPhong( directLight, geometry, material, &reflectedLight );
 
                 var outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;
 

@@ -410,6 +410,8 @@ class Camera extends _core_Object3D__WEBPACK_IMPORTED_MODULE_0__.Object3D {
         this.projectionMatrix = new _math_Matrix4__WEBPACK_IMPORTED_MODULE_2__.Matrix4();
         this.projectionMatrixInverse = new _math_Matrix4__WEBPACK_IMPORTED_MODULE_2__.Matrix4();
         this._uniforms = new Map();
+        this.matrixAutoUpdate = true;
+        this.matrixWorldNeedsUpdate = true;
         this._initInitialUniform();
     }
     copy(source, recursive = false) {
@@ -1581,32 +1583,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   BindGroupLayoutIndexInfo: () => (/* binding */ BindGroupLayoutIndexInfo),
 /* harmony export */   BindType: () => (/* binding */ BindType),
-/* harmony export */   GlobalGroupLayoutInfo: () => (/* binding */ GlobalGroupLayoutInfo),
 /* harmony export */   ObjectGroupLayoutInfo: () => (/* binding */ ObjectGroupLayoutInfo)
 /* harmony export */ });
+/* eslint-disable no-unused-vars */
 const BindGroupLayoutIndexInfo = {
     global: 0,
     material: 1,
     object: 2,
     custom: 3
 };
-// export const VertexBufferLayoutInfo = {
-// 	position:{
-// 		byteLength:4,
-// 		itemSize:3,
-// 		format:GPUVertexFormat.Float32x3
-// 	},
-// 	normal:{
-// 		byteLength:4,
-// 		itemSize:3,
-// 		format:GPUVertexFormat.Float32x3
-// 	},
-// 	uv:{
-// 		byteLength:4,
-// 		itemSize:2,
-// 		format:GPUVertexFormat.Float32x2
-// 	}
-// };
 var BindType;
 (function (BindType) {
     BindType[BindType["buffer"] = 1] = "buffer";
@@ -1614,18 +1599,6 @@ var BindType;
     BindType[BindType["sampler"] = 3] = "sampler";
     BindType[BindType["texture"] = 4] = "texture";
 })(BindType || (BindType = {}));
-const GlobalGroupLayoutInfo = {
-    projectionMatrix: {
-        index: 0,
-        bindType: BindType.buffer,
-        visibility: GPUShaderStage.VERTEX
-    },
-    matrixWorldInverse: {
-        index: 1,
-        bindType: BindType.buffer,
-        visibility: GPUShaderStage.VERTEX
-    }
-};
 const ObjectGroupLayoutInfo = {
     matrixWorld: {
         index: 0,
@@ -1741,6 +1714,14 @@ class Object3D {
         this._parent = null;
         this._children = [];
         this.up = Object3D.DEFAULT_UP.clone();
+        const onRotationChange = (e) => {
+            this.quaternion.setFromEuler(e, false);
+        };
+        const onQuaternionChange = (q) => {
+            this.rotation.setFromQuaternion(q, undefined, false);
+        };
+        this._rotation.onChange(onRotationChange);
+        this._quaternion.onChange(onQuaternionChange);
     }
     onBeforeRender( /* renderer, scene, camera, geometry, material, group */) { }
     onAfterRender( /* renderer, scene, camera, geometry, material, group */) { }
@@ -2052,8 +2033,8 @@ class Object3D {
     }
 }
 Object3D.DEFAULT_UP = new _math_Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3(0, 1, 0);
-Object3D.DEFAULT_MATRIX_AUTO_UPDATE = true;
-Object3D.DEFAULT_MATRIX_WORLD_AUTO_UPDATE = true;
+Object3D.DEFAULT_MATRIX_AUTO_UPDATE = false;
+Object3D.DEFAULT_MATRIX_WORLD_AUTO_UPDATE = false;
 
 
 /***/ }),
@@ -2078,29 +2059,30 @@ class Pipleline {
     constructor(material) {
         this._bindGroupLayouts = [];
         this._vertexBufferLayouts = [];
-        this._cameraBindGroups = {};
         this._objectBindGroups = {};
         this.needsCompile = true;
+        this.needsCreateMatBindGroup = true;
         this._material = material;
         _ResourceManagers__WEBPACK_IMPORTED_MODULE_2__.Cache.add("pipelineObjectBindGroup", this._objectBindGroups);
     }
-    compilePipeline(renderer) {
+    compilePipeline(renderer, scene) {
         if (!this.needsCompile)
             return;
-        this._beforeCompile();
-        this._compile(renderer);
+        this.needsCreateMatBindGroup = true;
+        this._beforeCompile(scene);
+        this._compile(renderer, scene);
         this.needsCompile = false;
     }
-    bindCommonUniform(passEncoder, camera) {
-        passEncoder.setBindGroup(0, this._cameraBindGroups[camera.uuid]);
+    bindCommonUniform(passEncoder) {
+        passEncoder.setBindGroup(0, this._globalBindGroups);
         passEncoder.setBindGroup(1, this._materialBindGroup);
     }
     bindObjectUnform(passEncoder, object) {
         passEncoder.setBindGroup(2, this._objectBindGroups[object.uuid]);
     }
-    _compile(renderer) {
+    _compile(renderer, scene) {
         const device = renderer.device;
-        this.material.shader.recreate();
+        this.material.shader.recreate(scene);
         this._pipeline = device.createRenderPipeline({
             layout: device.createPipelineLayout({
                 bindGroupLayouts: [...this._bindGroupLayouts],
@@ -2163,17 +2145,8 @@ class Pipleline {
             });
         }
     }
-    _createGlobalBindLayout() {
-        const entries = new Array();
-        for (const key in _Defines__WEBPACK_IMPORTED_MODULE_1__.GlobalGroupLayoutInfo) {
-            entries.push({
-                binding: _Defines__WEBPACK_IMPORTED_MODULE_1__.GlobalGroupLayoutInfo[key].index,
-                visibility: _Defines__WEBPACK_IMPORTED_MODULE_1__.GlobalGroupLayoutInfo[key].visibility,
-                buffer: {
-                    type: "uniform",
-                },
-            });
-        }
+    _createGlobalBindLayout(scene) {
+        const entries = scene.getBindLayout();
         this._bindGroupLayouts.push(_ResourceManagers__WEBPACK_IMPORTED_MODULE_2__.Context.activeDevice.createBindGroupLayout({
             entries: entries,
         }));
@@ -2199,40 +2172,31 @@ class Pipleline {
             entries: entries,
         }));
     }
-    _createBindLayouts() {
+    _createBindLayouts(scene) {
         this._bindGroupLayouts.length = 0;
-        this._createGlobalBindLayout(); //Layout 0
+        this._createGlobalBindLayout(scene); //Layout 0
         this._createMaterialBindLayout(); //Layout 1
         this._createObjectBindLayout(); //Layout 2
     }
     /****************************create layout end ***********************************/
     /****************************create group start ***********************************/
-    _createGlobalBindGroup(camera) {
-        if (this._cameraBindGroups[camera.uuid])
+    _createGlobalBindGroup(scene) {
+        if (!this.needsCreateMatBindGroup)
             return;
-        const group = new Array();
-        for (const key in _Defines__WEBPACK_IMPORTED_MODULE_1__.GlobalGroupLayoutInfo) {
-            group.push({
-                binding: _Defines__WEBPACK_IMPORTED_MODULE_1__.GlobalGroupLayoutInfo[key].index,
-                resource: {
-                    buffer: camera.uniforms.get(key).buffer,
-                },
-            });
-        }
-        this._cameraBindGroups[camera.uuid] = _ResourceManagers__WEBPACK_IMPORTED_MODULE_2__.Context.activeDevice.createBindGroup({
+        const group = scene.getBindGroup();
+        this._globalBindGroups = _ResourceManagers__WEBPACK_IMPORTED_MODULE_2__.Context.activeDevice.createBindGroup({
             layout: this.pipeline.getBindGroupLayout(_Defines__WEBPACK_IMPORTED_MODULE_1__.BindGroupLayoutIndexInfo.global),
             entries: group,
         });
     }
     _createMaterialBindGroup() {
-        if (!this.material.needsCreateBindGroup)
+        if (!this.needsCreateMatBindGroup)
             return;
         const group = this.material.getBindGroup();
         this._materialBindGroup = _ResourceManagers__WEBPACK_IMPORTED_MODULE_2__.Context.activeDevice.createBindGroup({
             layout: this.pipeline.getBindGroupLayout(_Defines__WEBPACK_IMPORTED_MODULE_1__.BindGroupLayoutIndexInfo.material),
             entries: group,
         });
-        this.material.needsCreateBindGroup = false;
     }
     createObjectBindGroup(object) {
         if (this._objectBindGroups[object.uuid]) {
@@ -2252,14 +2216,14 @@ class Pipleline {
             entries: group,
         });
     }
-    createBindGroups(camera) {
-        this._createGlobalBindGroup(camera); //Group 0
+    createCommonBindGroups(scene) {
+        this._createGlobalBindGroup(scene); //Group 0
         this._createMaterialBindGroup(); //Group 1
-        //this._createObjectsBindGroup(objects); //Group 2
+        this.needsCreateMatBindGroup = false;
     }
     /****************************create group end ***********************************/
-    _beforeCompile() {
-        this._createBindLayouts();
+    _beforeCompile(scene) {
+        this._createBindLayouts(scene);
         this._createVertexBufferLayouts();
     }
     get pipeline() {
@@ -2408,11 +2372,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Scene: () => (/* binding */ Scene)
 /* harmony export */ });
-/* harmony import */ var _lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../lights/DirectionalLight */ "./src/lights/DirectionalLight.ts");
-/* harmony import */ var _utils_CommonUtils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils/CommonUtils */ "./src/utils/CommonUtils.ts");
-/* harmony import */ var _Defines__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Defines */ "./src/core/Defines.ts");
-/* harmony import */ var _Object3D__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Object3D */ "./src/core/Object3D.ts");
-/* harmony import */ var _RenderableObject__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./RenderableObject */ "./src/core/RenderableObject.ts");
+/* harmony import */ var _Constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Constants */ "./src/Constants.ts");
+/* harmony import */ var _lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../lights/DirectionalLight */ "./src/lights/DirectionalLight.ts");
+/* harmony import */ var _utils_CommonUtils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/CommonUtils */ "./src/utils/CommonUtils.ts");
+/* harmony import */ var _Defines__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Defines */ "./src/core/Defines.ts");
+/* harmony import */ var _Object3D__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Object3D */ "./src/core/Object3D.ts");
+/* harmony import */ var _RenderableObject__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./RenderableObject */ "./src/core/RenderableObject.ts");
+/* harmony import */ var _binds_BindBuffer__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./binds/BindBuffer */ "./src/core/binds/BindBuffer.ts");
+
+
 
 
 
@@ -2423,18 +2391,18 @@ const t_cameraBindValue = [
         name: "projectionMatrix",
         index: 0,
         shaderItemType: "mat4x4<f32>",
-        bindType: _Defines__WEBPACK_IMPORTED_MODULE_2__.BindType.buffer,
-        visibility: GPUShaderStage.VERTEX
+        bindType: _Defines__WEBPACK_IMPORTED_MODULE_3__.BindType.buffer,
+        visibility: GPUShaderStage.VERTEX,
     },
     {
         name: "matrixWorldInverse",
         index: 1,
         shaderItemType: "mat4x4<f32>",
-        bindType: _Defines__WEBPACK_IMPORTED_MODULE_2__.BindType.buffer,
-        visibility: GPUShaderStage.VERTEX
-    }
+        bindType: _Defines__WEBPACK_IMPORTED_MODULE_3__.BindType.buffer,
+        visibility: GPUShaderStage.VERTEX,
+    },
 ];
-class Scene extends _Object3D__WEBPACK_IMPORTED_MODULE_3__.Object3D {
+class Scene extends _Object3D__WEBPACK_IMPORTED_MODULE_4__.Object3D {
     get type() {
         return "Scene";
     }
@@ -2447,28 +2415,126 @@ class Scene extends _Object3D__WEBPACK_IMPORTED_MODULE_3__.Object3D {
     constructor() {
         super();
         this._renderableObjects = new Map();
-        this._directionLights = new Map();
-        this.directionLightChanged = false;
+        this._directionalLights = new Map();
+        this._bindValues = new Map();
+        this._entriesLayout = new Array();
+        this._entriesGroup = new Array();
+        this._lastSetCamera = null;
+        this.needsRecreateBind = true;
+    }
+    update(camrea) {
+        this._lastSetCamera = camrea;
+        if (this.needsRecreateBind) {
+            this._createLayout();
+            this._createBindGroup();
+            this.needsRecreateBind = false;
+            return true;
+        }
+        return false;
+    }
+    getBindLayout() {
+        return this._entriesLayout;
+    }
+    getBindGroup() {
+        return this._entriesGroup;
     }
     handleAdded(object) {
         object.traverse((child) => {
-            if (_RenderableObject__WEBPACK_IMPORTED_MODULE_4__.RenderableObject.Is(child)) {
+            if (_RenderableObject__WEBPACK_IMPORTED_MODULE_5__.RenderableObject.Is(child)) {
                 this._addRenderableObject(child);
             }
-            else if (_lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_0__.DirectionalLight.Is(child)) {
-                this._addDirectionLight(child);
+            else if (_lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_1__.DirectionalLight.Is(child)) {
+                this._addDirectionalLight(child);
             }
         });
     }
     handleRemoved(object) {
         object.traverse((child) => {
-            if (_RenderableObject__WEBPACK_IMPORTED_MODULE_4__.RenderableObject.Is(child)) {
+            if (_RenderableObject__WEBPACK_IMPORTED_MODULE_5__.RenderableObject.Is(child)) {
                 this._removeRenderableObject(child);
             }
-            else if (_lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_0__.DirectionalLight.Is(child)) {
+            else if (_lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_1__.DirectionalLight.Is(child)) {
                 this._removeDirectionalLight(child);
             }
         });
+    }
+    _createBindGroup() {
+        this._entriesGroup.length = 0;
+        this._entriesGroup.push({
+            binding: 0,
+            resource: {
+                buffer: this._lastSetCamera.uniforms.get("projectionMatrix").buffer,
+            },
+        });
+        this._entriesGroup.push({
+            binding: 1,
+            resource: {
+                buffer: this._lastSetCamera.uniforms.get("matrixWorldInverse").buffer,
+            },
+        });
+        if (this._directionalLights.size > 0) {
+            this._entriesGroup.push({
+                binding: 2,
+                resource: {
+                    buffer: this._directionalLightBuffer.buffer,
+                },
+            });
+        }
+    }
+    _createLayout() {
+        this._bindValues.clear();
+        this._entriesLayout.length = 0;
+        for (const cameraBind of t_cameraBindValue) {
+            this._bindValues.set(cameraBind.name, cameraBind);
+        }
+        if (this._directionalLights.size > 0) {
+            this._bindValues.set("directionalLights", {
+                name: "directionalLights",
+                index: this._bindValues.size,
+                shaderItemType: `array<DirectionalLight,${this._directionalLights.size}>`,
+                bindType: _Defines__WEBPACK_IMPORTED_MODULE_3__.BindType.buffer,
+                visibility: GPUShaderStage.FRAGMENT,
+            });
+            if (this._directionalLightBuffer)
+                this._directionalLightBuffer.destroy();
+            const arrayBuffer = new Float32Array(8 * this._directionalLights.size);
+            let offset = 0;
+            for (const dirLight of this._directionalLights.values()) {
+                arrayBuffer.set(dirLight.color.toArray(), offset);
+                offset += 4;
+                const normal = dirLight.direction;
+                arrayBuffer.set(normal.toArray(), offset);
+                offset += 4;
+            }
+            this._directionalLightBuffer = new _binds_BindBuffer__WEBPACK_IMPORTED_MODULE_6__.BindBuffer("directionalLight", arrayBuffer);
+        }
+        for (const bindOption of this._bindValues.values()) {
+            if (bindOption.bindType === _Defines__WEBPACK_IMPORTED_MODULE_3__.BindType.buffer) {
+                this._entriesLayout.push({
+                    binding: bindOption.index,
+                    visibility: bindOption.visibility,
+                    buffer: {
+                        type: _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUBufferBindingType.Uniform
+                    },
+                });
+            }
+            else if (bindOption.bindType === _Defines__WEBPACK_IMPORTED_MODULE_3__.BindType.sampler) {
+                this._entriesLayout.push({
+                    binding: bindOption.index,
+                    visibility: bindOption.visibility,
+                    sampler: {
+                        type: _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUSamplerBindingType.Filtering,
+                    },
+                });
+            }
+            else if (bindOption.bindType === _Defines__WEBPACK_IMPORTED_MODULE_3__.BindType.texture) {
+                this._entriesLayout.push({
+                    binding: bindOption.index,
+                    visibility: bindOption.visibility,
+                    texture: {},
+                });
+            }
+        }
     }
     _addRenderableObject(renderableObj) {
         const material = renderableObj.material;
@@ -2485,22 +2551,25 @@ class Scene extends _Object3D__WEBPACK_IMPORTED_MODULE_3__.Object3D {
         const material = renderableObj.material;
         const arr = this._renderableObjects.get(material);
         if (arr) {
-            _utils_CommonUtils__WEBPACK_IMPORTED_MODULE_1__.CommonUtils.removeArrayItemByValue(arr, renderableObj);
+            _utils_CommonUtils__WEBPACK_IMPORTED_MODULE_2__.CommonUtils.removeArrayItemByValue(arr, renderableObj);
         }
     }
-    _addDirectionLight(light) {
-        this._directionLights.set(light.uuid, light);
-        this.directionLightChanged = true;
+    _addDirectionalLight(light) {
+        this._directionalLights.set(light.uuid, light);
+        this.needsRecreateBind = true;
     }
     _removeDirectionalLight(light) {
-        this._directionLights.delete(light.uuid);
-        this.directionLightChanged = true;
+        this._directionalLights.delete(light.uuid);
+        this.needsRecreateBind = true;
     }
     get renderableObjs() {
         return this._renderableObjects;
     }
-    get directionLights() {
-        return this._directionLights;
+    get directionalLights() {
+        return this._directionalLights;
+    }
+    get bindValues() {
+        return this._bindValues;
     }
 }
 
@@ -2981,10 +3050,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   DirectionalLight: () => (/* binding */ DirectionalLight)
 /* harmony export */ });
 /* harmony import */ var _Light__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Light */ "./src/lights/Light.ts");
-/* harmony import */ var _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/binds/BindBuffer */ "./src/core/binds/BindBuffer.ts");
-/* harmony import */ var _utils_TMPValues__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/TMPValues */ "./src/utils/TMPValues.ts");
-/* harmony import */ var _core_Object3D__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../core/Object3D */ "./src/core/Object3D.ts");
-
+/* harmony import */ var _core_Object3D__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/Object3D */ "./src/core/Object3D.ts");
+/* harmony import */ var _spectre__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../spectre */ "./src/spectre.ts");
 
 
 
@@ -2997,36 +3064,30 @@ class DirectionalLight extends _Light__WEBPACK_IMPORTED_MODULE_0__.Light {
     }
     constructor(color, intensity = 1) {
         super(color, intensity);
-        this._target = new _core_Object3D__WEBPACK_IMPORTED_MODULE_3__.Object3D();
-        this.position.copy(_core_Object3D__WEBPACK_IMPORTED_MODULE_3__.Object3D.DEFAULT_UP);
+        this._direction = new _spectre__WEBPACK_IMPORTED_MODULE_2__.Vector3();
         this.updateMatrix();
         //this.shadow = new DirectionalLightShadow();
-        const arrayBuffer = new Float32Array(6);
-        arrayBuffer.set(this.color.toArray());
-        const normal = _utils_TMPValues__WEBPACK_IMPORTED_MODULE_2__.Vector0.subVectors(this._target.position, this.position);
-        arrayBuffer.set(normal.toArray(), 3);
-        this._uniform = new _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__.BindBuffer("color", arrayBuffer);
+        this._direction.copy(_core_Object3D__WEBPACK_IMPORTED_MODULE_1__.Object3D.DEFAULT_UP);
     }
     get uniform() {
         return this._uniform;
     }
-    set target(v) {
-        this._target = v;
+    set direction(v) {
+        this._direction.copy(v);
     }
-    get target() {
-        return this._target;
+    get direction() {
+        return this._direction;
     }
     dispose() {
         //this.shadow.dispose();
     }
     copy(source) {
         super.copy(source);
-        this._target = source._target.clone();
+        this._direction.copy(source._direction);
         //this.shadow = source.shadow.clone();
         return this;
     }
 }
-
 
 
 /***/ }),
@@ -3547,8 +3608,6 @@ class Material {
             attributeValues: new Map(),
             bindValues: new Map(),
         };
-        this.needsCreateBindGroup = true;
-        this.needsCompile = true;
         this.uuid = _math_MathUtils__WEBPACK_IMPORTED_MODULE_5__.MathUtils.generateUUID();
         this._pipeline = new _core_Pipeline__WEBPACK_IMPORTED_MODULE_6__.Pipleline(this);
         this._setAttributeValue("position", "vec3<f32>", _Constants__WEBPACK_IMPORTED_MODULE_1__.GPUVertexFormat.Float32x3, 4 * 3);
@@ -3561,8 +3620,8 @@ class Material {
             uniform.update();
             if (uniform.type === _core_Defines__WEBPACK_IMPORTED_MODULE_7__.BindType.texture) {
                 const textureUniform = uniform;
-                if (textureUniform.changed && !this.needsCreateBindGroup) {
-                    this.needsCreateBindGroup = true;
+                if (textureUniform.changed && !this.pipeline.needsCreateMatBindGroup) {
+                    this.pipeline.needsCreateMatBindGroup = true;
                     textureUniform.changed = false;
                 }
             }
@@ -3602,9 +3661,9 @@ class Material {
     }
     getBindGroup() {
         const entriesGroup = new Array();
-        for (const [name, bindOption] of this._shaderOptions.bindValues) {
+        for (const bindOption of this._shaderOptions.bindValues.values()) {
             if (bindOption.bindType === _core_Defines__WEBPACK_IMPORTED_MODULE_7__.BindType.buffer) {
-                const bufferUnform = this.uniforms.get(name);
+                const bufferUnform = this.uniforms.get(bindOption.name);
                 entriesGroup.push({
                     binding: bindOption.index,
                     resource: {
@@ -3613,21 +3672,20 @@ class Material {
                 });
             }
             else if (bindOption.bindType === _core_Defines__WEBPACK_IMPORTED_MODULE_7__.BindType.sampler) {
-                const samplerUnform = this.uniforms.get(name);
+                const samplerUnform = this.uniforms.get(bindOption.name);
                 entriesGroup.push({
                     binding: bindOption.index,
                     resource: samplerUnform.sampler,
                 });
             }
             else if (bindOption.bindType === _core_Defines__WEBPACK_IMPORTED_MODULE_7__.BindType.texture) {
-                const textureUnform = this.uniforms.get(name);
+                const textureUnform = this.uniforms.get(bindOption.name);
                 entriesGroup.push({
                     binding: bindOption.index,
                     resource: textureUnform.textureBuffer.createView(),
                 });
             }
         }
-        this.needsCreateBindGroup = false;
         return entriesGroup;
     }
     _setAttributeValue(name, itemType, format, itemSize) {
@@ -3720,7 +3778,7 @@ class Material {
             this.pipeline.needsCompile = true;
             this._uniforms.get("texture").texture = v;
         }
-        this.needsCreateBindGroup = true;
+        this.pipeline.needsCreateMatBindGroup = true;
         this._map = v;
     }
     get map() {
@@ -3730,7 +3788,7 @@ class Material {
         if (this._transparent === v)
             return;
         this.pipeline.needsCompile = true;
-        this.needsCreateBindGroup = true;
+        this.pipeline.needsCreateMatBindGroup = true;
         this._transparent = v;
         this.color = this._color;
     }
@@ -4496,34 +4554,66 @@ __webpack_require__.r(__webpack_exports__);
 const _matrix = /*@__PURE__*/ new _Matrix4__WEBPACK_IMPORTED_MODULE_1__.Matrix4();
 const _quaternion = /*@__PURE__*/ new _Quaternion__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
 class Euler {
+    set x(v) {
+        this._x = v;
+        this._onChangeCallback(this);
+    }
+    get x() {
+        return this._x;
+    }
+    set y(v) {
+        this._y = v;
+        this._onChangeCallback(this);
+    }
+    get y() {
+        return this._y;
+    }
+    set z(v) {
+        this._z = v;
+        this._onChangeCallback(this);
+    }
+    get z() {
+        return this._z;
+    }
+    set order(v) {
+        this._order = v;
+        this._onChangeCallback(this);
+    }
+    get order() {
+        return this._order;
+    }
     constructor(x = 0, y = 0, z = 0, order = Euler.DEFAULT_ORDER) {
-        this.x = 0;
-        this.y = 0;
-        this.z = 0;
-        this.order = Euler.DEFAULT_ORDER;
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this._x = 0;
+        this._y = 0;
+        this._z = 0;
+        this._order = Euler.DEFAULT_ORDER;
+        this._onChangeCallback = (e) => {
+        };
+        this._x = x;
+        this._y = y;
+        this._z = z;
         this.order = order;
     }
     set(x, y, z, order = this.order) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.order = order;
+        this._x = x;
+        this._y = y;
+        this._z = z;
+        this._order = order;
+        this._onChangeCallback(this);
         return this;
     }
     clone() {
         return new Euler(this.x, this.y, this.z, this.order);
     }
     copy(euler) {
-        this.x = euler.x;
-        this.y = euler.y;
-        this.z = euler.z;
-        this.order = euler.order;
+        this._x = euler.x;
+        this._y = euler.y;
+        this._z = euler.z;
+        this._order = euler.order;
+        this._onChangeCallback(this);
         return this;
     }
-    setFromRotationMatrix(m, order = this.order) {
+    setFromRotationMatrix(m, order = this.order, update = true) {
         // assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
         const te = m.elements;
         const m11 = te[0], m12 = te[4], m13 = te[8];
@@ -4531,80 +4621,82 @@ class Euler {
         const m31 = te[2], m32 = te[6], m33 = te[10];
         switch (order) {
             case 'XYZ':
-                this.y = Math.asin((0,_MathUtils__WEBPACK_IMPORTED_MODULE_2__.clamp)(m13, -1, 1));
+                this._y = Math.asin((0,_MathUtils__WEBPACK_IMPORTED_MODULE_2__.clamp)(m13, -1, 1));
                 if (Math.abs(m13) < 0.9999999) {
-                    this.x = Math.atan2(-m23, m33);
-                    this.z = Math.atan2(-m12, m11);
+                    this._x = Math.atan2(-m23, m33);
+                    this._z = Math.atan2(-m12, m11);
                 }
                 else {
-                    this.x = Math.atan2(m32, m22);
-                    this.z = 0;
+                    this._x = Math.atan2(m32, m22);
+                    this._z = 0;
                 }
                 break;
             case 'YXZ':
-                this.x = Math.asin(-(0,_MathUtils__WEBPACK_IMPORTED_MODULE_2__.clamp)(m23, -1, 1));
+                this._x = Math.asin(-(0,_MathUtils__WEBPACK_IMPORTED_MODULE_2__.clamp)(m23, -1, 1));
                 if (Math.abs(m23) < 0.9999999) {
-                    this.y = Math.atan2(m13, m33);
-                    this.z = Math.atan2(m21, m22);
+                    this._y = Math.atan2(m13, m33);
+                    this._z = Math.atan2(m21, m22);
                 }
                 else {
-                    this.y = Math.atan2(-m31, m11);
-                    this.z = 0;
+                    this._y = Math.atan2(-m31, m11);
+                    this._z = 0;
                 }
                 break;
             case 'ZXY':
-                this.x = Math.asin((0,_MathUtils__WEBPACK_IMPORTED_MODULE_2__.clamp)(m32, -1, 1));
+                this._x = Math.asin((0,_MathUtils__WEBPACK_IMPORTED_MODULE_2__.clamp)(m32, -1, 1));
                 if (Math.abs(m32) < 0.9999999) {
-                    this.y = Math.atan2(-m31, m33);
-                    this.z = Math.atan2(-m12, m22);
+                    this._y = Math.atan2(-m31, m33);
+                    this._z = Math.atan2(-m12, m22);
                 }
                 else {
-                    this.y = 0;
-                    this.z = Math.atan2(m21, m11);
+                    this._y = 0;
+                    this._z = Math.atan2(m21, m11);
                 }
                 break;
             case 'ZYX':
-                this.y = Math.asin(-(0,_MathUtils__WEBPACK_IMPORTED_MODULE_2__.clamp)(m31, -1, 1));
+                this._y = Math.asin(-(0,_MathUtils__WEBPACK_IMPORTED_MODULE_2__.clamp)(m31, -1, 1));
                 if (Math.abs(m31) < 0.9999999) {
-                    this.x = Math.atan2(m32, m33);
-                    this.z = Math.atan2(m21, m11);
+                    this._x = Math.atan2(m32, m33);
+                    this._z = Math.atan2(m21, m11);
                 }
                 else {
-                    this.x = 0;
-                    this.z = Math.atan2(-m12, m22);
+                    this._x = 0;
+                    this._z = Math.atan2(-m12, m22);
                 }
                 break;
             case 'YZX':
-                this.z = Math.asin((0,_MathUtils__WEBPACK_IMPORTED_MODULE_2__.clamp)(m21, -1, 1));
+                this._z = Math.asin((0,_MathUtils__WEBPACK_IMPORTED_MODULE_2__.clamp)(m21, -1, 1));
                 if (Math.abs(m21) < 0.9999999) {
-                    this.x = Math.atan2(-m23, m22);
-                    this.y = Math.atan2(-m31, m11);
+                    this._x = Math.atan2(-m23, m22);
+                    this._y = Math.atan2(-m31, m11);
                 }
                 else {
-                    this.x = 0;
-                    this.y = Math.atan2(m13, m33);
+                    this._x = 0;
+                    this._y = Math.atan2(m13, m33);
                 }
                 break;
             case 'XZY':
-                this.z = Math.asin(-(0,_MathUtils__WEBPACK_IMPORTED_MODULE_2__.clamp)(m12, -1, 1));
+                this._z = Math.asin(-(0,_MathUtils__WEBPACK_IMPORTED_MODULE_2__.clamp)(m12, -1, 1));
                 if (Math.abs(m12) < 0.9999999) {
-                    this.x = Math.atan2(m32, m22);
-                    this.y = Math.atan2(m13, m11);
+                    this._x = Math.atan2(m32, m22);
+                    this._y = Math.atan2(m13, m11);
                 }
                 else {
-                    this.x = Math.atan2(-m23, m33);
-                    this.y = 0;
+                    this._x = Math.atan2(-m23, m33);
+                    this._y = 0;
                 }
                 break;
             default:
                 console.warn('THREE.Euler: .setFromRotationMatrix() encountered an unknown order: ' + order);
         }
-        this.order = order;
+        this._order = order;
+        if (update)
+            this._onChangeCallback(this);
         return this;
     }
-    setFromQuaternion(q, order) {
+    setFromQuaternion(q, order, update = true) {
         _matrix.makeRotationFromQuaternion(q);
-        return this.setFromRotationMatrix(_matrix, order);
+        return this.setFromRotationMatrix(_matrix, order, update);
     }
     setFromVector3(v, order = this.order) {
         return this.set(v.x, v.y, v.z, order);
@@ -4618,11 +4710,12 @@ class Euler {
         return (euler.x === this.x) && (euler.y === this.y) && (euler.z === this.z) && (euler.order === this.order);
     }
     fromArray(array) {
-        this.x = array[0];
-        this.y = array[1];
-        this.z = array[2];
+        this._x = array[0];
+        this._y = array[1];
+        this._z = array[2];
         if (array[3] !== undefined)
-            this.order = array[3];
+            this._order = array[3];
+        this._onChangeCallback(this);
         return this;
     }
     toArray(array = [], offset = 0) {
@@ -4631,6 +4724,9 @@ class Euler {
         array[offset + 2] = this.z;
         array[offset + 3] = this.order;
         return array;
+    }
+    onChange(callback) {
+        this._onChangeCallback = callback;
     }
     *[Symbol.iterator]() {
         yield this.x;
@@ -5701,14 +5797,44 @@ __webpack_require__.r(__webpack_exports__);
 
 class Quaternion {
     constructor(x = 0, y = 0, z = 0, w = 1) {
-        this.x = 0;
-        this.y = 0;
-        this.z = 0;
-        this.w = 0;
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.w = w;
+        this._x = 0;
+        this._y = 0;
+        this._z = 0;
+        this._w = 0;
+        this._onChangeCallback = (q) => {
+        };
+        this._x = x;
+        this._y = y;
+        this._z = z;
+        this._w = w;
+    }
+    set x(v) {
+        this._x = v;
+        this._onChangeCallback(this);
+    }
+    get x() {
+        return this._x;
+    }
+    set y(v) {
+        this._y = v;
+        this._onChangeCallback(this);
+    }
+    get y() {
+        return this._y;
+    }
+    set z(v) {
+        this._z = v;
+        this._onChangeCallback(this);
+    }
+    get z() {
+        return this._z;
+    }
+    set w(v) {
+        this._w = v;
+        this._onChangeCallback(this);
+    }
+    get w() {
+        return this._w;
     }
     static slerpFlat(dst, dstOffset, src0, srcOffset0, src1, srcOffset1, t) {
         // fuzz-free, array-based Quaternion SLERP operation
@@ -5772,23 +5898,25 @@ class Quaternion {
         return dst;
     }
     set(x, y, z, w) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.w = w;
+        this._x = x;
+        this._y = y;
+        this._z = z;
+        this._w = w;
+        this._onChangeCallback(this);
         return this;
     }
     clone() {
         return new Quaternion(this.x, this.y, this.z, this.w);
     }
     copy(quaternion) {
-        this.x = quaternion.x;
-        this.y = quaternion.y;
-        this.z = quaternion.z;
-        this.w = quaternion.w;
+        this._x = quaternion.x;
+        this._y = quaternion.y;
+        this._z = quaternion.z;
+        this._w = quaternion.w;
+        this._onChangeCallback(this);
         return this;
     }
-    setFromEuler(euler) {
+    setFromEuler(euler, update = true) {
         const x = euler.x, y = euler.y, z = euler.z, order = euler.order;
         // http://www.mathworks.com/matlabcentral/fileexchange/
         // 	20696-function-to-convert-between-dcm-euler-angles-quaternions-and-euler-vectors/
@@ -5803,28 +5931,28 @@ class Quaternion {
         const s3 = sin(z / 2);
         switch (order) {
             case 'XYZ':
-                this.x = s1 * c2 * c3 + c1 * s2 * s3;
-                this.y = c1 * s2 * c3 - s1 * c2 * s3;
-                this.z = c1 * c2 * s3 + s1 * s2 * c3;
-                this.w = c1 * c2 * c3 - s1 * s2 * s3;
+                this._x = s1 * c2 * c3 + c1 * s2 * s3;
+                this._y = c1 * s2 * c3 - s1 * c2 * s3;
+                this._z = c1 * c2 * s3 + s1 * s2 * c3;
+                this._w = c1 * c2 * c3 - s1 * s2 * s3;
                 break;
             case 'YXZ':
-                this.x = s1 * c2 * c3 + c1 * s2 * s3;
-                this.y = c1 * s2 * c3 - s1 * c2 * s3;
-                this.z = c1 * c2 * s3 - s1 * s2 * c3;
-                this.w = c1 * c2 * c3 + s1 * s2 * s3;
+                this._x = s1 * c2 * c3 + c1 * s2 * s3;
+                this._y = c1 * s2 * c3 - s1 * c2 * s3;
+                this._z = c1 * c2 * s3 - s1 * s2 * c3;
+                this._w = c1 * c2 * c3 + s1 * s2 * s3;
                 break;
             case 'ZXY':
-                this.x = s1 * c2 * c3 - c1 * s2 * s3;
-                this.y = c1 * s2 * c3 + s1 * c2 * s3;
-                this.z = c1 * c2 * s3 + s1 * s2 * c3;
-                this.w = c1 * c2 * c3 - s1 * s2 * s3;
+                this._x = s1 * c2 * c3 - c1 * s2 * s3;
+                this._y = c1 * s2 * c3 + s1 * c2 * s3;
+                this._z = c1 * c2 * s3 + s1 * s2 * c3;
+                this._w = c1 * c2 * c3 - s1 * s2 * s3;
                 break;
             case 'ZYX':
-                this.x = s1 * c2 * c3 - c1 * s2 * s3;
-                this.y = c1 * s2 * c3 + s1 * c2 * s3;
-                this.z = c1 * c2 * s3 - s1 * s2 * c3;
-                this.w = c1 * c2 * c3 + s1 * s2 * s3;
+                this._x = s1 * c2 * c3 - c1 * s2 * s3;
+                this._y = c1 * s2 * c3 + s1 * c2 * s3;
+                this._z = c1 * c2 * s3 - s1 * s2 * c3;
+                this._w = c1 * c2 * c3 + s1 * s2 * s3;
                 break;
             case 'YZX':
                 this.x = s1 * c2 * c3 + c1 * s2 * s3;
@@ -5841,16 +5969,19 @@ class Quaternion {
             default:
                 console.warn('THREE.Quaternion: .setFromEuler() encountered an unknown order: ' + order);
         }
+        if (update)
+            this._onChangeCallback(this);
         return this;
     }
     setFromAxisAngle(axis, angle) {
         // http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
         // assumes axis is normalized
         const halfAngle = angle / 2, s = Math.sin(halfAngle);
-        this.x = axis.x * s;
-        this.y = axis.y * s;
-        this.z = axis.z * s;
-        this.w = Math.cos(halfAngle);
+        this._x = axis.x * s;
+        this._y = axis.y * s;
+        this._z = axis.z * s;
+        this._w = Math.cos(halfAngle);
+        this._onChangeCallback(this);
         return this;
     }
     setFromRotationMatrix(m) {
@@ -5859,32 +5990,33 @@ class Quaternion {
         const te = m.elements, m11 = te[0], m12 = te[4], m13 = te[8], m21 = te[1], m22 = te[5], m23 = te[9], m31 = te[2], m32 = te[6], m33 = te[10], trace = m11 + m22 + m33;
         if (trace > 0) {
             const s = 0.5 / Math.sqrt(trace + 1.0);
-            this.w = 0.25 / s;
-            this.x = (m32 - m23) * s;
-            this.y = (m13 - m31) * s;
-            this.z = (m21 - m12) * s;
+            this._w = 0.25 / s;
+            this._x = (m32 - m23) * s;
+            this._y = (m13 - m31) * s;
+            this._z = (m21 - m12) * s;
         }
         else if (m11 > m22 && m11 > m33) {
             const s = 2.0 * Math.sqrt(1.0 + m11 - m22 - m33);
-            this.w = (m32 - m23) / s;
-            this.x = 0.25 * s;
-            this.y = (m12 + m21) / s;
-            this.z = (m13 + m31) / s;
+            this._w = (m32 - m23) / s;
+            this._x = 0.25 * s;
+            this._y = (m12 + m21) / s;
+            this._z = (m13 + m31) / s;
         }
         else if (m22 > m33) {
             const s = 2.0 * Math.sqrt(1.0 + m22 - m11 - m33);
-            this.w = (m13 - m31) / s;
-            this.x = (m12 + m21) / s;
-            this.y = 0.25 * s;
-            this.z = (m23 + m32) / s;
+            this._w = (m13 - m31) / s;
+            this._x = (m12 + m21) / s;
+            this._y = 0.25 * s;
+            this._z = (m23 + m32) / s;
         }
         else {
             const s = 2.0 * Math.sqrt(1.0 + m33 - m11 - m22);
-            this.w = (m21 - m12) / s;
-            this.x = (m13 + m31) / s;
-            this.y = (m23 + m32) / s;
-            this.z = 0.25 * s;
+            this._w = (m21 - m12) / s;
+            this._x = (m13 + m31) / s;
+            this._y = (m23 + m32) / s;
+            this._z = 0.25 * s;
         }
+        this._onChangeCallback(this);
         return this;
     }
     setFromUnitVectors(vFrom, vTo) {
@@ -5894,24 +6026,24 @@ class Quaternion {
             // vFrom and vTo point in opposite directions
             r = 0;
             if (Math.abs(vFrom.x) > Math.abs(vFrom.z)) {
-                this.x = -vFrom.y;
-                this.y = vFrom.x;
-                this.z = 0;
-                this.w = r;
+                this._x = -vFrom.y;
+                this._y = vFrom.x;
+                this._z = 0;
+                this._w = r;
             }
             else {
-                this.x = 0;
-                this.y = -vFrom.z;
-                this.z = vFrom.y;
-                this.w = r;
+                this._x = 0;
+                this._y = -vFrom.z;
+                this._z = vFrom.y;
+                this._w = r;
             }
         }
         else {
             // crossVectors( vFrom, vTo ); // inlined to avoid cyclic dependency on Vector3
-            this.x = vFrom.y * vTo.z - vFrom.z * vTo.y;
-            this.y = vFrom.z * vTo.x - vFrom.x * vTo.z;
-            this.z = vFrom.x * vTo.y - vFrom.y * vTo.x;
-            this.w = r;
+            this._x = vFrom.y * vTo.z - vFrom.z * vTo.y;
+            this._y = vFrom.z * vTo.x - vFrom.x * vTo.z;
+            this._z = vFrom.x * vTo.y - vFrom.y * vTo.x;
+            this._w = r;
         }
         return this.normalize();
     }
@@ -5937,6 +6069,7 @@ class Quaternion {
         this.x *= -1;
         this.y *= -1;
         this.z *= -1;
+        this._onChangeCallback(this);
         return this;
     }
     dot(v) {
@@ -5951,18 +6084,19 @@ class Quaternion {
     normalize() {
         let l = this.length();
         if (l === 0) {
-            this.x = 0;
-            this.y = 0;
-            this.z = 0;
-            this.w = 1;
+            this._x = 0;
+            this._y = 0;
+            this._z = 0;
+            this._w = 1;
         }
         else {
             l = 1 / l;
-            this.x = this.x * l;
-            this.y = this.y * l;
-            this.z = this.z * l;
-            this.w = this.w * l;
+            this._x = this.x * l;
+            this._y = this.y * l;
+            this._z = this.z * l;
+            this._w = this.w * l;
         }
+        this._onChangeCallback(this);
         return this;
     }
     multiply(q) {
@@ -5975,10 +6109,11 @@ class Quaternion {
         // from http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/code/index.htm
         const qax = a.x, qay = a.y, qaz = a.z, qaw = a.w;
         const qbx = b.x, qby = b.y, qbz = b.z, qbw = b.w;
-        this.x = qax * qbw + qaw * qbx + qay * qbz - qaz * qby;
-        this.y = qay * qbw + qaw * qby + qaz * qbx - qax * qbz;
-        this.z = qaz * qbw + qaw * qbz + qax * qby - qay * qbx;
-        this.w = qaw * qbw - qax * qbx - qay * qby - qaz * qbz;
+        this._x = qax * qbw + qaw * qbx + qay * qbz - qaz * qby;
+        this._y = qay * qbw + qaw * qby + qaz * qbx - qax * qbz;
+        this._z = qaz * qbw + qaw * qbz + qax * qby - qay * qbx;
+        this._w = qaw * qbw - qax * qbx - qay * qby - qaz * qbz;
+        this._onChangeCallback(this);
         return this;
     }
     slerp(qb, t) {
@@ -6023,6 +6158,7 @@ class Quaternion {
         this.x = (x * ratioA + this.x * ratioB);
         this.y = (y * ratioA + this.y * ratioB);
         this.z = (z * ratioA + this.z * ratioB);
+        this._onChangeCallback(this);
         return this;
     }
     slerpQuaternions(qa, qb, t) {
@@ -6047,6 +6183,7 @@ class Quaternion {
         this.y = array[offset + 1];
         this.z = array[offset + 2];
         this.w = array[offset + 3];
+        this._onChangeCallback(this);
         return this;
     }
     toArray(array = [], offset = 0) {
@@ -6065,6 +6202,9 @@ class Quaternion {
     // }
     toJSON() {
         return this.toArray();
+    }
+    onChange(callback) {
+        this._onChangeCallback = callback;
     }
     *[Symbol.iterator]() {
         yield this.x;
@@ -7002,6 +7142,7 @@ class WebGPURenderer {
             this._sizeChanged = false;
         }
         camera.update();
+        const sceneUpdated = scene.update(camera);
         //this._materialObjects.clear();
         const commandEncoder = this.device.createCommandEncoder();
         const view = this.sampleCount > 1 ? this._colorAttachmentView : this._context.getCurrentTexture().createView();
@@ -7012,16 +7153,19 @@ class WebGPURenderer {
         const materialObjects = scene.renderableObjs;
         const passEncoder = commandEncoder.beginRenderPass(this._renderPassDescriptor);
         for (const [material, objects] of materialObjects) {
-            this._renderSamePipeline(passEncoder, material, objects, camera);
+            if (sceneUpdated) {
+                material.pipeline.needsCompile = true;
+            }
+            this._renderSamePipeline(passEncoder, material, objects, camera, scene);
         }
         passEncoder.end();
         this.device.queue.submit([commandEncoder.finish()]);
     }
-    _renderSamePipeline(passEncoder, material, objects, camera) {
-        material.pipeline.compilePipeline(this);
+    _renderSamePipeline(passEncoder, material, objects, camera, scene) {
+        material.pipeline.compilePipeline(this, scene);
         passEncoder.setPipeline(material.pipeline.pipeline);
-        material.pipeline.createBindGroups(camera);
-        material.pipeline.bindCommonUniform(passEncoder, camera);
+        material.pipeline.createCommonBindGroups(scene);
+        material.pipeline.bindCommonUniform(passEncoder);
         material.updateUniforms();
         for (let i = 0; i < objects.length; ++i) {
             material.pipeline.createObjectBindGroup(objects[i]);
@@ -7110,13 +7254,16 @@ class MeshBasicShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
     constructor(material) {
         super(material);
     }
-    _createVertexShader() {
+    _createVertexShader(scene) {
         const shaderOptions = this._material.shaderOptions;
         const indexObj = { index: 1 };
         const uvItem = shaderOptions.attributeValues.get("uv");
         this._vertexShaderCode = `
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.location_transform_vert()}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(0, scene.bindValues.get("projectionMatrix"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(0, scene.bindValues.get("matrixWorldInverse"))}
 
+            @group(2) @binding(0) var<uniform> modelMatrix : mat4x4<f32>;
+            
             struct VertexOutput {
                 @builtin(position) Position : vec4<f32>,
                 ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.itemVary_value(uvItem, indexObj)}
@@ -7135,15 +7282,15 @@ class MeshBasicShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
         
         `;
     }
-    _createFragmentShader() {
+    _createFragmentShader(scene) {
         const shaderOptions = this._material.shaderOptions;
         const indexObj = { index: 1 };
         const uvItem = shaderOptions.attributeValues.get("uv");
         this._fragmentShaderCode = `
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("parameters"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("color"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("colorSampler"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("texture"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("parameters"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("color"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("colorSampler"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("texture"))}
             
 
 
@@ -7152,7 +7299,7 @@ class MeshBasicShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
                 ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.itemVary_value(uvItem, indexObj)}
             ) -> @location(0) vec4<f32> {
                 var baseColor:vec4<f32>;
-                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.getColo_frag(shaderOptions.bindValues.get("texture"), shaderOptions.bindValues.get("color"))}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.getColor_frag(shaderOptions.bindValues.get("texture"), shaderOptions.bindValues.get("color"))}
                 return baseColor;
             }
 
@@ -7181,13 +7328,16 @@ class MeshPhongShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
     constructor(material) {
         super(material);
     }
-    _createVertexShader() {
+    _createVertexShader(scene) {
         const shaderOptions = this._material.shaderOptions;
         const indexObj = { index: 1 };
         const uvItem = shaderOptions.attributeValues.get("uv");
         const normalItem = shaderOptions.attributeValues.get("normal");
         this._vertexShaderCode = `
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.location_transform_vert()}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(0, scene.bindValues.get("projectionMatrix"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(0, scene.bindValues.get("matrixWorldInverse"))}
+
+            @group(2) @binding(0) var<uniform> modelMatrix : mat4x4<f32>;
 
             struct VertexOutput {
                 @builtin(position) Position : vec4<f32>,
@@ -7212,22 +7362,12 @@ class MeshPhongShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
         
         `;
     }
-    _createFragmentShader() {
+    _createFragmentShader(scene) {
         const shaderOptions = this._material.shaderOptions;
         const indexObj = { index: 1 };
         const uvItem = shaderOptions.attributeValues.get("uv");
         const normalItem = shaderOptions.attributeValues.get("normal");
         this._fragmentShaderCode = `
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("parameters"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("color"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("colorSampler"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("texture"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("specular"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("emissive"))}
-            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value_frag(shaderOptions.bindValues.get("shininess"))}
-    
-
-
             const RECIPROCAL_PI = 0.3183098861837907;
             struct IncidentLight {
                 color:vec3<f32>,
@@ -7258,8 +7398,8 @@ class MeshPhongShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
             };
 
             struct DirectionalLight {
-                direction:vec3<f32>,
-                color:vec3<f32>,
+                color:vec4<f32>,
+                direction:vec4<f32>,
             };
 
             fn saturate( a:f32 )->f32 {
@@ -7324,6 +7464,16 @@ class MeshPhongShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
                 (*reflectedLight).directSpecular += irradiance * BRDF_BlinnPhong( directLight.direction, geometry.viewDir, geometry.normal, material.specularColor, material.specularShininess ) * material.specularStrength;
             }
 
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(0, scene.bindValues.get("directionalLights"))}
+
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("parameters"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("color"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("colorSampler"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("texture"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("specular"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("emissive"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("shininess"))}
+
             @fragment
             fn main(
                 ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.itemVary_value(uvItem, indexObj)}
@@ -7331,7 +7481,7 @@ class MeshPhongShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
                 ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.customVary_value("vViewPosition", "vec3<f32>", indexObj)}
             ) -> @location(0) vec4<f32> {
                 var baseColor:vec4<f32>;
-                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.getColo_frag(shaderOptions.bindValues.get("texture"), shaderOptions.bindValues.get("color"))}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.getColor_frag(shaderOptions.bindValues.get("texture"), shaderOptions.bindValues.get("color"))}
 
                 var diffuse = baseColor.xyz;
                 // var emissive = vec3<f32>(0.0,0.0,0.0);
@@ -7362,20 +7512,34 @@ class MeshPhongShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
                 //geometry.viewDir = ( isOrthographic ) ? vec3( 0, 0, 1 ) : normalize( vViewPosition );
                 geometry.viewDir = normalize( vViewPosition );
 
+                ${scene.directionalLights.size > 0 ? `
+                    for(var i = 0u;i < ${scene.directionalLights.size}u;i++){
+                        var directionalLight = directionalLights[i];
+        
+                        var directLight:IncidentLight;
+                        directLight.color = directionalLight.color.xyz;
+                        directLight.direction = directionalLight.direction.xyz;
+                        //directLight.direction = vec3<f32>(0.,1.,0.);
+                        directLight.visible = true;
+        
+                        RE_Direct_BlinnPhong( directLight, geometry, material, &reflectedLight );
+                    }
+                
+                ` : ``}
+                //var directionalLight:DirectionalLight;
+                
 
-                var directionalLight:DirectionalLight;
+                // directionalLight.direction = vec3<f32>(0.,1.,1.);
+                // directionalLight.color = vec3<f32>(1.,1.,1.);
 
-                directionalLight.direction = vec3<f32>(0.,1.,1.);
-                directionalLight.color = vec3<f32>(1.,1.,1.);
+                // var directLight:IncidentLight;
+                // directLight.color = directionalLight.color;
+                // directLight.direction = directionalLight.direction;
+                // directLight.visible = true;
 
-                var directLight:IncidentLight;
-                directLight.color = directionalLight.color;
-                directLight.direction = directionalLight.direction;
-                directLight.visible = true;
+                // //getDirectionalLightInfo( directionalLight, geometry, directLight );
 
-                //getDirectionalLightInfo( directionalLight, geometry, directLight );
-
-                RE_Direct_BlinnPhong( directLight, geometry, material, &reflectedLight );
+                // RE_Direct_BlinnPhong( directLight, geometry, material, &reflectedLight );
 
                 var outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;
 
@@ -7404,9 +7568,9 @@ class Shader {
     constructor(material) {
         this._material = material;
     }
-    recreate() {
-        this._createVertexShader();
-        this._createFragmentShader();
+    recreate(scene) {
+        this._createVertexShader(scene);
+        this._createFragmentShader(scene);
     }
     get vertexShaderCode() {
         return this._vertexShaderCode;
@@ -7427,9 +7591,9 @@ class Shader {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   bind_value_frag: () => (/* binding */ bind_value_frag),
+/* harmony export */   bind_value: () => (/* binding */ bind_value),
 /* harmony export */   customVary_value: () => (/* binding */ customVary_value),
-/* harmony export */   getColo_frag: () => (/* binding */ getColo_frag),
+/* harmony export */   getColor_frag: () => (/* binding */ getColor_frag),
 /* harmony export */   itemVary_value: () => (/* binding */ itemVary_value),
 /* harmony export */   location_transform_vert: () => (/* binding */ location_transform_vert),
 /* harmony export */   location_vert: () => (/* binding */ location_vert),
@@ -7462,7 +7626,7 @@ function customVary_value(name, itemType, indexObj) {
 }
 function transform_vert() {
     return `
-            var mvPosition = viewMatrix * modelMatrix * vec4<f32>(position, 1.0);
+            var mvPosition = matrixWorldInverse * modelMatrix * vec4<f32>(position, 1.0);
             output.Position = projectionMatrix * mvPosition;
             `;
 }
@@ -7471,12 +7635,12 @@ function uv_vert(item) {
         return `output.uv = uv;`;
     return "";
 }
-function bind_value_frag(item) {
+function bind_value(groupIndex, item) {
     if (item)
-        return `@group(1) @binding(${item.index}) var${item.bindType === _core_Defines__WEBPACK_IMPORTED_MODULE_0__.BindType.buffer ? "<uniform>" : ""} ${item.name} : ${item.shaderItemType};`;
+        return `@group(${groupIndex}) @binding(${item.index}) var${item.bindType === _core_Defines__WEBPACK_IMPORTED_MODULE_0__.BindType.buffer ? "<uniform>" : ""} ${item.name} : ${item.shaderItemType};`;
     return "";
 }
-function getColo_frag(textureItem, colorItem) {
+function getColor_frag(textureItem, colorItem) {
     if (textureItem)
         return `baseColor = textureSample(texture, colorSampler, uv);`;
     else {
@@ -7486,6 +7650,103 @@ function getColo_frag(textureItem, colorItem) {
             return `baseColor = color;`;
     }
 }
+
+
+/***/ }),
+
+/***/ "./src/spectre.ts":
+/*!************************!*\
+  !*** ./src/spectre.ts ***!
+  \************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   BoxGeometry: () => (/* reexport safe */ _geometries_BoxGeometry__WEBPACK_IMPORTED_MODULE_5__.BoxGeometry),
+/* harmony export */   BufferAttribute: () => (/* reexport safe */ _core_BufferAttribute__WEBPACK_IMPORTED_MODULE_3__.BufferAttribute),
+/* harmony export */   BufferGeometry: () => (/* reexport safe */ _core_BufferGeometry__WEBPACK_IMPORTED_MODULE_4__.BufferGeometry),
+/* harmony export */   Color: () => (/* reexport safe */ _math_Color__WEBPACK_IMPORTED_MODULE_10__.Color),
+/* harmony export */   ConstantsValues: () => (/* reexport module object */ _utils_TMPValues__WEBPACK_IMPORTED_MODULE_27__),
+/* harmony export */   DirectionalLight: () => (/* reexport safe */ _lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_20__.DirectionalLight),
+/* harmony export */   Environment: () => (/* reexport module object */ _core_Defines__WEBPACK_IMPORTED_MODULE_1__),
+/* harmony export */   Euler: () => (/* reexport safe */ _math_Euler__WEBPACK_IMPORTED_MODULE_11__.Euler),
+/* harmony export */   FileLoader: () => (/* reexport safe */ _loaders_FileLoader__WEBPACK_IMPORTED_MODULE_24__.FileLoader),
+/* harmony export */   GPUConstances: () => (/* reexport module object */ _Constants__WEBPACK_IMPORTED_MODULE_0__),
+/* harmony export */   ImageLoader: () => (/* reexport safe */ _loaders_ImageLoader__WEBPACK_IMPORTED_MODULE_25__.ImageLoader),
+/* harmony export */   Matrix3: () => (/* reexport safe */ _math_Matrix3__WEBPACK_IMPORTED_MODULE_12__.Matrix3),
+/* harmony export */   Matrix4: () => (/* reexport safe */ _math_Matrix4__WEBPACK_IMPORTED_MODULE_13__.Matrix4),
+/* harmony export */   Mesh: () => (/* reexport safe */ _objects_Mesh__WEBPACK_IMPORTED_MODULE_19__.Mesh),
+/* harmony export */   MeshBasicMaterial: () => (/* reexport safe */ _materials_MeshBasicMaterial__WEBPACK_IMPORTED_MODULE_8__.MeshBasicMaterial),
+/* harmony export */   MeshPhongMaterial: () => (/* reexport safe */ _materials_MeshPhongMaterial__WEBPACK_IMPORTED_MODULE_9__.MeshPhongMaterial),
+/* harmony export */   Object3D: () => (/* reexport safe */ _core_Object3D__WEBPACK_IMPORTED_MODULE_17__.Object3D),
+/* harmony export */   OrbitControls: () => (/* reexport safe */ _controls_OrbitControls__WEBPACK_IMPORTED_MODULE_23__.OrbitControls),
+/* harmony export */   OrthographicCamera: () => (/* reexport safe */ _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_22__.OrthographicCamera),
+/* harmony export */   PerspectiveCamera: () => (/* reexport safe */ _cameras_PerspectiveCamera__WEBPACK_IMPORTED_MODULE_21__.PerspectiveCamera),
+/* harmony export */   PlaneGeometry: () => (/* reexport safe */ _geometries_PlaneGeometry__WEBPACK_IMPORTED_MODULE_6__.PlaneGeometry),
+/* harmony export */   Quaternion: () => (/* reexport safe */ _math_Quaternion__WEBPACK_IMPORTED_MODULE_14__.Quaternion),
+/* harmony export */   Scene: () => (/* reexport safe */ _core_Scene__WEBPACK_IMPORTED_MODULE_18__.Scene),
+/* harmony export */   SphereGeometry: () => (/* reexport safe */ _geometries_SphereGeometry__WEBPACK_IMPORTED_MODULE_7__.SphereGeometry),
+/* harmony export */   TextureLoader: () => (/* reexport safe */ _loaders_TextureLoader__WEBPACK_IMPORTED_MODULE_26__.TextureLoader),
+/* harmony export */   Vector2: () => (/* reexport safe */ _math_Vector2__WEBPACK_IMPORTED_MODULE_15__.Vector2),
+/* harmony export */   Vector3: () => (/* reexport safe */ _math_Vector3__WEBPACK_IMPORTED_MODULE_16__.Vector3),
+/* harmony export */   WebGPURenderer: () => (/* reexport safe */ _renderers_WebGPURenderer__WEBPACK_IMPORTED_MODULE_2__.WebGPURenderer)
+/* harmony export */ });
+/* harmony import */ var _Constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
+/* harmony import */ var _core_Defines__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./core/Defines */ "./src/core/Defines.ts");
+/* harmony import */ var _renderers_WebGPURenderer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./renderers/WebGPURenderer */ "./src/renderers/WebGPURenderer.ts");
+/* harmony import */ var _core_BufferAttribute__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./core/BufferAttribute */ "./src/core/BufferAttribute.ts");
+/* harmony import */ var _core_BufferGeometry__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./core/BufferGeometry */ "./src/core/BufferGeometry.ts");
+/* harmony import */ var _geometries_BoxGeometry__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./geometries/BoxGeometry */ "./src/geometries/BoxGeometry.ts");
+/* harmony import */ var _geometries_PlaneGeometry__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./geometries/PlaneGeometry */ "./src/geometries/PlaneGeometry.ts");
+/* harmony import */ var _geometries_SphereGeometry__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./geometries/SphereGeometry */ "./src/geometries/SphereGeometry.ts");
+/* harmony import */ var _materials_MeshBasicMaterial__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./materials/MeshBasicMaterial */ "./src/materials/MeshBasicMaterial.ts");
+/* harmony import */ var _materials_MeshPhongMaterial__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./materials/MeshPhongMaterial */ "./src/materials/MeshPhongMaterial.ts");
+/* harmony import */ var _math_Color__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./math/Color */ "./src/math/Color.ts");
+/* harmony import */ var _math_Euler__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./math/Euler */ "./src/math/Euler.ts");
+/* harmony import */ var _math_Matrix3__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./math/Matrix3 */ "./src/math/Matrix3.ts");
+/* harmony import */ var _math_Matrix4__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./math/Matrix4 */ "./src/math/Matrix4.ts");
+/* harmony import */ var _math_Quaternion__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./math/Quaternion */ "./src/math/Quaternion.ts");
+/* harmony import */ var _math_Vector2__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./math/Vector2 */ "./src/math/Vector2.ts");
+/* harmony import */ var _math_Vector3__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./math/Vector3 */ "./src/math/Vector3.ts");
+/* harmony import */ var _core_Object3D__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./core/Object3D */ "./src/core/Object3D.ts");
+/* harmony import */ var _core_Scene__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./core/Scene */ "./src/core/Scene.ts");
+/* harmony import */ var _objects_Mesh__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./objects/Mesh */ "./src/objects/Mesh.ts");
+/* harmony import */ var _lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./lights/DirectionalLight */ "./src/lights/DirectionalLight.ts");
+/* harmony import */ var _cameras_PerspectiveCamera__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./cameras/PerspectiveCamera */ "./src/cameras/PerspectiveCamera.ts");
+/* harmony import */ var _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./cameras/OrthographicCamera */ "./src/cameras/OrthographicCamera.ts");
+/* harmony import */ var _controls_OrbitControls__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ./controls/OrbitControls */ "./src/controls/OrbitControls.ts");
+/* harmony import */ var _loaders_FileLoader__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ./loaders/FileLoader */ "./src/loaders/FileLoader.ts");
+/* harmony import */ var _loaders_ImageLoader__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ./loaders/ImageLoader */ "./src/loaders/ImageLoader.ts");
+/* harmony import */ var _loaders_TextureLoader__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ./loaders/TextureLoader */ "./src/loaders/TextureLoader.ts");
+/* harmony import */ var _utils_TMPValues__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ./utils/TMPValues */ "./src/utils/TMPValues.ts");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /***/ }),
@@ -7793,126 +8054,40 @@ const Vector0 = new _math_Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
 /******/ })();
 /******/ 
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
-(() => {
-/*!************************!*\
-  !*** ./src/spectre.ts ***!
-  \************************/
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   BoxGeometry: () => (/* reexport safe */ _geometries_BoxGeometry__WEBPACK_IMPORTED_MODULE_5__.BoxGeometry),
-/* harmony export */   BufferAttribute: () => (/* reexport safe */ _core_BufferAttribute__WEBPACK_IMPORTED_MODULE_3__.BufferAttribute),
-/* harmony export */   BufferGeometry: () => (/* reexport safe */ _core_BufferGeometry__WEBPACK_IMPORTED_MODULE_4__.BufferGeometry),
-/* harmony export */   Color: () => (/* reexport safe */ _math_Color__WEBPACK_IMPORTED_MODULE_10__.Color),
-/* harmony export */   ConstantsValues: () => (/* reexport module object */ _utils_TMPValues__WEBPACK_IMPORTED_MODULE_26__),
-/* harmony export */   Environment: () => (/* reexport module object */ _core_Defines__WEBPACK_IMPORTED_MODULE_1__),
-/* harmony export */   Euler: () => (/* reexport safe */ _math_Euler__WEBPACK_IMPORTED_MODULE_11__.Euler),
-/* harmony export */   FileLoader: () => (/* reexport safe */ _loaders_FileLoader__WEBPACK_IMPORTED_MODULE_23__.FileLoader),
-/* harmony export */   GPUConstances: () => (/* reexport module object */ _Constants__WEBPACK_IMPORTED_MODULE_0__),
-/* harmony export */   ImageLoader: () => (/* reexport safe */ _loaders_ImageLoader__WEBPACK_IMPORTED_MODULE_24__.ImageLoader),
-/* harmony export */   Matrix3: () => (/* reexport safe */ _math_Matrix3__WEBPACK_IMPORTED_MODULE_12__.Matrix3),
-/* harmony export */   Matrix4: () => (/* reexport safe */ _math_Matrix4__WEBPACK_IMPORTED_MODULE_13__.Matrix4),
-/* harmony export */   Mesh: () => (/* reexport safe */ _objects_Mesh__WEBPACK_IMPORTED_MODULE_18__.Mesh),
-/* harmony export */   MeshBasicMaterial: () => (/* reexport safe */ _materials_MeshBasicMaterial__WEBPACK_IMPORTED_MODULE_8__.MeshBasicMaterial),
-/* harmony export */   MeshPhongMaterial: () => (/* reexport safe */ _materials_MeshPhongMaterial__WEBPACK_IMPORTED_MODULE_9__.MeshPhongMaterial),
-/* harmony export */   Object3D: () => (/* reexport safe */ _core_Object3D__WEBPACK_IMPORTED_MODULE_17__.Object3D),
-/* harmony export */   OrbitControls: () => (/* reexport safe */ _controls_OrbitControls__WEBPACK_IMPORTED_MODULE_22__.OrbitControls),
-/* harmony export */   OrthographicCamera: () => (/* reexport safe */ _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_21__.OrthographicCamera),
-/* harmony export */   PerspectiveCamera: () => (/* reexport safe */ _cameras_PerspectiveCamera__WEBPACK_IMPORTED_MODULE_20__.PerspectiveCamera),
-/* harmony export */   PlaneGeometry: () => (/* reexport safe */ _geometries_PlaneGeometry__WEBPACK_IMPORTED_MODULE_6__.PlaneGeometry),
-/* harmony export */   Quaternion: () => (/* reexport safe */ _math_Quaternion__WEBPACK_IMPORTED_MODULE_14__.Quaternion),
-/* harmony export */   Scene: () => (/* reexport safe */ _core_Scene__WEBPACK_IMPORTED_MODULE_19__.Scene),
-/* harmony export */   SphereGeometry: () => (/* reexport safe */ _geometries_SphereGeometry__WEBPACK_IMPORTED_MODULE_7__.SphereGeometry),
-/* harmony export */   TextureLoader: () => (/* reexport safe */ _loaders_TextureLoader__WEBPACK_IMPORTED_MODULE_25__.TextureLoader),
-/* harmony export */   Vector2: () => (/* reexport safe */ _math_Vector2__WEBPACK_IMPORTED_MODULE_15__.Vector2),
-/* harmony export */   Vector3: () => (/* reexport safe */ _math_Vector3__WEBPACK_IMPORTED_MODULE_16__.Vector3),
-/* harmony export */   WebGPURenderer: () => (/* reexport safe */ _renderers_WebGPURenderer__WEBPACK_IMPORTED_MODULE_2__.WebGPURenderer)
-/* harmony export */ });
-/* harmony import */ var _Constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
-/* harmony import */ var _core_Defines__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./core/Defines */ "./src/core/Defines.ts");
-/* harmony import */ var _renderers_WebGPURenderer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./renderers/WebGPURenderer */ "./src/renderers/WebGPURenderer.ts");
-/* harmony import */ var _core_BufferAttribute__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./core/BufferAttribute */ "./src/core/BufferAttribute.ts");
-/* harmony import */ var _core_BufferGeometry__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./core/BufferGeometry */ "./src/core/BufferGeometry.ts");
-/* harmony import */ var _geometries_BoxGeometry__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./geometries/BoxGeometry */ "./src/geometries/BoxGeometry.ts");
-/* harmony import */ var _geometries_PlaneGeometry__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./geometries/PlaneGeometry */ "./src/geometries/PlaneGeometry.ts");
-/* harmony import */ var _geometries_SphereGeometry__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./geometries/SphereGeometry */ "./src/geometries/SphereGeometry.ts");
-/* harmony import */ var _materials_MeshBasicMaterial__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./materials/MeshBasicMaterial */ "./src/materials/MeshBasicMaterial.ts");
-/* harmony import */ var _materials_MeshPhongMaterial__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./materials/MeshPhongMaterial */ "./src/materials/MeshPhongMaterial.ts");
-/* harmony import */ var _math_Color__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./math/Color */ "./src/math/Color.ts");
-/* harmony import */ var _math_Euler__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./math/Euler */ "./src/math/Euler.ts");
-/* harmony import */ var _math_Matrix3__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./math/Matrix3 */ "./src/math/Matrix3.ts");
-/* harmony import */ var _math_Matrix4__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./math/Matrix4 */ "./src/math/Matrix4.ts");
-/* harmony import */ var _math_Quaternion__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./math/Quaternion */ "./src/math/Quaternion.ts");
-/* harmony import */ var _math_Vector2__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./math/Vector2 */ "./src/math/Vector2.ts");
-/* harmony import */ var _math_Vector3__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./math/Vector3 */ "./src/math/Vector3.ts");
-/* harmony import */ var _core_Object3D__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./core/Object3D */ "./src/core/Object3D.ts");
-/* harmony import */ var _objects_Mesh__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./objects/Mesh */ "./src/objects/Mesh.ts");
-/* harmony import */ var _core_Scene__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./core/Scene */ "./src/core/Scene.ts");
-/* harmony import */ var _cameras_PerspectiveCamera__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./cameras/PerspectiveCamera */ "./src/cameras/PerspectiveCamera.ts");
-/* harmony import */ var _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./cameras/OrthographicCamera */ "./src/cameras/OrthographicCamera.ts");
-/* harmony import */ var _controls_OrbitControls__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./controls/OrbitControls */ "./src/controls/OrbitControls.ts");
-/* harmony import */ var _loaders_FileLoader__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ./loaders/FileLoader */ "./src/loaders/FileLoader.ts");
-/* harmony import */ var _loaders_ImageLoader__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ./loaders/ImageLoader */ "./src/loaders/ImageLoader.ts");
-/* harmony import */ var _loaders_TextureLoader__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ./loaders/TextureLoader */ "./src/loaders/TextureLoader.ts");
-/* harmony import */ var _utils_TMPValues__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ./utils/TMPValues */ "./src/utils/TMPValues.ts");
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-})();
-
-var __webpack_exports__BoxGeometry = __webpack_exports__.BoxGeometry;
-var __webpack_exports__BufferAttribute = __webpack_exports__.BufferAttribute;
-var __webpack_exports__BufferGeometry = __webpack_exports__.BufferGeometry;
-var __webpack_exports__Color = __webpack_exports__.Color;
-var __webpack_exports__ConstantsValues = __webpack_exports__.ConstantsValues;
-var __webpack_exports__Environment = __webpack_exports__.Environment;
-var __webpack_exports__Euler = __webpack_exports__.Euler;
-var __webpack_exports__FileLoader = __webpack_exports__.FileLoader;
-var __webpack_exports__GPUConstances = __webpack_exports__.GPUConstances;
-var __webpack_exports__ImageLoader = __webpack_exports__.ImageLoader;
-var __webpack_exports__Matrix3 = __webpack_exports__.Matrix3;
-var __webpack_exports__Matrix4 = __webpack_exports__.Matrix4;
-var __webpack_exports__Mesh = __webpack_exports__.Mesh;
-var __webpack_exports__MeshBasicMaterial = __webpack_exports__.MeshBasicMaterial;
-var __webpack_exports__MeshPhongMaterial = __webpack_exports__.MeshPhongMaterial;
-var __webpack_exports__Object3D = __webpack_exports__.Object3D;
-var __webpack_exports__OrbitControls = __webpack_exports__.OrbitControls;
-var __webpack_exports__OrthographicCamera = __webpack_exports__.OrthographicCamera;
-var __webpack_exports__PerspectiveCamera = __webpack_exports__.PerspectiveCamera;
-var __webpack_exports__PlaneGeometry = __webpack_exports__.PlaneGeometry;
-var __webpack_exports__Quaternion = __webpack_exports__.Quaternion;
-var __webpack_exports__Scene = __webpack_exports__.Scene;
-var __webpack_exports__SphereGeometry = __webpack_exports__.SphereGeometry;
-var __webpack_exports__TextureLoader = __webpack_exports__.TextureLoader;
-var __webpack_exports__Vector2 = __webpack_exports__.Vector2;
-var __webpack_exports__Vector3 = __webpack_exports__.Vector3;
-var __webpack_exports__WebGPURenderer = __webpack_exports__.WebGPURenderer;
-export { __webpack_exports__BoxGeometry as BoxGeometry, __webpack_exports__BufferAttribute as BufferAttribute, __webpack_exports__BufferGeometry as BufferGeometry, __webpack_exports__Color as Color, __webpack_exports__ConstantsValues as ConstantsValues, __webpack_exports__Environment as Environment, __webpack_exports__Euler as Euler, __webpack_exports__FileLoader as FileLoader, __webpack_exports__GPUConstances as GPUConstances, __webpack_exports__ImageLoader as ImageLoader, __webpack_exports__Matrix3 as Matrix3, __webpack_exports__Matrix4 as Matrix4, __webpack_exports__Mesh as Mesh, __webpack_exports__MeshBasicMaterial as MeshBasicMaterial, __webpack_exports__MeshPhongMaterial as MeshPhongMaterial, __webpack_exports__Object3D as Object3D, __webpack_exports__OrbitControls as OrbitControls, __webpack_exports__OrthographicCamera as OrthographicCamera, __webpack_exports__PerspectiveCamera as PerspectiveCamera, __webpack_exports__PlaneGeometry as PlaneGeometry, __webpack_exports__Quaternion as Quaternion, __webpack_exports__Scene as Scene, __webpack_exports__SphereGeometry as SphereGeometry, __webpack_exports__TextureLoader as TextureLoader, __webpack_exports__Vector2 as Vector2, __webpack_exports__Vector3 as Vector3, __webpack_exports__WebGPURenderer as WebGPURenderer };
+/******/ 
+/******/ // startup
+/******/ // Load entry module and return exports
+/******/ // This entry module is referenced by other modules so it can't be inlined
+/******/ var __webpack_exports__ = __webpack_require__("./src/spectre.ts");
+/******/ var __webpack_exports__BoxGeometry = __webpack_exports__.BoxGeometry;
+/******/ var __webpack_exports__BufferAttribute = __webpack_exports__.BufferAttribute;
+/******/ var __webpack_exports__BufferGeometry = __webpack_exports__.BufferGeometry;
+/******/ var __webpack_exports__Color = __webpack_exports__.Color;
+/******/ var __webpack_exports__ConstantsValues = __webpack_exports__.ConstantsValues;
+/******/ var __webpack_exports__DirectionalLight = __webpack_exports__.DirectionalLight;
+/******/ var __webpack_exports__Environment = __webpack_exports__.Environment;
+/******/ var __webpack_exports__Euler = __webpack_exports__.Euler;
+/******/ var __webpack_exports__FileLoader = __webpack_exports__.FileLoader;
+/******/ var __webpack_exports__GPUConstances = __webpack_exports__.GPUConstances;
+/******/ var __webpack_exports__ImageLoader = __webpack_exports__.ImageLoader;
+/******/ var __webpack_exports__Matrix3 = __webpack_exports__.Matrix3;
+/******/ var __webpack_exports__Matrix4 = __webpack_exports__.Matrix4;
+/******/ var __webpack_exports__Mesh = __webpack_exports__.Mesh;
+/******/ var __webpack_exports__MeshBasicMaterial = __webpack_exports__.MeshBasicMaterial;
+/******/ var __webpack_exports__MeshPhongMaterial = __webpack_exports__.MeshPhongMaterial;
+/******/ var __webpack_exports__Object3D = __webpack_exports__.Object3D;
+/******/ var __webpack_exports__OrbitControls = __webpack_exports__.OrbitControls;
+/******/ var __webpack_exports__OrthographicCamera = __webpack_exports__.OrthographicCamera;
+/******/ var __webpack_exports__PerspectiveCamera = __webpack_exports__.PerspectiveCamera;
+/******/ var __webpack_exports__PlaneGeometry = __webpack_exports__.PlaneGeometry;
+/******/ var __webpack_exports__Quaternion = __webpack_exports__.Quaternion;
+/******/ var __webpack_exports__Scene = __webpack_exports__.Scene;
+/******/ var __webpack_exports__SphereGeometry = __webpack_exports__.SphereGeometry;
+/******/ var __webpack_exports__TextureLoader = __webpack_exports__.TextureLoader;
+/******/ var __webpack_exports__Vector2 = __webpack_exports__.Vector2;
+/******/ var __webpack_exports__Vector3 = __webpack_exports__.Vector3;
+/******/ var __webpack_exports__WebGPURenderer = __webpack_exports__.WebGPURenderer;
+/******/ export { __webpack_exports__BoxGeometry as BoxGeometry, __webpack_exports__BufferAttribute as BufferAttribute, __webpack_exports__BufferGeometry as BufferGeometry, __webpack_exports__Color as Color, __webpack_exports__ConstantsValues as ConstantsValues, __webpack_exports__DirectionalLight as DirectionalLight, __webpack_exports__Environment as Environment, __webpack_exports__Euler as Euler, __webpack_exports__FileLoader as FileLoader, __webpack_exports__GPUConstances as GPUConstances, __webpack_exports__ImageLoader as ImageLoader, __webpack_exports__Matrix3 as Matrix3, __webpack_exports__Matrix4 as Matrix4, __webpack_exports__Mesh as Mesh, __webpack_exports__MeshBasicMaterial as MeshBasicMaterial, __webpack_exports__MeshPhongMaterial as MeshPhongMaterial, __webpack_exports__Object3D as Object3D, __webpack_exports__OrbitControls as OrbitControls, __webpack_exports__OrthographicCamera as OrthographicCamera, __webpack_exports__PerspectiveCamera as PerspectiveCamera, __webpack_exports__PlaneGeometry as PlaneGeometry, __webpack_exports__Quaternion as Quaternion, __webpack_exports__Scene as Scene, __webpack_exports__SphereGeometry as SphereGeometry, __webpack_exports__TextureLoader as TextureLoader, __webpack_exports__Vector2 as Vector2, __webpack_exports__Vector3 as Vector3, __webpack_exports__WebGPURenderer as WebGPURenderer };
+/******/ 
 
 //# sourceMappingURL=spectre.js.map

@@ -1,11 +1,11 @@
 import { Light } from './Light';
 import { BindBuffer } from '../core/binds/BindBuffer';
-import *  as TMPValues from '../utils/TMPValues';
 import { Color } from '../math/Color';
 import { Object3D } from '../core/Object3D';
+import { Vector3 } from '../spectre';
 
 
-class DirectionalLight extends Light {
+export class DirectionalLight extends Light {
 
 	public get type(){
 		return "DirectionalLight";
@@ -15,39 +15,31 @@ class DirectionalLight extends Light {
 		return object instanceof DirectionalLight;
 	}
 
-	private _target = new Object3D();
-
 	private _uniform: BindBuffer;
+
+	private _direction = new Vector3();
 
 	constructor( color:Color, intensity = 1 ) {
 
 		super( color, intensity );
 
-		this.position.copy( Object3D.DEFAULT_UP );
 		this.updateMatrix();
 
 		//this.shadow = new DirectionalLightShadow();
 
-		const arrayBuffer = new Float32Array(6);
-		arrayBuffer.set(this.color.toArray());
-
-		const normal = TMPValues.Vector0.subVectors(this._target.position,this.position);
-		arrayBuffer.set(normal.toArray(),3);
-
-		this._uniform = new BindBuffer("color",arrayBuffer);
-		
+		this._direction.copy( Object3D.DEFAULT_UP);
 	}
 
 	public get uniform(){
 		return this._uniform;
 	}
 
-	public set target(v:Object3D){
-		this._target = v;
+	public set direction(v:Vector3){
+		this._direction.copy(v);
 	}
 
-	public get target(){
-		return this._target;
+	public get direction(){
+		return this._direction;
 	}
 
 	dispose() {
@@ -60,7 +52,7 @@ class DirectionalLight extends Light {
 
 		super.copy( source );
 
-		this._target = source._target.clone();
+		this._direction.copy(source._direction)
 		//this.shadow = source.shadow.clone();
 
 		return this;
@@ -68,5 +60,3 @@ class DirectionalLight extends Light {
 	}
 
 }
-
-export { DirectionalLight };
