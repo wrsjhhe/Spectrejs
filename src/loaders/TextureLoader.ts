@@ -1,44 +1,43 @@
-import { ImageLoader } from './ImageLoader';
-import { Texture } from '../textures/Texture';
-import { Loader } from './Loader';
-import { LoadingManager } from './LoadingManager';
+import { ImageLoader } from "./ImageLoader";
+import { Texture } from "../textures/Texture";
+import { Loader } from "./Loader";
+import { LoadingManager } from "./LoadingManager";
 
 class TextureLoader extends Loader {
+    public image: HTMLImageElement;
 
-	public image:HTMLImageElement;
+    constructor(manager: LoadingManager = undefined) {
+        super(manager);
+    }
 
-	constructor( manager : LoadingManager = undefined ) {
+    load(
+        url: string,
+        onLoad: Function,
+        onProgress: Function,
+        onError: Function
+    ) {
+        const texture = new Texture();
 
-		super( manager );
+        const loader = new ImageLoader(this.manager);
+        loader.setCrossOrigin(this.crossOrigin);
+        loader.setPath(this.path);
 
-	}
+        loader.load(
+            url,
+            function (image: HTMLImageElement) {
+                texture.image = image;
+                texture.needsUpdate = true;
 
-	load( url:string, onLoad:Function, onProgress:Function, onError:Function ) {
+                if (onLoad !== undefined) {
+                    onLoad(texture);
+                }
+            },
+            onProgress,
+            onError
+        );
 
-		const texture = new Texture();
-
-		const loader = new ImageLoader( this.manager );
-		loader.setCrossOrigin( this.crossOrigin );
-		loader.setPath( this.path );
-
-		loader.load( url, function ( image:HTMLImageElement ) {
-
-			texture.image = image;
-			texture.needsUpdate = true;
-
-			if ( onLoad !== undefined ) {
-
-				onLoad( texture );
-
-			}
-
-		}, onProgress, onError );
-
-		return texture;
-
-	}
-
+        return texture;
+    }
 }
-
 
 export { TextureLoader };

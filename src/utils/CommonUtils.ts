@@ -12,10 +12,10 @@ export class CommonUtils {
         return o !== undefined && o !== null;
     }
 
-    public static removeArrayItemByValue<T>(array:Array<T>,value:T) {
-        for(let i = 0;i < array.length;++i){
-            if(array[i] === value){
-                array.splice(i,1);
+    public static removeArrayItemByValue<T>(array: Array<T>, value: T) {
+        for (let i = 0; i < array.length; ++i) {
+            if (array[i] === value) {
+                array.splice(i, 1);
                 break;
             }
         }

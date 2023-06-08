@@ -1,8 +1,19 @@
-import { DeepTexturePixelFormat, DepthFormat, DepthStencilFormat, MagnificationTextureFilter, Mapping, MinificationTextureFilter, NearestFilter, TextureDataType, UnsignedInt248Type, UnsignedIntType, Wrapping } from '../Constants';
-import { Texture } from './Texture';
+import {
+    DeepTexturePixelFormat,
+    DepthFormat,
+    DepthStencilFormat,
+    MagnificationTextureFilter,
+    Mapping,
+    MinificationTextureFilter,
+    NearestFilter,
+    TextureDataType,
+    UnsignedInt248Type,
+    UnsignedIntType,
+    Wrapping,
+} from "../Constants";
+import { Texture } from "./Texture";
 
 export class DepthTexture extends Texture {
-
     public flipY: boolean;
     public magFilter: MagnificationTextureFilter;
     public minFilter: MinificationTextureFilter;
@@ -20,22 +31,33 @@ export class DepthTexture extends Texture {
         magFilter?: MagnificationTextureFilter,
         minFilter?: MinificationTextureFilter,
         anisotropy?: number,
-        format?: DeepTexturePixelFormat,
-    ){
+        format?: DeepTexturePixelFormat
+    ) {
         format = format !== undefined ? format : DepthFormat;
-        
-		if ( type === undefined && format === DepthFormat ) type = UnsignedIntType;
-		if ( type === undefined && format === DepthStencilFormat ) type = UnsignedInt248Type;
 
-        super(null, mapping, wrapS, wrapT, magFilter, minFilter, format, type, anisotropy);
+        if (type === undefined && format === DepthFormat)
+            type = UnsignedIntType;
+        if (type === undefined && format === DepthStencilFormat)
+            type = UnsignedInt248Type;
 
-		this.image = { width: width, height: height };
+        super(
+            null,
+            mapping,
+            wrapS,
+            wrapT,
+            magFilter,
+            minFilter,
+            format,
+            type,
+            anisotropy
+        );
 
-		this.magFilter = magFilter !== undefined ? magFilter : NearestFilter;
-		this.minFilter = minFilter !== undefined ? minFilter : NearestFilter;
+        this.image = { width: width, height: height };
 
-		this.flipY = false;
-		this.generateMipmaps = false;
+        this.magFilter = magFilter !== undefined ? magFilter : NearestFilter;
+        this.minFilter = minFilter !== undefined ? minFilter : NearestFilter;
 
+        this.flipY = false;
+        this.generateMipmaps = false;
     }
 }

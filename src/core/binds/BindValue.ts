@@ -1,19 +1,19 @@
 import { BindType } from "../Defines";
 
-export abstract class BindValue{
-    private _name : string;
+export abstract class BindValue {
+    private _name: string;
 
     protected _needsUpdate = true;
 
-    constructor(){}
+    constructor() {}
 
-    public abstract get type():BindType;
+    public abstract get type(): BindType;
 
-    public destroy(){}
+    public destroy() {}
 
-    public update(){}
+    public update() {}
 
-    public get name(){
+    public get name() {
         return this._name;
     }
 }

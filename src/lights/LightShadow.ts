@@ -24,7 +24,7 @@ export class LightShadow {
 
     _viewports = [new Vector4(0, 0, 1, 1)];
 
-    constructor(camera?:Camera) {
+    constructor(camera?: Camera) {
         this.camera = camera;
         // this.map = null;
         // this.mapPass = null;
@@ -38,7 +38,7 @@ export class LightShadow {
         return this._frustum;
     }
 
-    getViewport(viewportIndex:number) {
+    getViewport(viewportIndex: number) {
         return this._viewports[viewportIndex];
     }
 
@@ -50,13 +50,12 @@ export class LightShadow {
         // if (this.map) {
         //     this.map.dispose();
         // }
-
         // if (this.mapPass) {
         //     this.mapPass.dispose();
         // }
     }
 
-    copy(source:LightShadow) {
+    copy(source: LightShadow) {
         this.camera = source.camera.clone();
 
         this.bias = source.bias;

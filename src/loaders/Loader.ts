@@ -1,69 +1,56 @@
-import { DefaultLoadingManager, LoadingManager } from './LoadingManager';
+import { DefaultLoadingManager, LoadingManager } from "./LoadingManager";
 
- export abstract class Loader {
-
-    public manager:LoadingManager;
-    public crossOrigin = 'anonymous';
+export abstract class Loader {
+    public manager: LoadingManager;
+    public crossOrigin = "anonymous";
     public withCredentials = false;
-    public path = '';
-    public resourcePath = '';
+    public path = "";
+    public resourcePath = "";
     public requestHeader = {};
 
-	constructor( manager:LoadingManager = undefined ) {
+    constructor(manager: LoadingManager = undefined) {
+        this.manager = manager !== undefined ? manager : DefaultLoadingManager;
+    }
 
-		this.manager = ( manager !== undefined ) ? manager : DefaultLoadingManager;
+    abstract load(
+        url: string,
+        onLoad: Function,
+        onProgress: Function,
+        onError: Function
+    ): void;
 
-	}
+    loadAsync(url: string, onProgress: Function) {
+        const scope = this;
 
-	abstract load( url:string, onLoad:Function, onProgress:Function, onError:Function ):void;
+        return new Promise(function (resolve, reject) {
+            scope.load(url, resolve, onProgress, reject);
+        });
+    }
 
-	loadAsync( url:string, onProgress:Function ) {
+    parse(/* data */) {}
 
-		const scope = this;
+    setCrossOrigin(crossOrigin: string) {
+        this.crossOrigin = crossOrigin;
+        return this;
+    }
 
-		return new Promise( function ( resolve, reject ) {
+    setWithCredentials(value: boolean) {
+        this.withCredentials = value;
+        return this;
+    }
 
-			scope.load( url, resolve, onProgress, reject );
+    setPath(path: string) {
+        this.path = path;
+        return this;
+    }
 
-		} );
+    setResourcePath(resourcePath: string) {
+        this.resourcePath = resourcePath;
+        return this;
+    }
 
-	}
-
-	parse( /* data */ ) {}
-
-	setCrossOrigin( crossOrigin:string ) {
-
-		this.crossOrigin = crossOrigin;
-		return this;
-
-	}
-
-	setWithCredentials( value:boolean ) {
-
-		this.withCredentials = value;
-		return this;
-
-	}
-
-	setPath( path:string ) {
-
-		this.path = path;
-		return this;
-
-	}
-
-	setResourcePath( resourcePath:string ) {
-
-		this.resourcePath = resourcePath;
-		return this;
-
-	}
-
-	setRequestHeader( requestHeader:any ) {
-
-		this.requestHeader = requestHeader;
-		return this;
-
-	}
-
+    setRequestHeader(requestHeader: any) {
+        this.requestHeader = requestHeader;
+        return this;
+    }
 }

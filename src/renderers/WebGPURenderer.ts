@@ -20,8 +20,6 @@ interface RendererSize {
     height: number;
 }
 
-
-
 export class WebGPURenderer {
     private _parameters: WebGPURendererParameters;
     private _canvas: HTMLCanvasElement;
@@ -40,13 +38,16 @@ export class WebGPURenderer {
 
     private _renderPassDescriptor: GPURenderPassDescriptor;
 
-    private _currentRenderTarget: RenderTarget = null; 
+    private _currentRenderTarget: RenderTarget = null;
 
     constructor(parameters: WebGPURendererParameters = {}) {
         this._parameters = parameters;
 
         if (this._parameters.antialias === true) {
-            this._sampleCount = parameters.sampleCount === undefined ? 4 : parameters.sampleCount;
+            this._sampleCount =
+                parameters.sampleCount === undefined
+                    ? 4
+                    : parameters.sampleCount;
         } else {
             this._sampleCount = 1;
         }
@@ -77,7 +78,12 @@ export class WebGPURenderer {
                 {
                     view: null,
                     resolveTarget: undefined,
-                    clearValue: { r: this._clearColor.r, g: this._clearColor.g, b: this._clearColor.b, a: 1.0 },
+                    clearValue: {
+                        r: this._clearColor.r,
+                        g: this._clearColor.g,
+                        b: this._clearColor.b,
+                        a: 1.0,
+                    },
                     loadOp: "clear",
                     storeOp: "store",
                 },
@@ -85,8 +91,8 @@ export class WebGPURenderer {
             depthStencilAttachment: {
                 view: null,
                 depthClearValue: 1.0,
-                depthLoadOp: 'clear',
-                depthStoreOp: 'store',
+                depthLoadOp: "clear",
+                depthStoreOp: "store",
             },
         };
     }
@@ -113,9 +119,10 @@ export class WebGPURenderer {
         }
 
         if (this._sizeChanged) {
-            if(PerspectiveCamera.Is(camera)){
+            if (PerspectiveCamera.Is(camera)) {
                 const perspectiveCamera = camera as PerspectiveCamera;
-                perspectiveCamera.aspect = this._canvas.width / this._canvas.height;
+                perspectiveCamera.aspect =
+                    this._canvas.width / this._canvas.height;
                 perspectiveCamera.updateProjectionMatrix();
             }
 
@@ -124,8 +131,8 @@ export class WebGPURenderer {
         camera.update();
         const sceneUpdated = scene.update(camera);
 
-        if(this._currentRenderTarget) {
-            this._currentRenderTarget.depthTexture
+        if (this._currentRenderTarget) {
+            this._currentRenderTarget.depthTexture;
             // const descriptor = {
             //     colorAttachments: [
             //         {
@@ -144,22 +151,39 @@ export class WebGPURenderer {
             // }
         }
 
-        const view = this.sampleCount > 1 ? this._colorAttachmentView : this._context.getCurrentTexture().createView();
-        const resolveTarget = this.sampleCount > 1 ? this._context.getCurrentTexture().createView() : undefined;
-        (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].view = view;
-        (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget = resolveTarget;
-        (this._renderPassDescriptor.depthStencilAttachment as GPURenderPassDepthStencilAttachment).view = this._depthBuffer.createView();
+        const view =
+            this.sampleCount > 1
+                ? this._colorAttachmentView
+                : this._context.getCurrentTexture().createView();
+        const resolveTarget =
+            this.sampleCount > 1
+                ? this._context.getCurrentTexture().createView()
+                : undefined;
+        (
+            this._renderPassDescriptor
+                .colorAttachments as Array<GPURenderPassColorAttachment>
+        )[0].view = view;
+        (
+            this._renderPassDescriptor
+                .colorAttachments as Array<GPURenderPassColorAttachment>
+        )[0].resolveTarget = resolveTarget;
+        (
+            this._renderPassDescriptor
+                .depthStencilAttachment as GPURenderPassDepthStencilAttachment
+        ).view = this._depthBuffer.createView();
 
         const materialObjects = scene.renderableObjs;
 
         const commandEncoder = this.device.createCommandEncoder();
-        const passEncoder = commandEncoder.beginRenderPass(this._renderPassDescriptor);
+        const passEncoder = commandEncoder.beginRenderPass(
+            this._renderPassDescriptor
+        );
 
-        for(const [material,objects] of materialObjects){
-            if(sceneUpdated){
+        for (const [material, objects] of materialObjects) {
+            if (sceneUpdated) {
                 material.pipeline.needsCompile = true;
             }
-            this._renderSamePipeline(passEncoder, material,objects,scene);
+            this._renderSamePipeline(passEncoder, material, objects, scene);
         }
 
         passEncoder.end();
@@ -167,13 +191,18 @@ export class WebGPURenderer {
         this.device.queue.submit([commandEncoder.finish()]);
     }
 
-    public setRenderTarget(renderTarget:RenderTarget){
+    public setRenderTarget(renderTarget: RenderTarget) {
         this._currentRenderTarget = renderTarget;
     }
 
-    private _renderSamePipeline(passEncoder: GPURenderPassEncoder, material:Material,objects:Array<RenderableObject>,scene:Scene){
-        if(material.pipeline.needsCompile) 
-            material.pipeline.compilePipeline(this,scene);
+    private _renderSamePipeline(
+        passEncoder: GPURenderPassEncoder,
+        material: Material,
+        objects: Array<RenderableObject>,
+        scene: Scene
+    ) {
+        if (material.pipeline.needsCompile)
+            material.pipeline.compilePipeline(this, scene);
 
         passEncoder.setPipeline(material.pipeline.pipeline);
 
@@ -182,22 +211,34 @@ export class WebGPURenderer {
 
         material.updateBinds();
 
-        for(let i = 0;i < objects.length;++i){
+        for (let i = 0; i < objects.length; ++i) {
             material.pipeline.createObjectBindGroup(objects[i]);
-            material.pipeline.bindObjectUnform(passEncoder,objects[i]);
-            this._renderObject(passEncoder,objects[i]);
+            material.pipeline.bindObjectUnform(passEncoder, objects[i]);
+            this._renderObject(passEncoder, objects[i]);
         }
     }
 
-    private _renderObject(passEncoder: GPURenderPassEncoder, object: RenderableObject ) {
+    private _renderObject(
+        passEncoder: GPURenderPassEncoder,
+        object: RenderableObject
+    ) {
         object.update();
 
         const geometry = object.geometry;
         geometry.update();
-        geometry.setVertexBuffer(passEncoder,object.material.shaderOptions.attributeValues);
+        geometry.setVertexBuffer(
+            passEncoder,
+            object.material.shaderOptions.attributeValues
+        );
         if (geometry.indices) {
-            passEncoder.setIndexBuffer(geometry.indices.buffer.buffer, GPUIndexFormat.Uint32);
-            passEncoder.drawIndexedIndirect(object.geometry.drawBuffer.buffer, 0);
+            passEncoder.setIndexBuffer(
+                geometry.indices.buffer.buffer,
+                GPUIndexFormat.Uint32
+            );
+            passEncoder.drawIndexedIndirect(
+                object.geometry.drawBuffer.buffer,
+                0
+            );
         } else {
             passEncoder.drawIndirect(object.geometry.drawBuffer.buffer, 0);
         }
@@ -224,22 +265,20 @@ export class WebGPURenderer {
     }
 
     private _setupDepthBuffer() {
+        if (this._depthBuffer) this._depthBuffer.destroy();
 
-		if ( this._depthBuffer ) this._depthBuffer.destroy();
-
-		this._depthBuffer = this.device.createTexture( {
-			label: 'depthBuffer',
-			size: {
+        this._depthBuffer = this.device.createTexture({
+            label: "depthBuffer",
+            size: {
                 width: Math.floor(this._size.width * this._pixelRatio),
                 height: Math.floor(this._size.height * this._pixelRatio),
                 depthOrArrayLayers: 1,
             },
-			sampleCount: this._sampleCount,
-			format: GPUTextureFormat.Depth24Plus,
-			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC
-		} );
-
-	}
+            sampleCount: this._sampleCount,
+            format: GPUTextureFormat.Depth24Plus,
+            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+        });
+    }
 
     get domElement() {
         return this._canvas;

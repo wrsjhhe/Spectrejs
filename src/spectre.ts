@@ -31,9 +31,8 @@ export { Mesh } from "./objects/Mesh";
 
 export { DirectionalLight } from "./lights/DirectionalLight";
 
-
 export { PerspectiveCamera } from "./cameras/PerspectiveCamera";
-export { OrthographicCamera } from './cameras/OrthographicCamera'
+export { OrthographicCamera } from "./cameras/OrthographicCamera";
 
 export { OrbitControls } from "./controls/OrbitControls";
 
@@ -43,11 +42,13 @@ export { TextureLoader } from "./loaders/TextureLoader";
 
 export * as ConstantsValues from "./utils/TempValues";
 
-export async function Init(parameters:any = {}) {
-    const powerPreference = parameters.powerPreference? parameters.powerPreference : "high-performance";
+export async function Init(parameters: any = {}) {
+    const powerPreference = parameters.powerPreference
+        ? parameters.powerPreference
+        : "high-performance";
     const adapter = await navigator.gpu.requestAdapter({
         powerPreference,
     });
 
     Context.activeDevice = await adapter.requestDevice();
-} 
+}
