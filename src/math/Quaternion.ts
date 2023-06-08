@@ -1,3 +1,4 @@
+import { BufferAttribute } from '../core/BufferAttribute';
 import { Euler } from './Euler';
 import * as MathUtils from './MathUtils';
 import { Matrix4 } from './Matrix4';
@@ -630,16 +631,16 @@ class Quaternion {
 
 	}
 
-	// fromBufferAttribute( attribute, index ) {
+	fromBufferAttribute( attribute:BufferAttribute, index:number ) {
 
-	// 	this.x = attribute.getX( index );
-	// 	this.y = attribute.getY( index );
-	// 	this.z = attribute.getZ( index );
-	// 	this.w = attribute.getW( index );
+		this.x = attribute.getX( index );
+		this.y = attribute.getY( index );
+		this.z = attribute.getZ( index );
+		this.w = attribute.getW( index );
 
-	// 	return this;
+		return this;
 
-	// }
+	}
 
 	toJSON() {
 

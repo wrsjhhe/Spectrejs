@@ -6,6 +6,7 @@ import { Context } from "../core/ResourceManagers";
 import { Scene } from "../core/Scene";
 import { Material } from "../materials/Material";
 import { Color } from "../math/Color";
+import { RenderTarget } from "./WebGPURenderTarget";
 
 interface WebGPURendererParameters {
     canvas?: HTMLCanvasElement;
@@ -24,8 +25,6 @@ interface RendererSize {
 export class WebGPURenderer {
     private _parameters: WebGPURendererParameters;
     private _canvas: HTMLCanvasElement;
-    private _powerPreference: GPUPowerPreference;
-    private _adapter: GPUAdapter;
     private _device: GPUDevice;
     private _presentationFormat: GPUTextureFormat = GPUTextureFormat.BGRA8Unorm;
     private _context: GPUCanvasContext;
@@ -39,9 +38,9 @@ export class WebGPURenderer {
     private _clearColor = new Color(1, 1, 1);
     private _sizeChanged = false;
 
-    private _renderPassDescriptor : GPURenderPassDescriptor;
+    private _renderPassDescriptor: GPURenderPassDescriptor;
 
-    //private _materialObjects = new Map<Material,Array<RenderableObject>>();
+    private _currentRenderTarget: RenderTarget = null; 
 
     constructor(parameters: WebGPURendererParameters = {}) {
         this._parameters = parameters;
@@ -53,7 +52,7 @@ export class WebGPURenderer {
         }
     }
 
-    public async init() {
+    public init() {
         if (!this._parameters.canvas) {
             this._canvas = document.createElement("canvas");
             this._canvas.style.width = "100%";
@@ -62,14 +61,7 @@ export class WebGPURenderer {
             this._canvas = this._parameters.canvas;
         }
 
-        this._powerPreference = this._parameters.powerPreference
-            ? this._parameters.powerPreference
-            : "high-performance";
-        this._adapter = await navigator.gpu.requestAdapter({
-            powerPreference: this._powerPreference,
-        });
-
-        this._device = await this._adapter.requestDevice();
+        this._device = Context.activeDevice;
 
         this._context = this._canvas.getContext("webgpu");
         this._context.configure({
@@ -95,7 +87,7 @@ export class WebGPURenderer {
                 depthClearValue: 1.0,
                 depthLoadOp: 'clear',
                 depthStoreOp: 'store',
-              },
+            },
         };
     }
 
@@ -131,9 +123,26 @@ export class WebGPURenderer {
         }
         camera.update();
         const sceneUpdated = scene.update(camera);
-        //this._materialObjects.clear();
 
-        const commandEncoder = this.device.createCommandEncoder();
+        if(this._currentRenderTarget) {
+            this._currentRenderTarget.depthTexture
+            // const descriptor = {
+            //     colorAttachments: [
+            //         {
+            //             view: null,
+            //             resolveTarget: undefined,
+            //             clearValue: { r: this._clearColor.r, g: this._clearColor.g, b: this._clearColor.b, a: 1.0 },
+            //             loadOp: "clear",
+            //             storeOp: "store",
+            //         },
+            //     ],
+            //     depthStencilAttachment: {
+            //         depthClearValue: 1.0,
+            //         depthLoadOp: 'clear',
+            //         depthStoreOp: 'store',
+            //     },
+            // }
+        }
 
         const view = this.sampleCount > 1 ? this._colorAttachmentView : this._context.getCurrentTexture().createView();
         const resolveTarget = this.sampleCount > 1 ? this._context.getCurrentTexture().createView() : undefined;
@@ -143,13 +152,14 @@ export class WebGPURenderer {
 
         const materialObjects = scene.renderableObjs;
 
+        const commandEncoder = this.device.createCommandEncoder();
         const passEncoder = commandEncoder.beginRenderPass(this._renderPassDescriptor);
 
         for(const [material,objects] of materialObjects){
             if(sceneUpdated){
                 material.pipeline.needsCompile = true;
             }
-            this._renderSamePipeline(passEncoder, material,objects,camera,scene);
+            this._renderSamePipeline(passEncoder, material,objects,scene);
         }
 
         passEncoder.end();
@@ -157,13 +167,21 @@ export class WebGPURenderer {
         this.device.queue.submit([commandEncoder.finish()]);
     }
 
-    private _renderSamePipeline(passEncoder: GPURenderPassEncoder, material:Material,objects:Array<RenderableObject>,camera: Camera,scene:Scene){
-        
-        material.pipeline.compilePipeline(this,scene);
+    public setRenderTarget(renderTarget:RenderTarget){
+        this._currentRenderTarget = renderTarget;
+    }
+
+    private _renderSamePipeline(passEncoder: GPURenderPassEncoder, material:Material,objects:Array<RenderableObject>,scene:Scene){
+        if(material.pipeline.needsCompile) 
+            material.pipeline.compilePipeline(this,scene);
+
         passEncoder.setPipeline(material.pipeline.pipeline);
+
         material.pipeline.createCommonBindGroups(scene);
         material.pipeline.bindCommonUniform(passEncoder);
-        material.updateUniforms();
+
+        material.updateBinds();
+
         for(let i = 0;i < objects.length;++i){
             material.pipeline.createObjectBindGroup(objects[i]);
             material.pipeline.bindObjectUnform(passEncoder,objects[i]);

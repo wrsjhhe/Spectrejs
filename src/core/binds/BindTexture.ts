@@ -8,23 +8,26 @@ export class BindTexture extends BindValue {
     private _textureBuffer: GPUTexture;
     private _texutureView : GPUTextureView;
 
-    public changed = false;
+    private _width: number;
+    private _height: number; 
 
-    constructor(name: string, texture: Texture) {
-        super(name);
+    constructor(texture: Texture) {
+        super();
 
         this._texture = texture;
         createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
+            this._width = imageBitmap.width;
+            this._height = imageBitmap.height;
             this._textureBuffer = Context.activeDevice.createTexture({
-                size: [imageBitmap.width, imageBitmap.height, 1],
+                size: [this._width, this._height, 1],
                 format: "rgba8unorm",
-                usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+                usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
             });
 
             Context.activeDevice.queue.copyExternalImageToTexture(
                 { source: imageBitmap },
                 { texture: this._textureBuffer },
-                [imageBitmap.width, imageBitmap.height]
+                [this._width, this._height]
             );
             this._texutureView = this._textureBuffer.createView();
         });
@@ -34,22 +37,31 @@ export class BindTexture extends BindValue {
     public override update() {
         if (this._needsUpdate) {
             createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
-                DelayDestroyer.destroy(this._textureBuffer,(data)=>{
-                    data.destroy();
-                });
-                this._textureBuffer = Context.activeDevice.createTexture({
-                    size: [imageBitmap.width, imageBitmap.height, 1],
-                    format: "rgba8unorm",
-                    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
-                });
-    
+                if(imageBitmap.width !== this._width || imageBitmap.height !== this._height ){
+                    console.warn("new image size must equal with texture,or you should create new texture!");
+                }
+                // DelayDestroyer.destroy(this._textureBuffer,(data)=>{
+                //     data.destroy();
+                // });
+
+                // this._textureBuffer = Context.activeDevice.createTexture({
+                //     size: [imageBitmap.width, imageBitmap.height, 1],
+                //     format: "rgba8unorm",
+                //     usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+                // });
+                Context.activeDevice.queue.writeTexture(
+                    { texture: this._textureBuffer },
+                    new Uint8Array([0,0,0,0]),
+                    { bytesPerRow: 4 * 4 },
+                    [1, 1]
+                  );
                 Context.activeDevice.queue.copyExternalImageToTexture(
                     { source: imageBitmap },
                     { texture: this._textureBuffer },
                     [imageBitmap.width, imageBitmap.height]
                 );
-                this._texutureView = this._textureBuffer.createView();
-                this.changed = true;
+                //this._texutureView = this._textureBuffer.createView();
+                // this.changed = true;
             });
 
             this._needsUpdate = false;
@@ -79,5 +91,12 @@ export class BindTexture extends BindValue {
 
     public get texutureView() {
         return this._texutureView;
+    }
+
+    public get width(){
+        return this._width;
+    }
+    public get height(){
+        return this._height;
     }
 }

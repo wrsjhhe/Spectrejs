@@ -1,5 +1,7 @@
 /* eslint-disable no-unused-vars */
 
+import { GPUBufferBindingType, GPUSamplerBindingType } from "../Constants";
+
 export const BindGroupLayoutIndexInfo = {
     global : 0,
     material : 1,
@@ -37,4 +39,30 @@ export const ObjectGroupLayoutInfo = {
         bindType : BindType.buffer,
         visibility: GPUShaderStage.VERTEX
     } as BindShaderItem
+}
+
+export function getLayoutEntity(item:BindShaderItem){
+    if (item.bindType === BindType.buffer) {
+        return {
+            binding: item.index,
+            visibility: item.visibility,
+            buffer: {
+                type: GPUBufferBindingType.Uniform
+            },
+        };
+    } else if (item.bindType === BindType.sampler) {
+        return {
+            binding: item.index,
+            visibility: item.visibility,
+            sampler: {
+                type: GPUSamplerBindingType.Filtering,
+            },
+        };
+    } else if (item.bindType === BindType.texture) {
+        return {
+            binding: item.index,
+            visibility: item.visibility,
+            texture: {},
+        };
+    }
 }

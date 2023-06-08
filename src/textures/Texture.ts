@@ -3,6 +3,9 @@ import { Vector2 } from '../math/Vector2';
 import { Matrix3 } from '../math/Matrix3';
 import * as Constants from '../Constants';
 import { Source } from './Source';
+import { MagnificationTextureFilter, Mapping, MinificationTextureFilter, TextureDataType, Wrapping } from '../Constants';
+import { BindTexture } from '../core/binds/BindTexture';
+import { BindSampler } from '../core/binds/BindSampler';
 
 const t_nullCanvas = document.createElement("canvas") as HTMLCanvasElement;
 t_nullCanvas.width = 1;
@@ -17,7 +20,7 @@ t_nullImage.height = 1;
 t_nullImage.src = t_nullCanvas.toDataURL();
 export class Texture {
     static DEFAULT_IMAGE:HTMLImageElement = t_nullImage;
-    static DEFAULT_MAPPING = Constants.UVMapping;
+    static DEFAULT_MAPPING:Mapping = Constants.UVMapping;
     static DEFAULT_ANISOTROPY = 1;
 
     public uuid = MathUtils.generateUUID();
@@ -27,19 +30,19 @@ export class Texture {
     public source:Source;
     public mipmaps:any = [];
 
-    public mapping:number;
+    public mapping:Mapping;
     public channel = 0;
 
-    public wrapS:number;
-    public wrapT:number;
+    public wrapS:Wrapping;
+    public wrapT:Wrapping;
 
-    public magFilter:number;
-    public minFilter:number;
+    public magFilter:MagnificationTextureFilter;
+    public minFilter:MinificationTextureFilter;
 
     public anisotropy:number;
 
     public format:number;
-    public type:number;
+    public type:TextureDataType;
 
     public offset = new Vector2( 0, 0 );
     public repeat = new Vector2( 1, 1 );
@@ -61,10 +64,15 @@ export class Texture {
 	public isRenderTargetTexture = false; // indicates whether a texture belongs to a render target or not
 	public needsPMREMUpdate = false; // indicates whether this texture should be processed by PMREMGenerator or not (only relevant for render target textures)
 
+	public internalFormat: any = null;
+
+	private _bind:BindTexture;
+	private _sampler:BindSampler;
+
 	constructor( image = Texture.DEFAULT_IMAGE, mapping = Texture.DEFAULT_MAPPING, 
-        wrapS = Constants.ClampToEdgeWrapping, wrapT = Constants.ClampToEdgeWrapping, 
-        magFilter = Constants.LinearFilter, minFilter = Constants.LinearMipmapLinearFilter, 
-        format = Constants.RGBAFormat, type = Constants.UnsignedByteType, anisotropy = Texture.DEFAULT_ANISOTROPY, 
+        wrapS:Wrapping = Constants.ClampToEdgeWrapping, wrapT:Wrapping = Constants.ClampToEdgeWrapping, 
+        magFilter:MagnificationTextureFilter = Constants.LinearFilter, minFilter:MinificationTextureFilter = Constants.LinearMipmapLinearFilter, 
+        format = Constants.RGBAFormat, type:TextureDataType= Constants.UnsignedByteType, anisotropy = Texture.DEFAULT_ANISOTROPY, 
         colorSpace = Constants.NoColorSpace ) {
 
 		this.uuid = MathUtils.generateUUID();
@@ -239,12 +247,26 @@ export class Texture {
 	set needsUpdate( value:boolean ) {
 
 		if ( value === true ) {
+			if(this._bind)
+				this._bind.update();
 
 			this.version ++;
 			this.source.needsUpdate = true;
 
 		}
 
+	}
+
+	get bind(){
+		if(!this._bind)
+			this._bind = new BindTexture(this); 
+		return this._bind;
+	}
+
+	get sampler(){
+		if(this._sampler)
+			this._sampler = new BindSampler();
+		return this._sampler;
 	}
 
 }

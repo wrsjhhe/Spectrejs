@@ -97,10 +97,10 @@ export class Camera extends Object3D {
 
 	private _initInitialUniform() {
 		const matrixBuffer = IdentifyMatrix4.toArray();
-        const projectionUniform = new BindBuffer(u_projection, matrixBuffer);
+        const projectionUniform = new BindBuffer( matrixBuffer);
         this._uniforms.set(u_projection, projectionUniform);
 
-        const viewUniform = new BindBuffer(u_view, matrixBuffer);
+        const viewUniform = new BindBuffer(matrixBuffer);
         this._uniforms.set(u_view, viewUniform);
     }
 

@@ -1,4 +1,4 @@
-
+import { Context } from "./core/ResourceManagers";
 
 export * as GPUConstances from "./Constants";
 
@@ -42,3 +42,12 @@ export { ImageLoader } from "./loaders/ImageLoader";
 export { TextureLoader } from "./loaders/TextureLoader";
 
 export * as ConstantsValues from "./utils/TempValues";
+
+export async function Init(parameters:any = {}) {
+    const powerPreference = parameters.powerPreference? parameters.powerPreference : "high-performance";
+    const adapter = await navigator.gpu.requestAdapter({
+        powerPreference,
+    });
+
+    Context.activeDevice = await adapter.requestDevice();
+} 

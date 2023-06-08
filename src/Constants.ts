@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 export type NumberArrayType = Float32Array | Int32Array | Int8Array | Uint32Array | Uint16Array | Uint8Array;
 
 export const GPUPrimitiveTopology = {
@@ -338,3 +339,48 @@ export const RGIntegerFormat = 1031;
 export const RGBAIntegerFormat = 1033;
 
 export const NoColorSpace = '';
+export const SRGBColorSpace = 'srgb';
+export const LinearSRGBColorSpace = 'srgb-linear';
+export const DisplayP3ColorSpace = 'display-p3';
+
+export type MagnificationTextureFilter = typeof NearestFilter | typeof LinearFilter;
+
+export type MinificationTextureFilter =
+    | typeof NearestFilter
+    | typeof NearestMipmapNearestFilter
+    | typeof NearestMipMapNearestFilter
+    | typeof NearestMipmapLinearFilter
+    | typeof NearestMipMapLinearFilter
+    | typeof LinearFilter
+    | typeof LinearMipmapNearestFilter
+    | typeof LinearMipMapNearestFilter
+    | typeof LinearMipmapLinearFilter
+    | typeof LinearMipMapLinearFilter;
+
+export type DeepTexturePixelFormat = typeof DepthFormat | typeof DepthStencilFormat;
+
+export type TextureDataType =
+    | typeof UnsignedByteType
+    | typeof ByteType
+    | typeof ShortType
+    | typeof UnsignedShortType
+    | typeof IntType
+    | typeof UnsignedIntType
+    | typeof FloatType
+    | typeof HalfFloatType
+    | typeof UnsignedShort4444Type
+    | typeof UnsignedShort5551Type
+    | typeof UnsignedInt248Type;
+
+export type Mapping =
+    | typeof UVMapping
+    | typeof EquirectangularReflectionMapping
+    | typeof EquirectangularRefractionMapping;
+
+export type Wrapping = typeof RepeatWrapping | typeof ClampToEdgeWrapping | typeof MirroredRepeatWrapping;
+
+export type ColorSpace =
+    | typeof NoColorSpace
+    | typeof SRGBColorSpace
+    | typeof LinearSRGBColorSpace
+    | typeof DisplayP3ColorSpace;

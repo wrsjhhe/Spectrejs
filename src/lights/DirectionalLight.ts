@@ -1,9 +1,9 @@
 import { Light } from './Light';
 import { Color } from '../math/Color';
 import { Object3D } from '../core/Object3D';
-import { Vector3 } from '../spectre';
 import { DirectionalLightShadow } from './DirectionalLightShadow';
 import * as TempValues from "../utils/TempValues"
+import { Vector3 } from '../math/Vector3';
 
 export class DirectionalLight extends Light {
 

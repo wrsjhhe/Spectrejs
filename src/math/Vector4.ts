@@ -1,4 +1,4 @@
-import { BufferAttribute } from "../spectre";
+import { BufferAttribute } from "../core/BufferAttribute";
 import { Matrix4 } from "./Matrix4";
 import { Quaternion } from "./Quaternion";
 

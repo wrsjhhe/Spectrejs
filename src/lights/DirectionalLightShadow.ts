@@ -1,4 +1,3 @@
-import { Camera } from "../cameras/Camera";
 import { OrthographicCamera } from "../cameras/OrthographicCamera";
 import { Matrix4 } from "../math/Matrix4";
 import { Vector3 } from "../math/Vector3";

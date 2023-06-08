@@ -1,9 +1,8 @@
 import { Camera } from "../cameras/Camera";
-import { GPUBufferBindingType, GPUSamplerBindingType } from "../Constants";
 import { DirectionalLight } from "../lights/DirectionalLight";
 import { Material } from "../materials/Material";
 import { CommonUtils } from "../utils/CommonUtils";
-import { BindShaderItem, BindType } from "./Defines";
+import { BindShaderItem, BindType, getLayoutEntity } from "./Defines";
 import { Object3D } from "./Object3D";
 import { RenderableObject } from "./RenderableObject";
 import { BindBuffer } from "./binds/BindBuffer";
@@ -173,33 +172,12 @@ export class Scene extends Object3D {
                 arrayBuffer.set(normal.toArray(),offset);
                 offset+=4;
             }
-            this._directionalLightBuffer = new BindBuffer("directionalLight",arrayBuffer);
+            this._directionalLightBuffer = new BindBuffer(arrayBuffer);
         }
 
         for (const bindOption of this._bindValues.values()) {
-            if (bindOption.bindType === BindType.buffer) {
-                this._entriesLayout.push({
-                    binding: bindOption.index,
-                    visibility: bindOption.visibility,
-                    buffer: {
-                        type: GPUBufferBindingType.Uniform
-                    },
-                });
-            } else if (bindOption.bindType === BindType.sampler) {
-                this._entriesLayout.push({
-                    binding: bindOption.index,
-                    visibility: bindOption.visibility,
-                    sampler: {
-                        type: GPUSamplerBindingType.Filtering,
-                    },
-                });
-            } else if (bindOption.bindType === BindType.texture) {
-                this._entriesLayout.push({
-                    binding: bindOption.index,
-                    visibility: bindOption.visibility,
-                    texture: {},
-                });
-            }
+            const entity = getLayoutEntity(bindOption);
+            this._entriesLayout.push(entity);
         }
     }
 

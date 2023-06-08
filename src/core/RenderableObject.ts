@@ -56,7 +56,7 @@ export class RenderableObject extends Object3D {
 
     private _initInitialUniform() {
 
-        const tranformUniform = new BindBuffer(u_modelTranform, IdentifyMatrix4.toArray());
+        const tranformUniform = new BindBuffer(IdentifyMatrix4.toArray());
         this._uniforms.set(u_modelTranform, tranformUniform);
     }
 

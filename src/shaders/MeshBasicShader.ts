@@ -49,7 +49,7 @@ export class MeshBasicShader extends Shader {
             ${basic.bind_value(1,shaderOptions.bindValues.get("parameters"))}
             ${basic.bind_value(1,shaderOptions.bindValues.get("color"))}
             ${basic.bind_value(1,shaderOptions.bindValues.get("colorSampler"))}
-            ${basic.bind_value(1,shaderOptions.bindValues.get("texture"))}
+            ${basic.bind_value(1,shaderOptions.bindValues.get("colorTexture"))}
             
 
 
@@ -58,7 +58,7 @@ export class MeshBasicShader extends Shader {
                 ${basic.itemVary_value(uvItem,indexObj)}
             ) -> @location(0) vec4<f32> {
                 var baseColor:vec4<f32>;
-                ${basic.getColor_frag(shaderOptions.bindValues.get("texture"),shaderOptions.bindValues.get("color"))}
+                ${basic.getColor_frag(shaderOptions.bindValues.get("colorTexture"),shaderOptions.bindValues.get("colorSampler"),shaderOptions.bindValues.get("color"))}
                 return baseColor;
             }
 

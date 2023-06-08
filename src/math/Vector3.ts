@@ -1,4 +1,4 @@
-import { BufferAttribute } from '../spectre';
+import { BufferAttribute } from "../core/BufferAttribute";
 import { Color } from './Color';
 import { Euler } from './Euler';
 import * as MathUtils from './MathUtils';

@@ -1,5 +1,5 @@
 import { Material } from "../materials/Material";
-import { Scene } from "../spectre";
+import { Scene } from "../core/Scene";
 import { Shader } from "./Shader";
 import * as basic from "./ShaderBasic"
 
@@ -154,7 +154,7 @@ export class MeshPhongShader extends Shader {
             ${basic.bind_value(1,shaderOptions.bindValues.get("parameters"))}
             ${basic.bind_value(1,shaderOptions.bindValues.get("color"))}
             ${basic.bind_value(1,shaderOptions.bindValues.get("colorSampler"))}
-            ${basic.bind_value(1,shaderOptions.bindValues.get("texture"))}
+            ${basic.bind_value(1,shaderOptions.bindValues.get("colorTexture"))}
             ${basic.bind_value(1,shaderOptions.bindValues.get("specular"))}
             ${basic.bind_value(1,shaderOptions.bindValues.get("emissive"))}
             ${basic.bind_value(1,shaderOptions.bindValues.get("shininess"))}
@@ -166,7 +166,7 @@ export class MeshPhongShader extends Shader {
                 ${basic.customVary_value("vViewPosition","vec3<f32>",indexObj)}
             ) -> @location(0) vec4<f32> {
                 var baseColor:vec4<f32>;
-                ${basic.getColor_frag(shaderOptions.bindValues.get("texture"),shaderOptions.bindValues.get("color"))}
+                ${basic.getColor_frag(shaderOptions.bindValues.get("colorTexture"),shaderOptions.bindValues.get("colorSampler"),shaderOptions.bindValues.get("color"))}
 
                 var diffuse = baseColor.xyz;
                 // var emissive = vec3<f32>(0.0,0.0,0.0);

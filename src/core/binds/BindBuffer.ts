@@ -8,8 +8,8 @@ export class BindBuffer extends BindValue{
     private _buffer : GPUBufferWrapper;
     private _data : NumberArrayType;
 
-    constructor(name:string,data:NumberArrayType){
-        super(name);
+    constructor(data:NumberArrayType){
+        super();
         this._buffer = new GPUBufferWrapper(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,data);
         this._data = data;
     }

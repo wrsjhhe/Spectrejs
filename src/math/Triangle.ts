@@ -1,4 +1,4 @@
-import { BufferAttribute } from "../spectre";
+import { BufferAttribute } from "../core/BufferAttribute";
 import { Box3 } from "./Box3";
 import { Plane } from "./Plane";
 import { Vector3 } from "./Vector3";

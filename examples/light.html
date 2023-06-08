@@ -32,13 +32,13 @@
         let mesh;
         let camera;
         let directionalLight;
-        async function init() {
+        function init() {
             container = document.getElementById("container");
             renderer = new Spectre.WebGPURenderer({
                 powerPreference: "high-performance",
                 antialias: true,
             });
-            await renderer.init();
+            renderer.init();
             container.appendChild(renderer.domElement);
 
             scene = new Spectre.Scene();
@@ -85,7 +85,8 @@
             resize();
         });
 
-        init().then(() => {
+        Spectre.Init().then(()=>{
+            init()
             render();
         });
 

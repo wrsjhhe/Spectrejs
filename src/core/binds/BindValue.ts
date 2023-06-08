@@ -5,9 +5,7 @@ export abstract class BindValue{
 
     protected _needsUpdate = true;
 
-    constructor(name:string){
-        this._name = name;
-    }
+    constructor(){}
 
     public abstract get type():BindType;
 

@@ -1,5 +1,5 @@
 import { Material } from "../materials/Material";
-import { Scene } from "../spectre";
+import { Scene } from "../core/Scene";
 
 export abstract class Shader{
     protected _vertexShaderCode: string;

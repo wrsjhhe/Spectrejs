@@ -5,8 +5,8 @@ import { BindValue } from "./BindValue";
 export class BindSampler extends BindValue{
     private _sampler : GPUSampler;
 
-    constructor(name:string){
-        super(name);
+    constructor(){
+        super();
 
         this._sampler = Context.activeDevice.createSampler({
             magFilter: 'linear',

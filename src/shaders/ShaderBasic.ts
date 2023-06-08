@@ -4,15 +4,6 @@ export interface IndexObj {
     index:number
 }
 
-export function location_transform_vert(){
-    return `
-            @group(0) @binding(0) var<uniform> projectionMatrix : mat4x4<f32>;
-            @group(0) @binding(1) var<uniform> viewMatrix : mat4x4<f32>;
-                
-            @group(2) @binding(0) var<uniform> modelMatrix : mat4x4<f32>;
-            `;
-}
-
 export function location_vert(item:ShaderItem){
     if(item)
         return `@location(${item.index}) ${item.name} : ${item.shaderItemType},`;
@@ -50,13 +41,13 @@ export function bind_value (groupIndex:number,item:BindShaderItem){
     return "";
 }
 
-export function getColor_frag(textureItem:ShaderItem,colorItem:ShaderItem){
+export function getColor_frag(textureItem:ShaderItem,samplerItem:ShaderItem,colorItem:ShaderItem){
     if(textureItem)
-        return `baseColor = textureSample(texture, colorSampler, uv);`;
+        return `baseColor = textureSample(${textureItem.name}, ${samplerItem.name}, uv);`;
     else{
         if(colorItem.shaderItemType === "vec3<f32>")
-            return `baseColor = vec4(color,1.0);`;
+            return `baseColor = vec4(${colorItem.name},1.0);`;
         else
-            return `baseColor = color;`;
+            return `baseColor = ${colorItem.name};`;
     }
 }
