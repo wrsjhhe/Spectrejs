@@ -25,24 +25,7 @@ export class Matrix4 {
         n44 = 1
     ) {
         if (n11 !== undefined) {
-            this.set(
-                n11,
-                n12,
-                n13,
-                n14,
-                n21,
-                n22,
-                n23,
-                n24,
-                n31,
-                n32,
-                n33,
-                n34,
-                n41,
-                n42,
-                n43,
-                n44
-            );
+            this.set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44);
         }
     }
 
@@ -134,24 +117,7 @@ export class Matrix4 {
     setFromMatrix3(m: Matrix3) {
         const me = m.elements;
 
-        this.set(
-            me[0],
-            me[3],
-            me[6],
-            0,
-            me[1],
-            me[4],
-            me[7],
-            0,
-            me[2],
-            me[5],
-            me[8],
-            0,
-            0,
-            0,
-            0,
-            1
-        );
+        this.set(me[0], me[3], me[6], 0, me[1], me[4], me[7], 0, me[2], me[5], me[8], 0, 0, 0, 0, 1);
 
         return this;
     }
@@ -165,24 +131,7 @@ export class Matrix4 {
     }
 
     makeBasis(xAxis: Vector3, yAxis: Vector3, zAxis: Vector3) {
-        this.set(
-            xAxis.x,
-            yAxis.x,
-            zAxis.x,
-            0,
-            xAxis.y,
-            yAxis.y,
-            zAxis.y,
-            0,
-            xAxis.z,
-            yAxis.z,
-            zAxis.z,
-            0,
-            0,
-            0,
-            0,
-            1
-        );
+        this.set(xAxis.x, yAxis.x, zAxis.x, 0, xAxis.y, yAxis.y, zAxis.y, 0, xAxis.z, yAxis.z, zAxis.z, 0, 0, 0, 0, 1);
 
         return this;
     }
@@ -633,8 +582,7 @@ export class Matrix4 {
 
         const det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
 
-        if (det === 0)
-            return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        if (det === 0) return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
         const detInv = 1 / det;
 
@@ -850,14 +798,7 @@ export class Matrix4 {
         return this;
     }
 
-    makeShear(
-        xy: number,
-        xz: number,
-        yx: number,
-        yz: number,
-        zx: number,
-        zy: number
-    ) {
+    makeShear(xy: number, xz: number, yx: number, yz: number, zx: number, zy: number) {
         this.set(1, yx, zx, 0, xy, 1, zy, 0, xz, yz, 1, 0, 0, 0, 0, 1);
 
         return this;
@@ -953,14 +894,7 @@ export class Matrix4 {
         return this;
     }
 
-    makePerspective(
-        left: number,
-        right: number,
-        top: number,
-        bottom: number,
-        near: number,
-        far: number
-    ) {
+    makePerspective(left: number, right: number, top: number, bottom: number, near: number, far: number) {
         const te = this.elements;
         const x = (2 * near) / (right - left);
         const y = (2 * near) / (top - bottom);
@@ -990,14 +924,7 @@ export class Matrix4 {
         return this;
     }
 
-    makeOrthographic(
-        left: number,
-        right: number,
-        top: number,
-        bottom: number,
-        near: number,
-        far: number
-    ) {
+    makeOrthographic(left: number, right: number, top: number, bottom: number, near: number, far: number) {
         const te = this.elements;
         const w = 1.0 / (right - left);
         const h = 1.0 / (top - bottom);

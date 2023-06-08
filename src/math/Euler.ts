@@ -172,10 +172,7 @@ class Euler {
                 break;
 
             default:
-                console.warn(
-                    "THREE.Euler: .setFromRotationMatrix() encountered an unknown order: " +
-                        order
-                );
+                console.warn("THREE.Euler: .setFromRotationMatrix() encountered an unknown order: " + order);
         }
 
         this._order = order;
@@ -204,12 +201,7 @@ class Euler {
     }
 
     equals(euler: Euler) {
-        return (
-            euler.x === this.x &&
-            euler.y === this.y &&
-            euler.z === this.z &&
-            euler.order === this.order
-        );
+        return euler.x === this.x && euler.y === this.y && euler.z === this.z && euler.order === this.order;
     }
 
     fromArray(array: Array<any>) {

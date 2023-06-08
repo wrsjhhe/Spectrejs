@@ -7,13 +7,7 @@ import { BindSampler } from "../core/binds/BindSampler";
 import { BindTexture } from "../core/binds/BindTexture";
 import { MathUtils } from "../math/MathUtils";
 import { Pipleline } from "../core/Pipeline";
-import {
-    AttributeShaderItem,
-    BindShaderItem,
-    BindType,
-    getLayoutEntity,
-    ShaderItem,
-} from "../core/Defines";
+import { AttributeShaderItem, BindShaderItem, BindType, getLayoutEntity, ShaderItem } from "../core/Defines";
 import { Shader } from "../shaders/Shader";
 
 export abstract class Material {
@@ -36,20 +30,10 @@ export abstract class Material {
     constructor() {
         this._pipeline = new Pipleline(this);
 
-        this._setAttributeItem(
-            "position",
-            "vec3<f32>",
-            GPUVertexFormat.Float32x3,
-            4 * 3
-        );
+        this._setAttributeItem("position", "vec3<f32>", GPUVertexFormat.Float32x3, 4 * 3);
 
         this._bindMap.set("parameters", new BindBuffer(this._parameters));
-        this._setBindItem(
-            "parameters",
-            "vec4<u32>",
-            BindType.buffer,
-            GPUShaderStage.FRAGMENT
-        );
+        this._setBindItem("parameters", "vec4<u32>", BindType.buffer, GPUShaderStage.FRAGMENT);
 
         this.color = new Color(1.0, 1.0, 1.0);
     }
@@ -75,9 +59,7 @@ export abstract class Material {
 
         for (const bindOption of this._shaderOptions.bindValues.values()) {
             if (bindOption.bindType === BindType.buffer) {
-                const bufferUnform = this._bindMap.get(
-                    bindOption.name
-                ) as BindBuffer;
+                const bufferUnform = this._bindMap.get(bindOption.name) as BindBuffer;
                 entriesGroup.push({
                     binding: bindOption.index,
                     resource: {
@@ -85,20 +67,16 @@ export abstract class Material {
                     },
                 });
             } else if (bindOption.bindType === BindType.sampler) {
-                const samplerUnform = this._bindMap.get(
-                    bindOption.name
-                ) as BindSampler;
+                const samplerUnform = this._bindMap.get(bindOption.name) as BindSampler;
                 entriesGroup.push({
                     binding: bindOption.index,
                     resource: samplerUnform.sampler,
                 });
             } else if (bindOption.bindType === BindType.texture) {
-                const textureUnform = this._bindMap.get(
-                    bindOption.name
-                ) as BindTexture;
+                const textureUnform = this._bindMap.get(bindOption.name) as BindTexture;
                 entriesGroup.push({
                     binding: bindOption.index,
-                    resource: textureUnform.texutureView,
+                    resource: textureUnform.gpuTexutureView,
                 });
             }
         }
@@ -106,12 +84,7 @@ export abstract class Material {
         return entriesGroup;
     }
 
-    protected _setAttributeItem(
-        name: string,
-        itemType: string,
-        format: GPUVertexFormat,
-        itemSize: number
-    ) {
+    protected _setAttributeItem(name: string, itemType: string, format: GPUVertexFormat, itemSize: number) {
         const values = this.shaderOptions.attributeValues;
         values.set(name, {
             name: name,
@@ -126,12 +99,7 @@ export abstract class Material {
         }
     }
 
-    protected _setBindItem(
-        name: string,
-        itemType: string,
-        bindType: BindType,
-        visibility: GPUShaderStageFlags
-    ) {
+    protected _setBindItem(name: string, itemType: string, bindType: BindType, visibility: GPUShaderStageFlags) {
         const values = this.shaderOptions.bindValues;
         values.set(name, {
             name: name,
@@ -175,20 +143,11 @@ export abstract class Material {
 
         const colorUniform = this._bindMap.get("color") as BindBuffer;
         if (!colorUniform) {
-            this._setBindItem(
-                "color",
-                itemType,
-                BindType.buffer,
-                GPUShaderStage.FRAGMENT
-            );
+            this._setBindItem("color", itemType, BindType.buffer, GPUShaderStage.FRAGMENT);
 
             this._bindMap.set("color", new BindBuffer(colorBuffer));
-        } else if (
-            colorBuffer.length * colorBuffer.BYTES_PER_ELEMENT !==
-            colorUniform.buffer.size
-        ) {
-            this._shaderOptions.bindValues.get("color").shaderItemType =
-                itemType;
+        } else if (colorBuffer.length * colorBuffer.BYTES_PER_ELEMENT !== colorUniform.buffer.size) {
+            this._shaderOptions.bindValues.get("color").shaderItemType = itemType;
 
             this._bindMap.set("color", new BindBuffer(colorBuffer));
         } else {
@@ -215,27 +174,12 @@ export abstract class Material {
             this.pipeline.needsCompile = true;
         } else if (v !== null && this._map === null) {
             //don't have map before
-            this._setAttributeItem(
-                "uv",
-                "vec2<f32>",
-                GPUVertexFormat.Float32x2,
-                4 * 2
-            );
+            this._setAttributeItem("uv", "vec2<f32>", GPUVertexFormat.Float32x2, 4 * 2);
 
-            this._setBindItem(
-                "colorSampler",
-                "sampler",
-                BindType.sampler,
-                GPUShaderStage.FRAGMENT
-            );
-            this._bindMap.set("colorSampler", new BindSampler());
+            this._setBindItem("colorSampler", "sampler", BindType.sampler, GPUShaderStage.FRAGMENT);
+            this._bindMap.set("colorSampler", v.sampler);
 
-            this._setBindItem(
-                "colorTexture",
-                "texture_2d<f32>",
-                BindType.texture,
-                GPUShaderStage.FRAGMENT
-            );
+            this._setBindItem("colorTexture", "texture_2d<f32>", BindType.texture, GPUShaderStage.FRAGMENT);
             this._bindMap.set("colorTexture", v.bind);
 
             this.pipeline.needsCompile = true;

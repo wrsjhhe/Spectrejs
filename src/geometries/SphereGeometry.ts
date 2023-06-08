@@ -71,15 +71,9 @@ export class SphereGeometry extends BufferGeometry {
 
                 // vertex
 
-                vertex.x =
-                    -radius *
-                    Math.cos(phiStart + u * phiLength) *
-                    Math.sin(thetaStart + v * thetaLength);
+                vertex.x = -radius * Math.cos(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
                 vertex.y = radius * Math.cos(thetaStart + v * thetaLength);
-                vertex.z =
-                    radius *
-                    Math.sin(phiStart + u * phiLength) *
-                    Math.sin(thetaStart + v * thetaLength);
+                vertex.z = radius * Math.sin(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
 
                 vertices.push(vertex.x, vertex.y, vertex.z);
 
@@ -108,41 +102,15 @@ export class SphereGeometry extends BufferGeometry {
                 const d = grid[iy + 1][ix + 1];
 
                 if (iy !== 0 || thetaStart > 0) indices.push(a, b, d);
-                if (iy !== heightSegments - 1 || thetaEnd < Math.PI)
-                    indices.push(b, c, d);
+                if (iy !== heightSegments - 1 || thetaEnd < Math.PI) indices.push(b, c, d);
             }
         }
 
         // build geometry
-        const indicesAttr = new BufferAttribute(
-            new Uint32Array(indices),
-            GPUIndexFormat.Uint32,
-            1
-        );
+        const indicesAttr = new BufferAttribute(new Uint32Array(indices), GPUIndexFormat.Uint32, 1);
         this.setIndex(indicesAttr);
-        this.setAttribute(
-            "position",
-            new BufferAttribute(
-                new Float32Array(vertices),
-                GPUVertexFormat.Float32x3,
-                3
-            )
-        );
-        this.setAttribute(
-            "normal",
-            new BufferAttribute(
-                new Float32Array(normals),
-                GPUVertexFormat.Float32x3,
-                3
-            )
-        );
-        this.setAttribute(
-            "uv",
-            new BufferAttribute(
-                new Float32Array(uvs),
-                GPUVertexFormat.Float32x2,
-                2
-            )
-        );
+        this.setAttribute("position", new BufferAttribute(new Float32Array(vertices), GPUVertexFormat.Float32x3, 3));
+        this.setAttribute("normal", new BufferAttribute(new Float32Array(normals), GPUVertexFormat.Float32x3, 3));
+        this.setAttribute("uv", new BufferAttribute(new Float32Array(uvs), GPUVertexFormat.Float32x2, 2));
     }
 }

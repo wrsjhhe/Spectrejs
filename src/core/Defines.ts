@@ -48,7 +48,7 @@ export function getLayoutEntity(item: BindShaderItem) {
             buffer: {
                 type: GPUBufferBindingType.Uniform,
             },
-        };
+        } as GPUBindGroupLayoutEntry;
     } else if (item.bindType === BindType.sampler) {
         return {
             binding: item.index,
@@ -56,12 +56,12 @@ export function getLayoutEntity(item: BindShaderItem) {
             sampler: {
                 type: GPUSamplerBindingType.Filtering,
             },
-        };
+        } as GPUBindGroupLayoutEntry;
     } else if (item.bindType === BindType.texture) {
         return {
             binding: item.index,
             visibility: item.visibility,
             texture: {},
-        };
+        } as GPUBindGroupLayoutEntry;
     }
 }

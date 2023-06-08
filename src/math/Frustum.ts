@@ -65,24 +65,12 @@ class Frustum {
             me14 = me[14],
             me15 = me[15];
 
-        planes[0]
-            .setComponents(me3 - me0, me7 - me4, me11 - me8, me15 - me12)
-            .normalize();
-        planes[1]
-            .setComponents(me3 + me0, me7 + me4, me11 + me8, me15 + me12)
-            .normalize();
-        planes[2]
-            .setComponents(me3 + me1, me7 + me5, me11 + me9, me15 + me13)
-            .normalize();
-        planes[3]
-            .setComponents(me3 - me1, me7 - me5, me11 - me9, me15 - me13)
-            .normalize();
-        planes[4]
-            .setComponents(me3 - me2, me7 - me6, me11 - me10, me15 - me14)
-            .normalize();
-        planes[5]
-            .setComponents(me3 + me2, me7 + me6, me11 + me10, me15 + me14)
-            .normalize();
+        planes[0].setComponents(me3 - me0, me7 - me4, me11 - me8, me15 - me12).normalize();
+        planes[1].setComponents(me3 + me0, me7 + me4, me11 + me8, me15 + me12).normalize();
+        planes[2].setComponents(me3 + me1, me7 + me5, me11 + me9, me15 + me13).normalize();
+        planes[3].setComponents(me3 - me1, me7 - me5, me11 - me9, me15 - me13).normalize();
+        planes[4].setComponents(me3 - me2, me7 - me6, me11 - me10, me15 - me14).normalize();
+        planes[5].setComponents(me3 + me2, me7 + me6, me11 + me10, me15 + me14).normalize();
 
         return this;
     }
@@ -91,18 +79,13 @@ class Frustum {
         if (object.boundingSphere !== undefined) {
             if (object.boundingSphere === null) object.computeBoundingSphere();
 
-            _sphere
-                .copy(object.boundingSphere)
-                .applyMatrix4(object.matrixWorld);
+            _sphere.copy(object.boundingSphere).applyMatrix4(object.matrixWorld);
         } else {
             const geometry = object.geometry;
 
-            if (geometry.boundingSphere === null)
-                geometry.computeBoundingSphere();
+            if (geometry.boundingSphere === null) geometry.computeBoundingSphere();
 
-            _sphere
-                .copy(geometry.boundingSphere)
-                .applyMatrix4(object.matrixWorld);
+            _sphere.copy(geometry.boundingSphere).applyMatrix4(object.matrixWorld);
         }
 
         return this.intersectsSphere(_sphere);

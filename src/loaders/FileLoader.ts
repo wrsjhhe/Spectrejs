@@ -21,12 +21,7 @@ class FileLoader extends Loader {
         super(manager);
     }
 
-    load(
-        url: string,
-        onLoad: Function,
-        onProgress: Function,
-        onError: Function
-    ) {
+    load(url: string, onLoad: Function, onProgress: Function, onError: Function) {
         if (url === undefined) url = "";
 
         if (this.path !== undefined) url = this.path + url;
@@ -87,9 +82,7 @@ class FileLoader extends Loader {
                     // e.g. 'file://' or 'data://'. Handle as success.
 
                     if (response.status === 0) {
-                        console.warn(
-                            "THREE.FileLoader: HTTP Status 0 received."
-                        );
+                        console.warn("THREE.FileLoader: HTTP Status 0 received.");
                     }
 
                     // Workaround: Checking if response.body === undefined for Alipay browser #23548
@@ -107,9 +100,7 @@ class FileLoader extends Loader {
 
                     // Nginx needs X-File-Size check
                     // https://serverfault.com/questions/482875/why-does-nginx-remove-content-length-header-for-chunked-content
-                    const contentLength =
-                        response.headers.get("Content-Length") ||
-                        response.headers.get("X-File-Size");
+                    const contentLength = response.headers.get("Content-Length") || response.headers.get("X-File-Size");
                     const total = contentLength ? parseInt(contentLength) : 0;
                     const lengthComputable = total !== 0;
                     let loaded = 0;
@@ -126,18 +117,14 @@ class FileLoader extends Loader {
                                     } else {
                                         loaded += value.byteLength;
 
-                                        const event = new ProgressEvent(
-                                            "progress",
-                                            { lengthComputable, loaded, total }
-                                        );
-                                        for (
-                                            let i = 0, il = callbacks.length;
-                                            i < il;
-                                            i++
-                                        ) {
+                                        const event = new ProgressEvent("progress", {
+                                            lengthComputable,
+                                            loaded,
+                                            total,
+                                        });
+                                        for (let i = 0, il = callbacks.length; i < il; i++) {
                                             const callback = callbacks[i];
-                                            if (callback.onProgress)
-                                                callback.onProgress(event);
+                                            if (callback.onProgress) callback.onProgress(event);
                                         }
 
                                         controller.enqueue(value);
@@ -180,14 +167,9 @@ class FileLoader extends Loader {
                             // sniff encoding
                             const re = /charset="?([^;"\s]*)"?/i;
                             const exec = re.exec(mimeType);
-                            const label =
-                                exec && exec[1]
-                                    ? exec[1].toLowerCase()
-                                    : undefined;
+                            const label = exec && exec[1] ? exec[1].toLowerCase() : undefined;
                             const decoder = new TextDecoder(label);
-                            return response
-                                .arrayBuffer()
-                                .then((ab) => decoder.decode(ab));
+                            return response.arrayBuffer().then((ab) => decoder.decode(ab));
                         }
                 }
             })

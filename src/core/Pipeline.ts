@@ -1,10 +1,4 @@
-import {
-    GPUBlendFactor,
-    GPUCompareFunction,
-    GPUCullMode,
-    GPUPrimitiveTopology,
-    GPUTextureFormat,
-} from "../Constants";
+import { GPUBlendFactor, GPUCompareFunction, GPUCullMode, GPUPrimitiveTopology, GPUTextureFormat } from "../Constants";
 import { Material } from "../materials/Material";
 import { WebGPURenderer } from "../renderers/WebGPURenderer";
 import { BindGroupLayoutIndexInfo, ObjectGroupLayoutInfo } from "./Defines";
@@ -48,10 +42,7 @@ export class Pipleline {
         passEncoder.setBindGroup(1, this._materialBindGroup);
     }
 
-    public bindObjectUnform(
-        passEncoder: GPURenderPassEncoder,
-        object: RenderableObject
-    ) {
+    public bindObjectUnform(passEncoder: GPURenderPassEncoder, object: RenderableObject) {
         passEncoder.setBindGroup(2, this._objectBindGroups[object.uuid]);
     }
 
@@ -176,9 +167,7 @@ export class Pipleline {
         const group = scene.getBindGroup();
 
         this._globalBindGroups = Context.activeDevice.createBindGroup({
-            layout: this.pipeline.getBindGroupLayout(
-                BindGroupLayoutIndexInfo.global
-            ),
+            layout: this.pipeline.getBindGroupLayout(BindGroupLayoutIndexInfo.global),
             entries: group,
         });
     }
@@ -188,9 +177,7 @@ export class Pipleline {
         const group = this.material.getBindGroup();
 
         this._materialBindGroup = Context.activeDevice.createBindGroup({
-            layout: this.pipeline.getBindGroupLayout(
-                BindGroupLayoutIndexInfo.material
-            ),
+            layout: this.pipeline.getBindGroupLayout(BindGroupLayoutIndexInfo.material),
             entries: group,
         });
     }
@@ -209,13 +196,10 @@ export class Pipleline {
                 },
             });
         }
-        this._objectBindGroups[object.uuid] =
-            Context.activeDevice.createBindGroup({
-                layout: this.pipeline.getBindGroupLayout(
-                    BindGroupLayoutIndexInfo.object
-                ),
-                entries: group,
-            });
+        this._objectBindGroups[object.uuid] = Context.activeDevice.createBindGroup({
+            layout: this.pipeline.getBindGroupLayout(BindGroupLayoutIndexInfo.object),
+            entries: group,
+        });
     }
 
     public createCommonBindGroups(scene: Scene) {

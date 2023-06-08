@@ -10,11 +10,7 @@ export class LoadingManager {
     public onProgress: Function;
     public onError: Function;
 
-    constructor(
-        onLoad: Function = undefined,
-        onProgress: Function = undefined,
-        onError: Function = undefined
-    ) {
+    constructor(onLoad: Function = undefined, onProgress: Function = undefined, onError: Function = undefined) {
         // Refer to #5689 for the reason why we don't set .onStart
         // in the constructor
 

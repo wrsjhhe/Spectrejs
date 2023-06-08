@@ -4,6 +4,10 @@ import { Matrix3 } from "../math/Matrix3";
 import * as Constants from "../Constants";
 import { Source } from "./Source";
 import {
+    GPUAddressMode,
+    GPUFilterMode,
+    GPUMipmapFilterMode,
+    GPUTextureFormat,
     MagnificationTextureFilter,
     Mapping,
     MinificationTextureFilter,
@@ -34,20 +38,23 @@ export class Texture {
     public name = "";
 
     public source: Source;
-    public mipmaps: any = [];
+    public mipmapSize: number;
 
     public mapping: Mapping;
     public channel = 0;
 
-    public wrapS: Wrapping;
-    public wrapT: Wrapping;
+    public wrapU: GPUAddressMode;
+    public wrapV: GPUAddressMode;
+    public wrapW: GPUAddressMode;
 
-    public magFilter: MagnificationTextureFilter;
-    public minFilter: MinificationTextureFilter;
+    public magFilter: GPUFilterMode;
+    public minFilter: GPUFilterMode;
+
+    public mipmapFilter: GPUMipmapFilterMode;
 
     public anisotropy: number;
 
-    public format: number;
+    public format: GPUTextureFormat;
     public type: TextureDataType;
 
     public offset = new Vector2(0, 0);
@@ -78,11 +85,13 @@ export class Texture {
     constructor(
         image = Texture.DEFAULT_IMAGE,
         mapping = Texture.DEFAULT_MAPPING,
-        wrapS: Wrapping = Constants.ClampToEdgeWrapping,
-        wrapT: Wrapping = Constants.ClampToEdgeWrapping,
-        magFilter: MagnificationTextureFilter = Constants.LinearFilter,
-        minFilter: MinificationTextureFilter = Constants.LinearMipmapLinearFilter,
-        format = Constants.RGBAFormat,
+        wrapU: GPUAddressMode = GPUAddressMode.MirrorRepeat,
+        wrapV: GPUAddressMode = GPUAddressMode.MirrorRepeat,
+        wrapW: GPUAddressMode = GPUAddressMode.MirrorRepeat,
+        magFilter: GPUFilterMode = GPUFilterMode.Linear,
+        minFilter: GPUFilterMode = GPUFilterMode.Linear,
+        mipmapFilter: GPUMipmapFilterMode = GPUMipmapFilterMode.Linear,
+        format: GPUTextureFormat = GPUTextureFormat.RGBA8Unorm,
         type: TextureDataType = Constants.UnsignedByteType,
         anisotropy = Texture.DEFAULT_ANISOTROPY,
         colorSpace = Constants.NoColorSpace
@@ -92,16 +101,18 @@ export class Texture {
         this.name = "";
 
         this.source = new Source(image);
-        this.mipmaps = [];
+        this.mipmapSize = 1;
 
         this.mapping = mapping;
         this.channel = 0;
 
-        this.wrapS = wrapS;
-        this.wrapT = wrapT;
+        this.wrapU = wrapU;
+        this.wrapV = wrapV;
+        this.wrapW = wrapW;
 
         this.magFilter = magFilter;
         this.minFilter = minFilter;
+        this.mipmapFilter = mipmapFilter;
 
         this.anisotropy = anisotropy;
 
@@ -139,13 +150,13 @@ export class Texture {
         this.name = source.name;
 
         this.source = source.source;
-        this.mipmaps = source.mipmaps.slice(0);
+        this.mipmapSize = source.mipmapSize;
 
         this.mapping = source.mapping;
         this.channel = source.channel;
 
-        this.wrapS = source.wrapS;
-        this.wrapT = source.wrapT;
+        this.wrapU = source.wrapU;
+        this.wrapV = source.wrapV;
 
         this.magFilter = source.magFilter;
         this.minFilter = source.minFilter;
@@ -180,16 +191,16 @@ export class Texture {
         uv.applyMatrix3(this.matrix);
 
         if (uv.x < 0 || uv.x > 1) {
-            switch (this.wrapS) {
-                case Constants.RepeatWrapping:
+            switch (this.wrapU) {
+                case GPUAddressMode.Repeat:
                     uv.x = uv.x - Math.floor(uv.x);
                     break;
 
-                case Constants.ClampToEdgeWrapping:
+                case GPUAddressMode.ClampToEdge:
                     uv.x = uv.x < 0 ? 0 : 1;
                     break;
 
-                case Constants.MirroredRepeatWrapping:
+                case GPUAddressMode.MirrorRepeat:
                     if (Math.abs(Math.floor(uv.x) % 2) === 1) {
                         uv.x = Math.ceil(uv.x) - uv.x;
                     } else {
@@ -201,16 +212,16 @@ export class Texture {
         }
 
         if (uv.y < 0 || uv.y > 1) {
-            switch (this.wrapT) {
-                case Constants.RepeatWrapping:
+            switch (this.wrapV) {
+                case GPUAddressMode.Repeat:
                     uv.y = uv.y - Math.floor(uv.y);
                     break;
 
-                case Constants.ClampToEdgeWrapping:
+                case GPUAddressMode.ClampToEdge:
                     uv.y = uv.y < 0 ? 0 : 1;
                     break;
 
-                case Constants.MirroredRepeatWrapping:
+                case GPUAddressMode.MirrorRepeat:
                     if (Math.abs(Math.floor(uv.y) % 2) === 1) {
                         uv.y = Math.ceil(uv.y) - uv.y;
                     } else {
@@ -238,12 +249,14 @@ export class Texture {
     }
 
     get bind() {
-        if (!this._bind) this._bind = new BindTexture(this);
+        if (!this._bind) {
+            this._bind = new BindTexture(this, this.mipmapSize);
+        }
         return this._bind;
     }
 
     get sampler() {
-        if (this._sampler) this._sampler = new BindSampler();
+        if (!this._sampler) this._sampler = new BindSampler(this);
         return this._sampler;
     }
 }

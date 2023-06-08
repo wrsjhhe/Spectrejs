@@ -241,10 +241,7 @@ class Quaternion {
                 break;
 
             default:
-                console.warn(
-                    "THREE.Quaternion: .setFromEuler() encountered an unknown order: " +
-                        order
-                );
+                console.warn("THREE.Quaternion: .setFromEuler() encountered an unknown order: " + order);
         }
 
         if (update) this._onChangeCallback(this);
@@ -396,21 +393,11 @@ class Quaternion {
     }
 
     lengthSq() {
-        return (
-            this.x * this.x +
-            this.y * this.y +
-            this.z * this.z +
-            this.w * this.w
-        );
+        return this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w;
     }
 
     length() {
-        return Math.sqrt(
-            this.x * this.x +
-                this.y * this.y +
-                this.z * this.z +
-                this.w * this.w
-        );
+        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w);
     }
 
     normalize() {
@@ -543,21 +530,11 @@ class Quaternion {
 
         const u3 = 2 * Math.PI * Math.random();
 
-        return this.set(
-            sqrt1u1 * Math.cos(u2),
-            sqrtu1 * Math.sin(u3),
-            sqrtu1 * Math.cos(u3),
-            sqrt1u1 * Math.sin(u2)
-        );
+        return this.set(sqrt1u1 * Math.cos(u2), sqrtu1 * Math.sin(u3), sqrtu1 * Math.cos(u3), sqrt1u1 * Math.sin(u2));
     }
 
     equals(quaternion: Quaternion) {
-        return (
-            quaternion.x === this.x &&
-            quaternion.y === this.y &&
-            quaternion.z === this.z &&
-            quaternion.w === this.w
-        );
+        return quaternion.x === this.x && quaternion.y === this.y && quaternion.z === this.z && quaternion.w === this.w;
     }
 
     fromArray(array: Array<number>, offset = 0) {

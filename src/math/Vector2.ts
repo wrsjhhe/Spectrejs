@@ -207,9 +207,7 @@ class Vector2 {
     clampLength(min: number, max: number) {
         const length = this.length();
 
-        return this.divideScalar(length || 1).multiplyScalar(
-            Math.max(min, Math.min(max, length))
-        );
+        return this.divideScalar(length || 1).multiplyScalar(Math.max(min, Math.min(max, length)));
     }
 
     floor() {

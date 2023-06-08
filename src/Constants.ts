@@ -1,11 +1,5 @@
 /* eslint-disable no-unused-vars */
-export type NumberArrayType =
-    | Float32Array
-    | Int32Array
-    | Int8Array
-    | Uint32Array
-    | Uint16Array
-    | Uint8Array;
+export type NumberArrayType = Float32Array | Int32Array | Int8Array | Uint32Array | Uint16Array | Uint8Array;
 
 export const GPUPrimitiveTopology = {
     PointList: "point-list" as GPUPrimitiveTopology,
@@ -350,9 +344,7 @@ export const SRGBColorSpace = "srgb";
 export const LinearSRGBColorSpace = "srgb-linear";
 export const DisplayP3ColorSpace = "display-p3";
 
-export type MagnificationTextureFilter =
-    | typeof NearestFilter
-    | typeof LinearFilter;
+export type MagnificationTextureFilter = typeof NearestFilter | typeof LinearFilter;
 
 export type MinificationTextureFilter =
     | typeof NearestFilter
@@ -366,9 +358,7 @@ export type MinificationTextureFilter =
     | typeof LinearMipmapLinearFilter
     | typeof LinearMipMapLinearFilter;
 
-export type DeepTexturePixelFormat =
-    | typeof DepthFormat
-    | typeof DepthStencilFormat;
+export type DeepTexturePixelFormat = typeof DepthFormat | typeof DepthStencilFormat;
 
 export type TextureDataType =
     | typeof UnsignedByteType
@@ -388,10 +378,7 @@ export type Mapping =
     | typeof EquirectangularReflectionMapping
     | typeof EquirectangularRefractionMapping;
 
-export type Wrapping =
-    | typeof RepeatWrapping
-    | typeof ClampToEdgeWrapping
-    | typeof MirroredRepeatWrapping;
+export type Wrapping = typeof RepeatWrapping | typeof ClampToEdgeWrapping | typeof MirroredRepeatWrapping;
 
 export type ColorSpace =
     | typeof NoColorSpace

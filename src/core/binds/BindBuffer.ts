@@ -10,10 +10,7 @@ export class BindBuffer extends BindValue {
 
     constructor(data: NumberArrayType) {
         super();
-        this._buffer = new GPUBufferWrapper(
-            GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-            data
-        );
+        this._buffer = new GPUBufferWrapper(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, data);
         this._data = data;
     }
 
@@ -36,10 +33,7 @@ export class BindBuffer extends BindValue {
                 DelayDestroyer.destroy(this._buffer, (data) => {
                     data.destroy();
                 });
-                this._buffer = new GPUBufferWrapper(
-                    GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-                    this._data
-                );
+                this._buffer = new GPUBufferWrapper(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, this._data);
             } else {
                 this._buffer.update(this._data);
             }

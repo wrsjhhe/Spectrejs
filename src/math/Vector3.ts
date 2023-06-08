@@ -319,9 +319,7 @@ class Vector3 {
     clampLength(min: number, max: number) {
         const length = this.length();
 
-        return this.divideScalar(length || 1).multiplyScalar(
-            Math.max(min, Math.min(max, length))
-        );
+        return this.divideScalar(length || 1).multiplyScalar(Math.max(min, Math.min(max, length)));
     }
 
     floor() {
@@ -445,9 +443,7 @@ class Vector3 {
         // reflect incident vector off plane orthogonal to normal
         // normal is assumed to have unit length
 
-        return this.sub(
-            _vector.copy(normal).multiplyScalar(2 * this.dot(normal))
-        );
+        return this.sub(_vector.copy(normal).multiplyScalar(2 * this.dot(normal)));
     }
 
     angleTo(v: Vector3) {
@@ -475,11 +471,7 @@ class Vector3 {
     }
 
     manhattanDistanceTo(v: Vector3) {
-        return (
-            Math.abs(this.x - v.x) +
-            Math.abs(this.y - v.y) +
-            Math.abs(this.z - v.z)
-        );
+        return Math.abs(this.x - v.x) + Math.abs(this.y - v.y) + Math.abs(this.z - v.z);
     }
 
     setFromSpherical(s: Spherical) {

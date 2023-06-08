@@ -12,12 +12,7 @@ export abstract class Loader {
         this.manager = manager !== undefined ? manager : DefaultLoadingManager;
     }
 
-    abstract load(
-        url: string,
-        onLoad: Function,
-        onProgress: Function,
-        onError: Function
-    ): void;
+    abstract load(url: string, onLoad: Function, onProgress: Function, onError: Function): void;
 
     loadAsync(url: string, onProgress: Function) {
         const scope = this;

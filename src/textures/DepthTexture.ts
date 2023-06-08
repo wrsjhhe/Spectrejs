@@ -2,6 +2,8 @@ import {
     DeepTexturePixelFormat,
     DepthFormat,
     DepthStencilFormat,
+    GPUFilterMode,
+    GPUTextureFormat,
     MagnificationTextureFilter,
     Mapping,
     MinificationTextureFilter,
@@ -15,10 +17,10 @@ import { Texture } from "./Texture";
 
 export class DepthTexture extends Texture {
     public flipY: boolean;
-    public magFilter: MagnificationTextureFilter;
-    public minFilter: MinificationTextureFilter;
+    public magFilter: GPUFilterMode;
+    public minFilter: GPUFilterMode;
     public generateMipmaps: boolean;
-    public format: DeepTexturePixelFormat;
+    public format: GPUTextureFormat;
     public type: TextureDataType;
 
     constructor(
@@ -26,36 +28,26 @@ export class DepthTexture extends Texture {
         height: number,
         type?: TextureDataType,
         mapping?: Mapping,
-        wrapS?: Wrapping,
-        wrapT?: Wrapping,
-        magFilter?: MagnificationTextureFilter,
-        minFilter?: MinificationTextureFilter,
+        wrapU?: GPUAddressMode,
+        wrapV?: GPUAddressMode,
+        wrapW?: GPUAddressMode,
+        magFilter?: GPUFilterMode,
+        minFilter?: GPUFilterMode,
+        mipmapFilter?: GPUMipmapFilterMode,
         anisotropy?: number,
-        format?: DeepTexturePixelFormat
+        format?: GPUTextureFormat
     ) {
-        format = format !== undefined ? format : DepthFormat;
+        format = format !== undefined ? format : GPUTextureFormat.Depth24Plus;
 
-        if (type === undefined && format === DepthFormat)
-            type = UnsignedIntType;
-        if (type === undefined && format === DepthStencilFormat)
-            type = UnsignedInt248Type;
+        if (type === undefined && format === GPUTextureFormat.Depth24Plus) type = UnsignedIntType;
+        if (type === undefined && format === GPUTextureFormat.Depth24PlusStencil8) type = UnsignedInt248Type;
 
-        super(
-            null,
-            mapping,
-            wrapS,
-            wrapT,
-            magFilter,
-            minFilter,
-            format,
-            type,
-            anisotropy
-        );
+        super(null, mapping, wrapU, wrapV, wrapW, magFilter, minFilter, mipmapFilter, format, type, anisotropy);
 
         this.image = { width: width, height: height };
 
-        this.magFilter = magFilter !== undefined ? magFilter : NearestFilter;
-        this.minFilter = minFilter !== undefined ? minFilter : NearestFilter;
+        this.magFilter = magFilter !== undefined ? magFilter : GPUFilterMode.Nearest;
+        this.minFilter = minFilter !== undefined ? minFilter : GPUFilterMode.Nearest;
 
         this.flipY = false;
         this.generateMipmaps = false;

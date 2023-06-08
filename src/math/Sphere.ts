@@ -35,10 +35,7 @@ export class Sphere {
         let maxRadiusSq = 0;
 
         for (let i = 0, il = points.length; i < il; i++) {
-            maxRadiusSq = Math.max(
-                maxRadiusSq,
-                center.distanceToSquared(points[i])
-            );
+            maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(points[i]));
         }
 
         this.radius = Math.sqrt(maxRadiusSq);
@@ -65,9 +62,7 @@ export class Sphere {
     }
 
     containsPoint(point: Vector3) {
-        return (
-            point.distanceToSquared(this.center) <= this.radius * this.radius
-        );
+        return point.distanceToSquared(this.center) <= this.radius * this.radius;
     }
 
     distanceToPoint(point: Vector3) {
@@ -77,10 +72,7 @@ export class Sphere {
     intersectsSphere(sphere: Sphere) {
         const radiusSum = this.radius + sphere.radius;
 
-        return (
-            sphere.center.distanceToSquared(this.center) <=
-            radiusSum * radiusSum
-        );
+        return sphere.center.distanceToSquared(this.center) <= radiusSum * radiusSum;
     }
 
     intersectsBox(box: Box3) {
@@ -183,9 +175,7 @@ export class Sphere {
     }
 
     equals(sphere: Sphere) {
-        return (
-            sphere.center.equals(this.center) && sphere.radius === this.radius
-        );
+        return sphere.center.equals(this.center) && sphere.radius === this.radius;
     }
 
     clone() {

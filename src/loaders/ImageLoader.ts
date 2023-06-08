@@ -7,12 +7,7 @@ export class ImageLoader extends Loader {
         super(manager);
     }
 
-    load(
-        url: string,
-        onLoad: Function,
-        onProgress: Function,
-        onError: Function
-    ) {
+    load(url: string, onLoad: Function, onProgress: Function, onError: Function) {
         if (this.path !== undefined) url = this.path + url;
 
         url = this.manager.resolveURL(url);
@@ -63,8 +58,7 @@ export class ImageLoader extends Loader {
         image.addEventListener("error", onImageError, false);
 
         if (url.slice(0, 5) !== "data:") {
-            if (this.crossOrigin !== undefined)
-                image.crossOrigin = this.crossOrigin;
+            if (this.crossOrigin !== undefined) image.crossOrigin = this.crossOrigin;
         }
 
         scope.manager.itemStart(url);

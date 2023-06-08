@@ -10,12 +10,7 @@ class TextureLoader extends Loader {
         super(manager);
     }
 
-    load(
-        url: string,
-        onLoad: Function,
-        onProgress: Function,
-        onError: Function
-    ) {
+    load(url: string, onLoad: Function, onProgress: Function, onError: Function) {
         const texture = new Texture();
 
         const loader = new ImageLoader(this.manager);

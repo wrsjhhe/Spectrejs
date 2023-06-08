@@ -43,13 +43,7 @@ export class Triangle {
 
     // static/instance method to calculate barycentric coordinates
     // based on: http://www.blackpawn.com/texts/pointinpoly/default.html
-    static getBarycoord(
-        point: Vector3,
-        a: Vector3,
-        b: Vector3,
-        c: Vector3,
-        target: Vector3
-    ) {
+    static getBarycoord(point: Vector3, a: Vector3, b: Vector3, c: Vector3, target: Vector3) {
         _v0.subVectors(c, a);
         _v1.subVectors(b, a);
         _v2.subVectors(point, a);
@@ -96,9 +90,7 @@ export class Triangle {
         // @deprecated, r151
 
         if (warnedGetUV === false) {
-            console.warn(
-                "THREE.Triangle.getUV() has been renamed to THREE.Triangle.getInterpolation()."
-            );
+            console.warn("THREE.Triangle.getUV() has been renamed to THREE.Triangle.getInterpolation().");
 
             warnedGetUV = true;
         }
@@ -126,12 +118,7 @@ export class Triangle {
         return target;
     }
 
-    static isFrontFacing(
-        a: Vector3,
-        b: Vector3,
-        c: Vector3,
-        direction: Vector3
-    ) {
+    static isFrontFacing(a: Vector3, b: Vector3, c: Vector3, direction: Vector3) {
         _v0.subVectors(c, b);
         _v1.subVectors(a, b);
 
@@ -147,12 +134,7 @@ export class Triangle {
         return this;
     }
 
-    setFromPointsAndIndices(
-        points: Array<Vector3>,
-        i0: number,
-        i1: number,
-        i2: number
-    ) {
+    setFromPointsAndIndices(points: Array<Vector3>, i0: number, i1: number, i2: number) {
         this.a.copy(points[i0]);
         this.b.copy(points[i1]);
         this.c.copy(points[i2]);
@@ -160,12 +142,7 @@ export class Triangle {
         return this;
     }
 
-    setFromAttributeAndIndices(
-        attribute: BufferAttribute,
-        i0: number,
-        i1: number,
-        i2: number
-    ) {
+    setFromAttributeAndIndices(attribute: BufferAttribute, i0: number, i1: number, i2: number) {
         this.a.fromBufferAttribute(attribute, i0);
         this.b.fromBufferAttribute(attribute, i1);
         this.c.fromBufferAttribute(attribute, i2);
@@ -211,52 +188,20 @@ export class Triangle {
         return Triangle.getBarycoord(point, this.a, this.b, this.c, target);
     }
 
-    getUV(
-        point: Vector3,
-        uv1: Vector3,
-        uv2: Vector3,
-        uv3: Vector3,
-        target: Vector3
-    ) {
+    getUV(point: Vector3, uv1: Vector3, uv2: Vector3, uv3: Vector3, target: Vector3) {
         // @deprecated, r151
 
         if (warnedGetUV === false) {
-            console.warn(
-                "THREE.Triangle.getUV() has been renamed to THREE.Triangle.getInterpolation()."
-            );
+            console.warn("THREE.Triangle.getUV() has been renamed to THREE.Triangle.getInterpolation().");
 
             warnedGetUV = true;
         }
 
-        return Triangle.getInterpolation(
-            point,
-            this.a,
-            this.b,
-            this.c,
-            uv1,
-            uv2,
-            uv3,
-            target
-        );
+        return Triangle.getInterpolation(point, this.a, this.b, this.c, uv1, uv2, uv3, target);
     }
 
-    getInterpolation(
-        point: Vector3,
-        v1: Vector3,
-        v2: Vector3,
-        v3: Vector3,
-        target: Vector3
-    ) {
-        return Triangle.getInterpolation(
-            point,
-            this.a,
-            this.b,
-            this.c,
-            v1,
-            v2,
-            v3,
-            target
-        );
+    getInterpolation(point: Vector3, v1: Vector3, v2: Vector3, v3: Vector3, target: Vector3) {
+        return Triangle.getInterpolation(point, this.a, this.b, this.c, v1, v2, v3, target);
     }
 
     containsPoint(point: Vector3) {
@@ -341,10 +286,6 @@ export class Triangle {
     }
 
     equals(triangle: Triangle) {
-        return (
-            triangle.a.equals(this.a) &&
-            triangle.b.equals(this.b) &&
-            triangle.c.equals(this.c)
-        );
+        return triangle.a.equals(this.a) && triangle.b.equals(this.b) && triangle.c.equals(this.c);
     }
 }

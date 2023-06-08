@@ -24,7 +24,7 @@ export class WebGPURenderer {
     private _parameters: WebGPURendererParameters;
     private _canvas: HTMLCanvasElement;
     private _device: GPUDevice;
-    private _presentationFormat: GPUTextureFormat = GPUTextureFormat.BGRA8Unorm;
+    private _presentationFormat: GPUTextureFormat = Context.textureFormat;
     private _context: GPUCanvasContext;
     private _alphaMode: GPUCanvasAlphaMode = "premultiplied";
     private _colorBuffer: GPUTexture;
@@ -44,10 +44,7 @@ export class WebGPURenderer {
         this._parameters = parameters;
 
         if (this._parameters.antialias === true) {
-            this._sampleCount =
-                parameters.sampleCount === undefined
-                    ? 4
-                    : parameters.sampleCount;
+            this._sampleCount = parameters.sampleCount === undefined ? 4 : parameters.sampleCount;
         } else {
             this._sampleCount = 1;
         }
@@ -121,8 +118,7 @@ export class WebGPURenderer {
         if (this._sizeChanged) {
             if (PerspectiveCamera.Is(camera)) {
                 const perspectiveCamera = camera as PerspectiveCamera;
-                perspectiveCamera.aspect =
-                    this._canvas.width / this._canvas.height;
+                perspectiveCamera.aspect = this._canvas.width / this._canvas.height;
                 perspectiveCamera.updateProjectionMatrix();
             }
 
@@ -151,33 +147,18 @@ export class WebGPURenderer {
             // }
         }
 
-        const view =
-            this.sampleCount > 1
-                ? this._colorAttachmentView
-                : this._context.getCurrentTexture().createView();
-        const resolveTarget =
-            this.sampleCount > 1
-                ? this._context.getCurrentTexture().createView()
-                : undefined;
-        (
-            this._renderPassDescriptor
-                .colorAttachments as Array<GPURenderPassColorAttachment>
-        )[0].view = view;
-        (
-            this._renderPassDescriptor
-                .colorAttachments as Array<GPURenderPassColorAttachment>
-        )[0].resolveTarget = resolveTarget;
-        (
-            this._renderPassDescriptor
-                .depthStencilAttachment as GPURenderPassDepthStencilAttachment
-        ).view = this._depthBuffer.createView();
+        const view = this.sampleCount > 1 ? this._colorAttachmentView : this._context.getCurrentTexture().createView();
+        const resolveTarget = this.sampleCount > 1 ? this._context.getCurrentTexture().createView() : undefined;
+        (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].view = view;
+        (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget =
+            resolveTarget;
+        (this._renderPassDescriptor.depthStencilAttachment as GPURenderPassDepthStencilAttachment).view =
+            this._depthBuffer.createView();
 
         const materialObjects = scene.renderableObjs;
 
         const commandEncoder = this.device.createCommandEncoder();
-        const passEncoder = commandEncoder.beginRenderPass(
-            this._renderPassDescriptor
-        );
+        const passEncoder = commandEncoder.beginRenderPass(this._renderPassDescriptor);
 
         for (const [material, objects] of materialObjects) {
             if (sceneUpdated) {
@@ -201,8 +182,7 @@ export class WebGPURenderer {
         objects: Array<RenderableObject>,
         scene: Scene
     ) {
-        if (material.pipeline.needsCompile)
-            material.pipeline.compilePipeline(this, scene);
+        if (material.pipeline.needsCompile) material.pipeline.compilePipeline(this, scene);
 
         passEncoder.setPipeline(material.pipeline.pipeline);
 
@@ -218,27 +198,15 @@ export class WebGPURenderer {
         }
     }
 
-    private _renderObject(
-        passEncoder: GPURenderPassEncoder,
-        object: RenderableObject
-    ) {
+    private _renderObject(passEncoder: GPURenderPassEncoder, object: RenderableObject) {
         object.update();
 
         const geometry = object.geometry;
         geometry.update();
-        geometry.setVertexBuffer(
-            passEncoder,
-            object.material.shaderOptions.attributeValues
-        );
+        geometry.setVertexBuffer(passEncoder, object.material.shaderOptions.attributeValues);
         if (geometry.indices) {
-            passEncoder.setIndexBuffer(
-                geometry.indices.buffer.buffer,
-                GPUIndexFormat.Uint32
-            );
-            passEncoder.drawIndexedIndirect(
-                object.geometry.drawBuffer.buffer,
-                0
-            );
+            passEncoder.setIndexBuffer(geometry.indices.buffer.buffer, GPUIndexFormat.Uint32);
+            passEncoder.drawIndexedIndirect(object.geometry.drawBuffer.buffer, 0);
         } else {
             passEncoder.drawIndirect(object.geometry.drawBuffer.buffer, 0);
         }

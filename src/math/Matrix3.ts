@@ -4,33 +4,13 @@ import { Vector3 } from "./Vector3";
 
 class Matrix3 {
     public elements = [1, 0, 0, 0, 1, 0, 0, 0, 1];
-    constructor(
-        n11 = 1,
-        n12 = 0,
-        n13 = 0,
-        n21 = 0,
-        n22 = 1,
-        n23 = 0,
-        n31 = 0,
-        n32 = 0,
-        n33 = 1
-    ) {
+    constructor(n11 = 1, n12 = 0, n13 = 0, n21 = 0, n22 = 1, n23 = 0, n31 = 0, n32 = 0, n33 = 1) {
         if (n11 !== undefined) {
             this.set(n11, n12, n13, n21, n22, n23, n31, n32, n33);
         }
     }
 
-    set(
-        n11 = 1,
-        n12 = 0,
-        n13 = 0,
-        n21 = 0,
-        n22 = 1,
-        n23 = 0,
-        n31 = 0,
-        n32 = 0,
-        n33 = 1
-    ) {
+    set(n11 = 1, n12 = 0, n13 = 0, n21 = 0, n22 = 1, n23 = 0, n31 = 0, n32 = 0, n33 = 1) {
         const te = this.elements;
 
         te[0] = n11;
@@ -80,17 +60,7 @@ class Matrix3 {
     setFromMatrix4(m: Matrix4) {
         const me = m.elements;
 
-        this.set(
-            me[0],
-            me[4],
-            me[8],
-            me[1],
-            me[5],
-            me[9],
-            me[2],
-            me[6],
-            me[10]
-        );
+        this.set(me[0], me[4], me[8], me[1], me[5], me[9], me[2], me[6], me[10]);
 
         return this;
     }
@@ -172,14 +142,7 @@ class Matrix3 {
             h = te[7],
             i = te[8];
 
-        return (
-            a * e * i -
-            a * f * h -
-            b * d * i +
-            b * f * g +
-            c * d * h -
-            c * e * g
-        );
+        return a * e * i - a * f * h - b * d * i + b * f * g + c * d * h - c * e * g;
     }
 
     invert() {
@@ -254,15 +217,7 @@ class Matrix3 {
         return this;
     }
 
-    setUvTransform(
-        tx: number,
-        ty: number,
-        sx: number,
-        sy: number,
-        rotation: number,
-        cx: number,
-        cy: number
-    ) {
+    setUvTransform(tx: number, ty: number, sx: number, sy: number, rotation: number, cx: number, cy: number) {
         const c = Math.cos(rotation);
         const s = Math.sin(rotation);
 

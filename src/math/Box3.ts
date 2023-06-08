@@ -91,23 +91,15 @@ export class Box3 {
     isEmpty() {
         // this is a more robust check for empty than ( volume <= 0 ) because volume can get positive with two negative axes
 
-        return (
-            this.max.x < this.min.x ||
-            this.max.y < this.min.y ||
-            this.max.z < this.min.z
-        );
+        return this.max.x < this.min.x || this.max.y < this.min.y || this.max.z < this.min.z;
     }
 
     getCenter(target: Vector3) {
-        return this.isEmpty()
-            ? target.set(0, 0, 0)
-            : target.addVectors(this.min, this.max).multiplyScalar(0.5);
+        return this.isEmpty() ? target.set(0, 0, 0) : target.addVectors(this.min, this.max).multiplyScalar(0.5);
     }
 
     getSize(target: Vector3) {
-        return this.isEmpty()
-            ? target.set(0, 0, 0)
-            : target.subVectors(this.max, this.min);
+        return this.isEmpty() ? target.set(0, 0, 0) : target.subVectors(this.max, this.min);
     }
 
     expandByPoint(point: Vector3) {
@@ -150,16 +142,10 @@ export class Box3 {
             const geometry = object.geometry;
 
             if (geometry !== undefined) {
-                if (
-                    precise &&
-                    geometry.attributes !== undefined &&
-                    geometry.attributes.get("position") !== undefined
-                ) {
+                if (precise && geometry.attributes !== undefined && geometry.attributes.get("position") !== undefined) {
                     const position = geometry.attributes.get("position");
                     for (let i = 0, l = position.count; i < l; i++) {
-                        _vector
-                            .fromBufferAttribute(position, i)
-                            .applyMatrix4(object.matrixWorld);
+                        _vector.fromBufferAttribute(position, i).applyMatrix4(object.matrixWorld);
                         this.expandByPoint(_vector);
                     }
                 } else {
@@ -178,8 +164,7 @@ export class Box3 {
         const children = object.children;
 
         for (let i = 0, l = children.length; i < l; i++) {
-            if (RenderableObject.Is(children[i]))
-                this.expandByObject(children[i] as RenderableObject, precise);
+            if (RenderableObject.Is(children[i])) this.expandByObject(children[i] as RenderableObject, precise);
         }
 
         return this;
@@ -235,10 +220,7 @@ export class Box3 {
         this.clampPoint(sphere.center, _vector);
 
         // If that point is inside the sphere, the AABB and sphere intersect.
-        return (
-            _vector.distanceToSquared(sphere.center) <=
-            sphere.radius * sphere.radius
-        );
+        return _vector.distanceToSquared(sphere.center) <= sphere.radius * sphere.radius;
     }
 
     intersectsPlane(plane: Plane) {
@@ -443,20 +425,12 @@ const _extents = /*@__PURE__*/ new Vector3();
 const _triangleNormal = /*@__PURE__*/ new Vector3();
 const _testAxis = /*@__PURE__*/ new Vector3();
 
-function satForAxes(
-    axes: Array<number>,
-    v0: Vector3,
-    v1: Vector3,
-    v2: Vector3,
-    extents: Vector3
-) {
+function satForAxes(axes: Array<number>, v0: Vector3, v1: Vector3, v2: Vector3, extents: Vector3) {
     for (let i = 0, j = axes.length - 3; i <= j; i += 3) {
         _testAxis.fromArray(axes, i);
         // project the aabb onto the separating axis
         const r =
-            extents.x * Math.abs(_testAxis.x) +
-            extents.y * Math.abs(_testAxis.y) +
-            extents.z * Math.abs(_testAxis.z);
+            extents.x * Math.abs(_testAxis.x) + extents.y * Math.abs(_testAxis.y) + extents.z * Math.abs(_testAxis.z);
         // project all 3 vertices of the triangle onto the separating axis
         const p0 = v0.dot(_testAxis);
         const p1 = v1.dot(_testAxis);

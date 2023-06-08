@@ -263,11 +263,7 @@ export class Vector4 {
             m32 = te[6],
             m33 = te[10];
 
-        if (
-            Math.abs(m12 - m21) < epsilon &&
-            Math.abs(m13 - m31) < epsilon &&
-            Math.abs(m23 - m32) < epsilon
-        ) {
+        if (Math.abs(m12 - m21) < epsilon && Math.abs(m13 - m31) < epsilon && Math.abs(m23 - m32) < epsilon) {
             // singularity found
             // first check for identity matrix which must have +1 for all terms
             // in leading diagonal and zero in other terms
@@ -341,11 +337,7 @@ export class Vector4 {
 
         // as we have reached here there are no singularities so we can handle normally
 
-        let s = Math.sqrt(
-            (m32 - m23) * (m32 - m23) +
-                (m13 - m31) * (m13 - m31) +
-                (m21 - m12) * (m21 - m12)
-        ); // used to normalize
+        let s = Math.sqrt((m32 - m23) * (m32 - m23) + (m13 - m31) * (m13 - m31) + (m21 - m12) * (m21 - m12)); // used to normalize
 
         if (Math.abs(s) < 0.001) s = 1;
 
@@ -401,9 +393,7 @@ export class Vector4 {
     clampLength(min: number, max: number) {
         const length = this.length();
 
-        return this.divideScalar(length || 1).multiplyScalar(
-            Math.max(min, Math.min(max, length))
-        );
+        return this.divideScalar(length || 1).multiplyScalar(Math.max(min, Math.min(max, length)));
     }
 
     floor() {
@@ -456,30 +446,15 @@ export class Vector4 {
     }
 
     lengthSq() {
-        return (
-            this.x * this.x +
-            this.y * this.y +
-            this.z * this.z +
-            this.w * this.w
-        );
+        return this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w;
     }
 
     length() {
-        return Math.sqrt(
-            this.x * this.x +
-                this.y * this.y +
-                this.z * this.z +
-                this.w * this.w
-        );
+        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w);
     }
 
     manhattanLength() {
-        return (
-            Math.abs(this.x) +
-            Math.abs(this.y) +
-            Math.abs(this.z) +
-            Math.abs(this.w)
-        );
+        return Math.abs(this.x) + Math.abs(this.y) + Math.abs(this.z) + Math.abs(this.w);
     }
 
     normalize() {
@@ -509,9 +484,7 @@ export class Vector4 {
     }
 
     equals(v: Vector4) {
-        return (
-            v.x === this.x && v.y === this.y && v.z === this.z && v.w === this.w
-        );
+        return v.x === this.x && v.y === this.y && v.z === this.z && v.w === this.w;
     }
 
     fromArray(array: Array<number>, offset = 0) {

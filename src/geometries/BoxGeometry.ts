@@ -11,14 +11,7 @@ export class BoxGeometry extends BufferGeometry {
     public heightSegments: number;
     public depthSegments: number;
 
-    constructor(
-        width = 1,
-        height = 1,
-        depth = 1,
-        widthSegments = 1,
-        heightSegments = 1,
-        depthSegments = 1
-    ) {
+    constructor(width = 1, height = 1, depth = 1, widthSegments = 1, heightSegments = 1, depthSegments = 1) {
         super();
 
         this.width = width;
@@ -143,109 +136,18 @@ export class BoxGeometry extends BufferGeometry {
         };
         // build each side of the box geometry
 
-        buildPlane(
-            "z",
-            "y",
-            "x",
-            -1,
-            -1,
-            depth,
-            height,
-            width,
-            depthSegments,
-            heightSegments
-        ); // px
-        buildPlane(
-            "z",
-            "y",
-            "x",
-            1,
-            -1,
-            depth,
-            height,
-            -width,
-            depthSegments,
-            heightSegments
-        ); // nx
-        buildPlane(
-            "x",
-            "z",
-            "y",
-            1,
-            1,
-            width,
-            depth,
-            height,
-            widthSegments,
-            depthSegments
-        ); // py
-        buildPlane(
-            "x",
-            "z",
-            "y",
-            1,
-            -1,
-            width,
-            depth,
-            -height,
-            widthSegments,
-            depthSegments
-        ); // ny
-        buildPlane(
-            "x",
-            "y",
-            "z",
-            1,
-            -1,
-            width,
-            height,
-            depth,
-            widthSegments,
-            heightSegments
-        ); // pz
-        buildPlane(
-            "x",
-            "y",
-            "z",
-            -1,
-            -1,
-            width,
-            height,
-            -depth,
-            widthSegments,
-            heightSegments
-        ); // nz
+        buildPlane("z", "y", "x", -1, -1, depth, height, width, depthSegments, heightSegments); // px
+        buildPlane("z", "y", "x", 1, -1, depth, height, -width, depthSegments, heightSegments); // nx
+        buildPlane("x", "z", "y", 1, 1, width, depth, height, widthSegments, depthSegments); // py
+        buildPlane("x", "z", "y", 1, -1, width, depth, -height, widthSegments, depthSegments); // ny
+        buildPlane("x", "y", "z", 1, -1, width, height, depth, widthSegments, heightSegments); // pz
+        buildPlane("x", "y", "z", -1, -1, width, height, -depth, widthSegments, heightSegments); // nz
 
         // build geometry
-        const indicesAttr = new BufferAttribute(
-            new Uint32Array(indices),
-            GPUIndexFormat.Uint32,
-            1
-        );
+        const indicesAttr = new BufferAttribute(new Uint32Array(indices), GPUIndexFormat.Uint32, 1);
         this.setIndex(indicesAttr);
-        this.setAttribute(
-            "position",
-            new BufferAttribute(
-                new Float32Array(vertices),
-                GPUVertexFormat.Float32x3,
-                3
-            )
-        );
-        this.setAttribute(
-            "normal",
-            new BufferAttribute(
-                new Float32Array(normals),
-                GPUVertexFormat.Float32x3,
-                3
-            )
-        );
-        this.setAttribute(
-            "uv",
-            new BufferAttribute(
-                new Float32Array(uvs),
-                GPUVertexFormat.Float32x2,
-                2
-            )
-        );
+        this.setAttribute("position", new BufferAttribute(new Float32Array(vertices), GPUVertexFormat.Float32x3, 3));
+        this.setAttribute("normal", new BufferAttribute(new Float32Array(normals), GPUVertexFormat.Float32x3, 3));
+        this.setAttribute("uv", new BufferAttribute(new Float32Array(uvs), GPUVertexFormat.Float32x2, 2));
     }
 }

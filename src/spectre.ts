@@ -43,9 +43,7 @@ export { TextureLoader } from "./loaders/TextureLoader";
 export * as ConstantsValues from "./utils/TempValues";
 
 export async function Init(parameters: any = {}) {
-    const powerPreference = parameters.powerPreference
-        ? parameters.powerPreference
-        : "high-performance";
+    const powerPreference = parameters.powerPreference ? parameters.powerPreference : "high-performance";
     const adapter = await navigator.gpu.requestAdapter({
         powerPreference,
     });

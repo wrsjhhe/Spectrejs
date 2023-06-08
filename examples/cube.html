@@ -1,151 +1,145 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset='utf-8'>
-    <title>Spectre</title>
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
-<style>
-    body {
-	margin: 0;
-	background-color: rgb(255, 255, 255);
-	color: #fff;
-	font-family: Monospace;
-	overscroll-behavior: none;
-}
-#container{
-    height: 100%;
-    width: 100%;
-    overscroll-behavior: none;
-    position: absolute;
-    overflow:hidden;
-}
-</style>
-</head>
-<body>
-    <div id="container"></div>
-    <!-- <script type="module" src="./cube.js"></script> -->
-    <script type="module">
-        import * as Spectre from "./build/js/spectre.js";
-        let container;
-        let renderer;
-        let scene;
-        let mesh;
-        let camera;
-        function init() {
-            container = document.getElementById("container");
-            renderer = new Spectre.WebGPURenderer({
-                antialias: true,
-            });
-            renderer.init();
-            container.appendChild(renderer.domElement);
-
-            scene = new Spectre.Scene();
-
-            camera = new Spectre.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
-            camera.position.z = 1600;
-            camera.lookAt(new Spectre.Vector3(0, 0, 0));
-
-            const controls = new Spectre.OrbitControls(camera, renderer.domElement);
-            const material = new Spectre.MeshBasicMaterial();
-            material.color = new Spectre.Color(1, 0, 0);
-            material.transparent = true;
-            material.opacity = 0.5;
-
-            // setInterval(() => {
-            //     material.transparent = !material.transparent;
-            // }, 2000);
-
-            let tex = null;
-            // setInterval(() => {
-            //     if(material.map){
-            //         material.map = null;
-            //     }else{
-            //         material.map = tex;
-            //     }
-            // }, 2000);
-
-           
-            const loader = new Spectre.TextureLoader();
-            loader.load(
-                // resource URL
-                "images/brick_diffuse.jpg",
-
-                // onLoad callback
-                function (texture) {
-                    //tex = texture;
-                    material.map = texture;
-                },
-
-                // onProgress callback currently not supported
-                undefined,
-
-                // onError callback
-                function (err) {
-                    console.error("An error happened.");
-                }
-            );
-
-            const geometry = new Spectre.BoxGeometry(20, 20, 20);
-
-            for (let i = 0; i < 10000; i++) {
-
-                const mesh = new Spectre.Mesh(geometry, material);
-
-                mesh.position.x = Math.random() * 800 - 400;
-                mesh.position.y = Math.random() * 800 - 400;
-                mesh.position.z = Math.random() * 800 - 400;
-
-                mesh.rotation.x = Math.random() * 2 * Math.PI;
-                mesh.rotation.y = Math.random() * 2 * Math.PI;
-                mesh.rotation.z = Math.random() * 2 * Math.PI;
-
-                mesh.scale.x = Math.random() + 0.5;
-                mesh.scale.y = Math.random() + 0.5;
-                mesh.scale.z = Math.random() + 0.5;
-
-                mesh.matrixWorldAutoUpdate = false;
-                mesh.matrixAutoUpdate = false;
-                mesh.updateMatrix();
-
-                scene.add(mesh);
-
+    <head>
+        <meta charset="utf-8" />
+        <title>Spectre</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <style>
+            body {
+                margin: 0;
+                background-color: rgb(255, 255, 255);
+                color: #fff;
+                font-family: Monospace;
+                overscroll-behavior: none;
             }
-        }
+            #container {
+                height: 100%;
+                width: 100%;
+                overscroll-behavior: none;
+                position: absolute;
+                overflow: hidden;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="container"></div>
+        <!-- <script type="module" src="./cube.js"></script> -->
+        <script type="module">
+            import * as Spectre from "./build/js/spectre.js";
+            let container;
+            let renderer;
+            let scene;
+            let mesh;
+            let camera;
+            function init() {
+                container = document.getElementById("container");
+                renderer = new Spectre.WebGPURenderer({
+                    antialias: true,
+                });
+                renderer.init();
+                container.appendChild(renderer.domElement);
 
-        function frame() {
-            renderer.render(scene, camera);
-            render();
+                scene = new Spectre.Scene();
 
-            for (let i = 0, len = scene.children.length; i < len; i++) {
+                camera = new Spectre.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
+                camera.position.z = 1600;
+                camera.lookAt(new Spectre.Vector3(0, 0, 0));
 
-                const mesh = scene.children[i];
-                mesh.rotation.x += 0.01;
-                mesh.rotation.y += 0.005;
-                mesh.updateMatrix();
+                const controls = new Spectre.OrbitControls(camera, renderer.domElement);
+                const material = new Spectre.MeshBasicMaterial();
+                material.color = new Spectre.Color(1, 0, 0);
+                material.transparent = true;
+                material.opacity = 0.5;
 
-            }    
-        }
+                // setInterval(() => {
+                //     material.transparent = !material.transparent;
+                // }, 2000);
 
-        function render() {
-            requestAnimationFrame(() => {
-                frame();
+                let tex = null;
+                // setInterval(() => {
+                //     if(material.map){
+                //         material.map = null;
+                //     }else{
+                //         material.map = tex;
+                //     }
+                // }, 2000);
+
+                const loader = new Spectre.TextureLoader();
+                loader.load(
+                    // resource URL
+                    "images/brick_diffuse.jpg",
+
+                    // onLoad callback
+                    function (texture) {
+                        texture.mipmapSize = 8;
+                        //tex = texture;
+                        material.map = texture;
+                    },
+
+                    // onProgress callback currently not supported
+                    undefined,
+
+                    // onError callback
+                    function (err) {
+                        console.error("An error happened.");
+                    }
+                );
+
+                const geometry = new Spectre.BoxGeometry(20, 20, 20);
+
+                for (let i = 0; i < 100; i++) {
+                    const mesh = new Spectre.Mesh(geometry, material);
+
+                    mesh.position.x = Math.random() * 800 - 400;
+                    mesh.position.y = Math.random() * 800 - 400;
+                    mesh.position.z = Math.random() * 800 - 400;
+
+                    mesh.rotation.x = Math.random() * 2 * Math.PI;
+                    mesh.rotation.y = Math.random() * 2 * Math.PI;
+                    mesh.rotation.z = Math.random() * 2 * Math.PI;
+
+                    mesh.scale.x = Math.random() + 0.5;
+                    mesh.scale.y = Math.random() + 0.5;
+                    mesh.scale.z = Math.random() + 0.5;
+
+                    mesh.matrixWorldAutoUpdate = false;
+                    mesh.matrixAutoUpdate = false;
+                    mesh.updateMatrix();
+
+                    scene.add(mesh);
+                }
+            }
+
+            function frame() {
+                renderer.render(scene, camera);
+                render();
+
+                for (let i = 0, len = scene.children.length; i < len; i++) {
+                    const mesh = scene.children[i];
+                    mesh.rotation.x += 0.01;
+                    mesh.rotation.y += 0.005;
+                    mesh.updateMatrix();
+                }
+            }
+
+            function render() {
+                requestAnimationFrame(() => {
+                    frame();
+                });
+            }
+
+            function resize() {
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            }
+
+            window.addEventListener("resize", function () {
+                resize();
             });
-        }
 
-        function resize() {
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        }
-
-        window.addEventListener("resize", function () {
-            resize();
-        });
-
-        Spectre.Init().then(()=>{
-            init()
-            render();
-        });
-
-
-    </script>
-</body>
+            Spectre.Init().then(() => {
+                init();
+                render();
+            });
+        </script>
+    </body>
 </html>

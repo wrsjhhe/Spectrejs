@@ -48,8 +48,7 @@ export class RenderableObject extends Object3D {
         super.updateMatrixWorld();
 
         if (needsUpdate) {
-            this._uniforms.get(u_modelTranform).data =
-                this.matrixWorld.toArray();
+            this._uniforms.get(u_modelTranform).data = this.matrixWorld.toArray();
         }
     }
 

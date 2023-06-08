@@ -221,12 +221,7 @@ class Color {
         return this;
     }
 
-    setRGB(
-        r: number,
-        g: number,
-        b: number,
-        colorSpace = ColorManagement.workingColorSpace
-    ) {
+    setRGB(r: number, g: number, b: number, colorSpace = ColorManagement.workingColorSpace) {
         this.r = r;
         this.g = g;
         this.b = b;
@@ -236,12 +231,7 @@ class Color {
         return this;
     }
 
-    setHSL(
-        h: number,
-        s: number,
-        l: number,
-        colorSpace = ColorManagement.workingColorSpace
-    ) {
+    setHSL(h: number, s: number, l: number, colorSpace = ColorManagement.workingColorSpace) {
         // h,s,l ranges are in 0.0 - 1.0
         h = euclideanModulo(h, 1);
         s = clamp(s, 0, 1);
@@ -268,11 +258,7 @@ class Color {
             if (string === undefined) return;
 
             if (parseFloat(string) < 1) {
-                console.warn(
-                    "THREE.Color: Alpha component of " +
-                        style +
-                        " will be ignored."
-                );
+                console.warn("THREE.Color: Alpha component of " + style + " will be ignored.");
             }
         }
 
@@ -288,12 +274,7 @@ class Color {
             switch (name) {
                 case "rgb":
                 case "rgba":
-                    if (
-                        (color =
-                            /^\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*(\d*\.?\d+)\s*)?$/.exec(
-                                components
-                            ))
-                    ) {
+                    if ((color = /^\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*(\d*\.?\d+)\s*)?$/.exec(components))) {
                         // rgb(255,0,0) rgba(255,0,0,0.5)
 
                         handleAlpha(color[4]);
@@ -307,10 +288,7 @@ class Color {
                     }
 
                     if (
-                        (color =
-                            /^\s*(\d+)\%\s*,\s*(\d+)\%\s*,\s*(\d+)\%\s*(?:,\s*(\d*\.?\d+)\s*)?$/.exec(
-                                components
-                            ))
+                        (color = /^\s*(\d+)\%\s*,\s*(\d+)\%\s*,\s*(\d+)\%\s*(?:,\s*(\d*\.?\d+)\s*)?$/.exec(components))
                     ) {
                         // rgb(100%,0%,0%) rgba(100%,0%,0%,0.5)
 
@@ -468,10 +446,7 @@ class Color {
         } else {
             const delta = max - min;
 
-            saturation =
-                lightness <= 0.5
-                    ? delta / (max + min)
-                    : delta / (2 - max - min);
+            saturation = lightness <= 0.5 ? delta / (max + min) : delta / (2 - max - min);
 
             switch (max) {
                 case r:
@@ -514,14 +489,10 @@ class Color {
 
         if (colorSpace !== SRGBColorSpace) {
             // Requires CSS Color Module Level 4 (https://www.w3.org/TR/css-color-4/).
-            return `color(${colorSpace} ${r.toFixed(3)} ${g.toFixed(
-                3
-            )} ${b.toFixed(3)})`;
+            return `color(${colorSpace} ${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)})`;
         }
 
-        return `rgb(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(
-            b * 255
-        )})`;
+        return `rgb(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)})`;
     }
 
     offsetHSL(h: number, s: number, l: number) {

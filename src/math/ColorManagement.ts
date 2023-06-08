@@ -6,9 +6,7 @@ export const LinearSRGBColorSpace = "srgb-linear";
 export const DisplayP3ColorSpace = "display-p3";
 
 export function SRGBToLinear(c: number) {
-    return c < 0.04045
-        ? c * 0.0773993808
-        : Math.pow(c * 0.9478672986 + 0.0521327014, 2.4);
+    return c < 0.04045 ? c * 0.0773993808 : Math.pow(c * 0.9478672986 + 0.0521327014, 2.4);
 }
 
 export function LinearToSRGB(c: number) {
@@ -28,27 +26,21 @@ export function LinearToSRGB(c: number) {
  */
 
 const LINEAR_SRGB_TO_LINEAR_DISPLAY_P3 = /*@__PURE__*/ new Matrix3().fromArray([
-    0.8224621, 0.0331941, 0.0170827, 0.177538, 0.9668058, 0.0723974, -0.0000001,
-    0.0000001, 0.9105199,
+    0.8224621, 0.0331941, 0.0170827, 0.177538, 0.9668058, 0.0723974, -0.0000001, 0.0000001, 0.9105199,
 ]);
 
 const LINEAR_DISPLAY_P3_TO_LINEAR_SRGB = /*@__PURE__*/ new Matrix3().fromArray([
-    1.2249401, -0.0420569, -0.0196376, -0.2249404, 1.0420571, -0.0786361,
-    0.0000001, 0.0, 1.0982735,
+    1.2249401, -0.0420569, -0.0196376, -0.2249404, 1.0420571, -0.0786361, 0.0000001, 0.0, 1.0982735,
 ]);
 
 function DisplayP3ToLinearSRGB(color: Color) {
     // Display P3 uses the sRGB transfer functions
-    return color
-        .convertSRGBToLinear()
-        .applyMatrix3(LINEAR_DISPLAY_P3_TO_LINEAR_SRGB);
+    return color.convertSRGBToLinear().applyMatrix3(LINEAR_DISPLAY_P3_TO_LINEAR_SRGB);
 }
 
 function LinearSRGBToDisplayP3(color: Color) {
     // Display P3 uses the sRGB transfer functions
-    return color
-        .applyMatrix3(LINEAR_SRGB_TO_LINEAR_DISPLAY_P3)
-        .convertLinearToSRGB();
+    return color.applyMatrix3(LINEAR_SRGB_TO_LINEAR_DISPLAY_P3).convertLinearToSRGB();
 }
 
 // Conversions from <source> to Linear-sRGB reference space.
@@ -69,17 +61,13 @@ export const ColorManagement = {
     enabled: true,
 
     get legacyMode() {
-        console.warn(
-            "THREE.ColorManagement: .legacyMode=false renamed to .enabled=true in r150."
-        );
+        console.warn("THREE.ColorManagement: .legacyMode=false renamed to .enabled=true in r150.");
 
         return !this.enabled;
     },
 
     set legacyMode(legacyMode) {
-        console.warn(
-            "THREE.ColorManagement: .legacyMode=false renamed to .enabled=true in r150."
-        );
+        console.warn("THREE.ColorManagement: .legacyMode=false renamed to .enabled=true in r150.");
 
         this.enabled = !legacyMode;
     },
@@ -92,17 +80,8 @@ export const ColorManagement = {
         console.warn("THREE.ColorManagement: .workingColorSpace is readonly.");
     },
 
-    convert: function (
-        color: Color,
-        sourceColorSpace: string,
-        targetColorSpace: string
-    ) {
-        if (
-            this.enabled === false ||
-            sourceColorSpace === targetColorSpace ||
-            !sourceColorSpace ||
-            !targetColorSpace
-        ) {
+    convert: function (color: Color, sourceColorSpace: string, targetColorSpace: string) {
+        if (this.enabled === false || sourceColorSpace === targetColorSpace || !sourceColorSpace || !targetColorSpace) {
             return color;
         }
 
@@ -110,9 +89,7 @@ export const ColorManagement = {
         const targetFromLinear = FROM_LINEAR[targetColorSpace];
 
         if (sourceToLinear === undefined || targetFromLinear === undefined) {
-            throw new Error(
-                `Unsupported color space conversion, "${sourceColorSpace}" to "${targetColorSpace}".`
-            );
+            throw new Error(`Unsupported color space conversion, "${sourceColorSpace}" to "${targetColorSpace}".`);
         }
 
         return targetFromLinear(sourceToLinear(color));

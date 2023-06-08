@@ -229,10 +229,7 @@ export class Object3D {
 
     add(object: Object3D) {
         if (object === this) {
-            console.error(
-                "THREE.Object3D.add: object can't be added as a child of itself.",
-                object
-            );
+            console.error("THREE.Object3D.add: object can't be added as a child of itself.", object);
             return this;
         }
 
@@ -393,10 +390,7 @@ export class Object3D {
             if (this.parent === null) {
                 this.matrixWorld.copy(this.matrix);
             } else {
-                this.matrixWorld.multiplyMatrices(
-                    this.parent.matrixWorld,
-                    this.matrix
-                );
+                this.matrixWorld.multiplyMatrices(this.parent.matrixWorld, this.matrix);
             }
 
             this.matrixWorldNeedsUpdate = false;
@@ -418,11 +412,7 @@ export class Object3D {
     updateWorldMatrix(updateParents = false, updateChildren = false) {
         const parent = this.parent;
 
-        if (
-            updateParents === true &&
-            parent !== null &&
-            parent.matrixWorldAutoUpdate === true
-        ) {
+        if (updateParents === true && parent !== null && parent.matrixWorldAutoUpdate === true) {
             parent.updateWorldMatrix(true, false);
         }
 
@@ -431,10 +421,7 @@ export class Object3D {
         if (this.parent === null) {
             this.matrixWorld.copy(this.matrix);
         } else {
-            this.matrixWorld.multiplyMatrices(
-                this.parent.matrixWorld,
-                this.matrix
-            );
+            this.matrixWorld.multiplyMatrices(this.parent.matrixWorld, this.matrix);
         }
 
         // update children

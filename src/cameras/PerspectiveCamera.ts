@@ -51,8 +51,7 @@ export class PerspectiveCamera extends Camera {
         this.focus = source.focus;
 
         this.aspect = source.aspect;
-        this.view =
-            source.view === null ? null : Object.assign({}, source.view);
+        this.view = source.view === null ? null : Object.assign({}, source.view);
 
         this.filmGauge = source.filmGauge;
         this.filmOffset = source.filmOffset;
@@ -86,11 +85,7 @@ export class PerspectiveCamera extends Camera {
     }
 
     getEffectiveFOV() {
-        return (
-            MathUtils.RAD2DEG *
-            2 *
-            Math.atan(Math.tan(MathUtils.DEG2RAD * 0.5 * this.fov) / this.zoom)
-        );
+        return MathUtils.RAD2DEG * 2 * Math.atan(Math.tan(MathUtils.DEG2RAD * 0.5 * this.fov) / this.zoom);
     }
 
     getFilmWidth() {
@@ -138,14 +133,7 @@ export class PerspectiveCamera extends Camera {
      *
      *   Note there is no reason monitors have to be the same size or in a grid.
      */
-    setViewOffset(
-        fullWidth: number,
-        fullHeight: number,
-        x: number,
-        y: number,
-        width: number,
-        height: number
-    ) {
+    setViewOffset(fullWidth: number, fullHeight: number, x: number, y: number, width: number, height: number) {
         this.aspect = fullWidth / fullHeight;
 
         if (this.view === null) {
@@ -181,8 +169,7 @@ export class PerspectiveCamera extends Camera {
 
     updateProjectionMatrix() {
         const near = this.near;
-        let top =
-            (near * Math.tan(MathUtils.DEG2RAD * 0.5 * this.fov)) / this.zoom;
+        let top = (near * Math.tan(MathUtils.DEG2RAD * 0.5 * this.fov)) / this.zoom;
         let height = 2 * top;
         let width = this.aspect * height;
         let left = -0.5 * width;
@@ -201,14 +188,7 @@ export class PerspectiveCamera extends Camera {
         const skew = this.filmOffset;
         if (skew !== 0) left += (near * skew) / this.getFilmWidth();
 
-        this.projectionMatrix.makePerspective(
-            left,
-            left + width,
-            top,
-            top - height,
-            near,
-            this.far
-        );
+        this.projectionMatrix.makePerspective(left, left + width, top, top - height, near, this.far);
 
         this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
     }

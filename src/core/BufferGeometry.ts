@@ -52,14 +52,10 @@ export class BufferGeometry {
         return bufferLayouts;
     }
 
-    public setVertexBuffer(
-        passEncoder: GPURenderPassEncoder,
-        locationValues: Map<string, AttributeShaderItem>
-    ) {
+    public setVertexBuffer(passEncoder: GPURenderPassEncoder, locationValues: Map<string, AttributeShaderItem>) {
         for (const value of locationValues.values()) {
             const attr = this._attributes.get(value.name);
-            if (attr)
-                passEncoder.setVertexBuffer(value.index, attr.buffer.buffer);
+            if (attr) passEncoder.setVertexBuffer(value.index, attr.buffer.buffer);
         }
     }
 
@@ -74,10 +70,7 @@ export class BufferGeometry {
         return this;
     }
 
-    public setAttribute(
-        name: string,
-        attribute: BufferAttribute
-    ): BufferGeometry {
+    public setAttribute(name: string, attribute: BufferAttribute): BufferGeometry {
         this._attributes.set(name, attribute);
         return this;
     }
@@ -102,10 +95,7 @@ export class BufferGeometry {
                 parameters[2] = 0; // The firstVertex value
                 parameters[3] = 0; // The firstInstance value
             }
-            this._drawBuffer = new GPUBufferWrapper(
-                GPUBufferUsage.COPY_DST | GPUBufferUsage.INDIRECT,
-                parameters
-            );
+            this._drawBuffer = new GPUBufferWrapper(GPUBufferUsage.COPY_DST | GPUBufferUsage.INDIRECT, parameters);
         }
     }
 
@@ -144,10 +134,7 @@ export class BufferGeometry {
             for (let i = 0, il = position.count; i < il; i++) {
                 _vector.fromBufferAttribute(position, i);
 
-                maxRadiusSq = Math.max(
-                    maxRadiusSq,
-                    center.distanceToSquared(_vector)
-                );
+                maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(_vector));
             }
 
             this.boundingSphere.radius = Math.sqrt(maxRadiusSq);
@@ -188,11 +175,7 @@ export class BufferGeometry {
             this._boundingBox.makeEmpty();
         }
 
-        if (
-            isNaN(this._boundingBox.min.x) ||
-            isNaN(this._boundingBox.min.y) ||
-            isNaN(this._boundingBox.min.z)
-        ) {
+        if (isNaN(this._boundingBox.min.x) || isNaN(this._boundingBox.min.y) || isNaN(this._boundingBox.min.z)) {
             console.error(
                 'THREE.BufferGeometry.computeBoundingBox(): Computed min/max have NaN values. The "position" attribute is likely to have NaN values.',
                 this

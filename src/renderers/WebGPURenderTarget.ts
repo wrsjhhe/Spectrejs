@@ -9,15 +9,19 @@ import {
     ColorSpace,
     LinearFilter,
     Mapping,
+    GPUMipmapFilterMode,
+    GPUFilterMode,
 } from "../Constants";
 
 export interface RenderTargetOptions {
     mapping?: Mapping | undefined;
-    wrapS?: Wrapping | undefined;
-    wrapT?: Wrapping | undefined;
-    magFilter?: MagnificationTextureFilter | undefined;
-    minFilter?: MinificationTextureFilter | undefined;
-    format?: number | undefined; // RGBAFormat;
+    wrapU?: GPUAddressMode | undefined;
+    wrapV?: GPUAddressMode | undefined;
+    wrapW?: GPUAddressMode | undefined;
+    magFilter?: GPUFilterMode | undefined;
+    minFilter?: GPUFilterMode | undefined;
+    mipmapFilter?: GPUMipmapFilterMode | undefined;
+    format?: GPUTextureFormat | undefined; // RGBAFormat;
     type?: TextureDataType | undefined; // UnsignedByteType;
     anisotropy?: number | undefined; // 1;
     depthBuffer?: boolean | undefined; // true;
@@ -42,14 +46,15 @@ export class RenderTarget {
     stencilBuffer: boolean;
     depthTexture: DepthTexture;
     samples: number;
-    wrapS: any;
-    wrapT: any;
-    magFilter: any;
-    minFilter: any;
-    anisotropy: any;
+    wrapU: GPUAddressMode;
+    wrapV: GPUAddressMode;
+    wrapW: GPUAddressMode;
+    magFilter: GPUFilterMode;
+    minFilter: GPUFilterMode;
+    anisotropy: number;
     offset: any;
     repeat: any;
-    format: any;
+    format: GPUTextureFormat;
     type: any;
     generateMipmaps: any;
 
@@ -70,10 +75,12 @@ export class RenderTarget {
         this.texture = new Texture(
             image,
             options.mapping,
-            options.wrapS,
-            options.wrapT,
+            options.wrapU,
+            options.wrapV,
+            options.wrapW,
             options.magFilter,
             options.minFilter,
+            options.mipmapFilter,
             options.format,
             options.type,
             options.anisotropy,
@@ -82,34 +89,20 @@ export class RenderTarget {
         this.texture.isRenderTargetTexture = true;
 
         this.texture.flipY = false;
-        this.texture.generateMipmaps =
-            options.generateMipmaps !== undefined
-                ? options.generateMipmaps
-                : false;
-        this.texture.internalFormat =
-            options.internalFormat !== undefined
-                ? options.internalFormat
-                : null;
-        this.texture.minFilter =
-            options.minFilter !== undefined ? options.minFilter : LinearFilter;
+        this.texture.generateMipmaps = options.generateMipmaps !== undefined ? options.generateMipmaps : false;
+        this.texture.internalFormat = options.internalFormat !== undefined ? options.internalFormat : null;
+        this.texture.minFilter = options.minFilter !== undefined ? options.minFilter : GPUFilterMode.Linear;
 
-        this.depthBuffer =
-            options.depthBuffer !== undefined ? options.depthBuffer : true;
-        this.stencilBuffer =
-            options.stencilBuffer !== undefined ? options.stencilBuffer : false;
+        this.depthBuffer = options.depthBuffer !== undefined ? options.depthBuffer : true;
+        this.stencilBuffer = options.stencilBuffer !== undefined ? options.stencilBuffer : false;
 
-        this.depthTexture =
-            options.depthTexture !== undefined ? options.depthTexture : null;
+        this.depthTexture = options.depthTexture !== undefined ? options.depthTexture : null;
 
         this.samples = options.samples !== undefined ? options.samples : 0;
     }
 
     setSize(width: number, height: number, depth = 1) {
-        if (
-            this.width !== width ||
-            this.height !== height ||
-            this.depth !== depth
-        ) {
+        if (this.width !== width || this.height !== height || this.depth !== depth) {
             this.width = width;
             this.height = height;
             this.depth = depth;

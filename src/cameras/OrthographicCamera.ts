@@ -21,14 +21,7 @@ export class OrthographicCamera extends Camera {
     public near = 0.1;
     public far = 2000;
 
-    constructor(
-        left = -1,
-        right = 1,
-        top = 1,
-        bottom = -1,
-        near = 0.1,
-        far = 2000
-    ) {
+    constructor(left = -1, right = 1, top = 1, bottom = -1, near = 0.1, far = 2000) {
         super();
         this.left = left;
         this.right = right;
@@ -51,20 +44,12 @@ export class OrthographicCamera extends Camera {
         this.far = source.far;
 
         this.zoom = source.zoom;
-        this.view =
-            source.view === null ? null : Object.assign({}, source.view);
+        this.view = source.view === null ? null : Object.assign({}, source.view);
 
         return this;
     }
 
-    setViewOffset(
-        fullWidth: number,
-        fullHeight: number,
-        x: number,
-        y: number,
-        width: number,
-        height: number
-    ) {
+    setViewOffset(fullWidth: number, fullHeight: number, x: number, y: number, width: number, height: number) {
         if (this.view === null) {
             this.view = {
                 enabled: true,
@@ -108,10 +93,8 @@ export class OrthographicCamera extends Camera {
         let bottom = cy - dy;
 
         if (this.view !== null && this.view.enabled) {
-            const scaleW =
-                (this.right - this.left) / this.view.fullWidth / this.zoom;
-            const scaleH =
-                (this.top - this.bottom) / this.view.fullHeight / this.zoom;
+            const scaleW = (this.right - this.left) / this.view.fullWidth / this.zoom;
+            const scaleH = (this.top - this.bottom) / this.view.fullHeight / this.zoom;
 
             left += scaleW * this.view.offsetX;
             right = left + scaleW * this.view.width;
@@ -119,14 +102,7 @@ export class OrthographicCamera extends Camera {
             bottom = top - scaleH * this.view.height;
         }
 
-        this.projectionMatrix.makeOrthographic(
-            left,
-            right,
-            top,
-            bottom,
-            this.near,
-            this.far
-        );
+        this.projectionMatrix.makeOrthographic(left, right, top, bottom, this.near, this.far);
 
         this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
     }

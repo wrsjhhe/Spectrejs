@@ -1,3 +1,5 @@
+import { GPUTextureFormat } from "../Constants";
+
 export class Cache {
     public static enabled = false;
 
@@ -33,20 +35,32 @@ export class Context {
     public static get activeDevice(): GPUDevice {
         return Context._activeDevice;
     }
-
     public static set activeDevice(v: GPUDevice) {
         Context._activeDevice = v;
+    }
+
+    private static _textureFormat: GPUTextureFormat = GPUTextureFormat.BGRA8Unorm;
+    public static get textureFormat() {
+        return Context._textureFormat;
+    }
+    public static set textureFormat(v: GPUTextureFormat) {
+        Context._textureFormat = v;
+    }
+
+    private static _commandEncoder: GPUCommandEncoder;
+    public static get commandEncoder() {
+        if (!Context._commandEncoder) {
+            Context._commandEncoder = Context._activeDevice.createCommandEncoder();
+        }
+
+        return Context._commandEncoder;
     }
 }
 
 export class DelayDestroyer {
     public static delayTime = 5000;
 
-    public static destroy(
-        garbage: any,
-        destroyFunc: (g: any) => void,
-        time = DelayDestroyer.delayTime
-    ) {
+    public static destroy(garbage: any, destroyFunc: (g: any) => void, time = DelayDestroyer.delayTime) {
         setTimeout(() => {
             destroyFunc(garbage);
         }, time);

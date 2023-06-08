@@ -98,15 +98,13 @@ export class Scene extends Object3D {
         this._entriesGroup.push({
             binding: 0,
             resource: {
-                buffer: this._lastSetCamera.uniforms.get("projectionMatrix")
-                    .buffer,
+                buffer: this._lastSetCamera.uniforms.get("projectionMatrix").buffer,
             },
         });
         this._entriesGroup.push({
             binding: 1,
             resource: {
-                buffer: this._lastSetCamera.uniforms.get("matrixWorldInverse")
-                    .buffer,
+                buffer: this._lastSetCamera.uniforms.get("matrixWorldInverse").buffer,
             },
         });
 
@@ -121,9 +119,7 @@ export class Scene extends Object3D {
     }
 
     private _updateLightsUniform() {
-        const dirLightsBuffer = new Float32Array(
-            8 * this._directionalLights.size
-        );
+        const dirLightsBuffer = new Float32Array(8 * this._directionalLights.size);
         let offset = 0;
         let needsUpdate = false;
         for (const dirLight of this._directionalLights.values()) {
@@ -161,12 +157,9 @@ export class Scene extends Object3D {
                 bindType: BindType.buffer,
                 visibility: GPUShaderStage.FRAGMENT,
             });
-            if (this._directionalLightBuffer)
-                this._directionalLightBuffer.destroy();
+            if (this._directionalLightBuffer) this._directionalLightBuffer.destroy();
 
-            const arrayBuffer = new Float32Array(
-                8 * this._directionalLights.size
-            );
+            const arrayBuffer = new Float32Array(8 * this._directionalLights.size);
             let offset = 0;
             for (const dirLight of this._directionalLights.values()) {
                 arrayBuffer.set(dirLight.color.toArray(), offset);

@@ -32,10 +32,7 @@ export class BufferAttribute {
 
     public update() {
         if (this._gpuBuffer === undefined) {
-            this._gpuBuffer = new GPUBufferWrapper(
-                this._usage | GPUBufferUsage.COPY_DST,
-                this._array
-            );
+            this._gpuBuffer = new GPUBufferWrapper(this._usage | GPUBufferUsage.COPY_DST, this._array);
         } else {
             if (this.needsUpdate) {
                 this._gpuBuffer.update(this._array);

@@ -108,11 +108,7 @@ export class OrbitControls {
     private onTouchMove: any;
     private onKeyDown: any;
 
-    constructor(
-        object: PerspectiveCamera | OrthographicCamera,
-        domElement: HTMLElement,
-        domWindow?: Window
-    ) {
+    constructor(object: PerspectiveCamera | OrthographicCamera, domElement: HTMLElement, domWindow?: Window) {
         this.camera = object;
 
         this.domElement = domElement;
@@ -186,10 +182,7 @@ export class OrbitControls {
         // for update speedup
         this.updateOffset = new Vector3();
         // so camera.up is the orbit axis
-        this.updateQuat = new Quaternion().setFromUnitVectors(
-            object.up,
-            new Vector3(0, 1, 0)
-        );
+        this.updateQuat = new Quaternion().setFromUnitVectors(object.up, new Vector3(0, 1, 0));
         this.updateQuatInverse = this.updateQuat.clone().invert();
         this.updateLastPosition = new Vector3();
         this.updateLastTargetPosition = new Vector3();
@@ -259,17 +252,9 @@ export class OrbitControls {
                 const element = this.domElement;
 
                 // rotating across whole screen goes 360 degrees around
-                this.rotateLeft(
-                    ((2 * Math.PI * this.rotateDelta.x) /
-                        (element as any).clientWidth) *
-                        this.rotateSpeed
-                );
+                this.rotateLeft(((2 * Math.PI * this.rotateDelta.x) / (element as any).clientWidth) * this.rotateSpeed);
                 // rotating up and down along whole screen attempts to go 360, but limited to 180
-                this.rotateUp(
-                    ((2 * Math.PI * this.rotateDelta.y) /
-                        (element as any).clientHeight) *
-                        this.rotateSpeed
-                );
+                this.rotateUp(((2 * Math.PI * this.rotateDelta.y) / (element as any).clientHeight) * this.rotateSpeed);
                 this.rotateStart.copy(this.rotateEnd);
 
                 this.update();
@@ -330,12 +315,7 @@ export class OrbitControls {
         };
 
         this.onKeyDown = (event: ControlEvent) => {
-            if (
-                this.enabled === false ||
-                this.enableKeys === false ||
-                this.enablePan === false
-            )
-                return;
+            if (this.enabled === false || this.enableKeys === false || this.enablePan === false) return;
 
             switch (event.keyCode) {
                 case this.keys.UP:
@@ -374,10 +354,7 @@ export class OrbitControls {
                     {
                         if (this.enableRotate === false) return;
 
-                        this.rotateStart.set(
-                            event.touches[0].pageX,
-                            event.touches[0].pageY
-                        );
+                        this.rotateStart.set(event.touches[0].pageX, event.touches[0].pageY);
                         this.state = STATE.TOUCH_ROTATE;
                     }
                     break;
@@ -386,10 +363,8 @@ export class OrbitControls {
                     {
                         if (this.enableZoom === false) return;
 
-                        const dx =
-                            event.touches[0].pageX - event.touches[1].pageX;
-                        const dy =
-                            event.touches[0].pageY - event.touches[1].pageY;
+                        const dx = event.touches[0].pageX - event.touches[1].pageX;
+                        const dy = event.touches[0].pageY - event.touches[1].pageY;
 
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         this.dollyStart.set(0, distance);
@@ -401,10 +376,7 @@ export class OrbitControls {
                     {
                         if (this.enablePan === false) return;
 
-                        this.panStart.set(
-                            event.touches[0].pageX,
-                            event.touches[0].pageY
-                        );
+                        this.panStart.set(event.touches[0].pageX, event.touches[0].pageY);
                         this.state = STATE.TOUCH_PAN;
                     }
                     break;
@@ -430,29 +402,19 @@ export class OrbitControls {
                         if (this.enableRotate === false) return;
                         if (this.state !== STATE.TOUCH_ROTATE) return; // is this needed?...
 
-                        this.rotateEnd.set(
-                            event.touches[0].pageX,
-                            event.touches[0].pageY
-                        );
-                        this.rotateDelta.subVectors(
-                            this.rotateEnd,
-                            this.rotateStart
-                        );
+                        this.rotateEnd.set(event.touches[0].pageX, event.touches[0].pageY);
+                        this.rotateDelta.subVectors(this.rotateEnd, this.rotateStart);
 
                         const element = this.domElement;
 
                         // rotating across whole screen goes 360 degrees around
                         this.rotateLeft(
-                            ((2 * Math.PI * this.rotateDelta.x) /
-                                (element as any).clientWidth) *
-                                this.rotateSpeed
+                            ((2 * Math.PI * this.rotateDelta.x) / (element as any).clientWidth) * this.rotateSpeed
                         );
 
                         // rotating up and down along whole screen attempts to go 360, but limited to 180
                         this.rotateUp(
-                            ((2 * Math.PI * this.rotateDelta.y) /
-                                (element as any).clientHeight) *
-                                this.rotateSpeed
+                            ((2 * Math.PI * this.rotateDelta.y) / (element as any).clientHeight) * this.rotateSpeed
                         );
 
                         this.rotateStart.copy(this.rotateEnd);
@@ -467,19 +429,14 @@ export class OrbitControls {
                         if (this.state !== STATE.TOUCH_DOLLY) return; // is this needed?...
 
                         //console.log( 'handleTouchMoveDolly' );
-                        const dx =
-                            event.touches[0].pageX - event.touches[1].pageX;
-                        const dy =
-                            event.touches[0].pageY - event.touches[1].pageY;
+                        const dx = event.touches[0].pageX - event.touches[1].pageX;
+                        const dy = event.touches[0].pageY - event.touches[1].pageY;
 
                         const distance = Math.sqrt(dx * dx + dy * dy);
 
                         this.dollyEnd.set(0, distance);
 
-                        this.dollyDelta.subVectors(
-                            this.dollyEnd,
-                            this.dollyStart
-                        );
+                        this.dollyDelta.subVectors(this.dollyEnd, this.dollyStart);
 
                         if (this.dollyDelta.y > 0) {
                             this.dollyOut(this.getZoomScale());
@@ -496,10 +453,7 @@ export class OrbitControls {
                     {
                         if (this.enablePan === false) return;
                         if (this.state !== STATE.TOUCH_PAN) return; // is this needed?...
-                        this.panEnd.set(
-                            event.touches[0].pageX,
-                            event.touches[0].pageY
-                        );
+                        this.panEnd.set(event.touches[0].pageX, event.touches[0].pageY);
                         this.panDelta.subVectors(this.panEnd, this.panStart);
                         this.pan(this.panDelta.x, this.panDelta.y);
                         this.panStart.copy(this.panEnd);
@@ -522,20 +476,12 @@ export class OrbitControls {
             event.preventDefault();
         };
 
-        this.domElement.addEventListener(
-            "contextmenu",
-            this.onContextMenu,
-            false
-        );
+        this.domElement.addEventListener("contextmenu", this.onContextMenu, false);
 
         this.domElement.addEventListener("mousedown", this.onMouseDown, false);
         this.domElement.addEventListener("wheel", this.onMouseWheel, false);
 
-        this.domElement.addEventListener(
-            "touchstart",
-            this.onTouchStart,
-            false
-        );
+        this.domElement.addEventListener("touchstart", this.onTouchStart, false);
         this.domElement.addEventListener("touchend", this.onTouchEnd, false);
         this.domElement.addEventListener("touchmove", this.onTouchMove, false);
 
@@ -560,8 +506,7 @@ export class OrbitControls {
         }
 
         if (this.enableDamping) {
-            this.spherical.theta +=
-                this.sphericalDelta.theta * this.dampingFactor;
+            this.spherical.theta += this.sphericalDelta.theta * this.dampingFactor;
             this.spherical.phi += this.sphericalDelta.phi * this.dampingFactor;
         } else {
             this.spherical.theta += this.sphericalDelta.theta;
@@ -581,10 +526,7 @@ export class OrbitControls {
             else if (max > Math.PI) max -= twoPI;
 
             if (min <= max) {
-                this.spherical.theta = Math.max(
-                    min,
-                    Math.min(max, this.spherical.theta)
-                );
+                this.spherical.theta = Math.max(min, Math.min(max, this.spherical.theta));
             } else {
                 this.spherical.theta =
                     this.spherical.theta > (min + max) / 2
@@ -594,20 +536,14 @@ export class OrbitControls {
         }
 
         // restrict phi to be between desired limits
-        this.spherical.phi = Math.max(
-            this.minPolarAngle,
-            Math.min(this.maxPolarAngle, this.spherical.phi)
-        );
+        this.spherical.phi = Math.max(this.minPolarAngle, Math.min(this.maxPolarAngle, this.spherical.phi));
 
         this.spherical.makeSafe();
 
         this.spherical.radius *= this.scale;
 
         // restrict radius to be between desired limits
-        this.spherical.radius = Math.max(
-            this.minDistance,
-            Math.min(this.maxDistance, this.spherical.radius)
-        );
+        this.spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, this.spherical.radius));
 
         // move target to panned location
 
@@ -645,10 +581,8 @@ export class OrbitControls {
 
         if (
             this.zoomChanged ||
-            this.updateLastPosition.distanceToSquared(this.camera.position) >
-                EPS ||
-            8 * (1 - this.updateLastQuaternion.dot(this.camera.quaternion)) >
-                EPS ||
+            this.updateLastPosition.distanceToSquared(this.camera.position) > EPS ||
+            8 * (1 - this.updateLastQuaternion.dot(this.camera.quaternion)) > EPS ||
             this.updateLastTargetPosition.distanceToSquared(this.target) > 0
         ) {
             this.updateLastPosition.copy(this.camera.position);
@@ -744,38 +678,24 @@ export class OrbitControls {
             let targetDistance = this.panInternalOffset.length();
 
             // half of the fov is center to top of screen
-            targetDistance *= Math.tan(
-                ((this.camera.fov / 2) * Math.PI) / 180.0
-            );
+            targetDistance *= Math.tan(((this.camera.fov / 2) * Math.PI) / 180.0);
 
             // we actually don't use screenWidth, since perspective camera is fixed to screen height
-            this.panLeft(
-                (2 * deltaX * targetDistance) / (element as any).clientHeight,
-                this.camera.matrix
-            );
-            this.panUp(
-                (2 * deltaY * targetDistance) / (element as any).clientHeight,
-                this.camera.matrix
-            );
+            this.panLeft((2 * deltaX * targetDistance) / (element as any).clientHeight, this.camera.matrix);
+            this.panUp((2 * deltaY * targetDistance) / (element as any).clientHeight, this.camera.matrix);
         } else if (this._checkOrthographicCamera(this.camera)) {
             // orthographic
             this.panLeft(
-                (deltaX * (this.camera.right - this.camera.left)) /
-                    this.camera.zoom /
-                    (element as any).clientWidth,
+                (deltaX * (this.camera.right - this.camera.left)) / this.camera.zoom / (element as any).clientWidth,
                 this.camera.matrix
             );
             this.panUp(
-                (deltaY * (this.camera.top - this.camera.bottom)) /
-                    this.camera.zoom /
-                    (element as any).clientHeight,
+                (deltaY * (this.camera.top - this.camera.bottom)) / this.camera.zoom / (element as any).clientHeight,
                 this.camera.matrix
             );
         } else {
             // camera neither orthographic nor perspective
-            console.warn(
-                "WARNING: OrbitControls.js encountered an unknown camera type - pan disabled."
-            );
+            console.warn("WARNING: OrbitControls.js encountered an unknown camera type - pan disabled.");
             this.enablePan = false;
         }
     }
@@ -784,16 +704,11 @@ export class OrbitControls {
         if (this._checkPerspectiveCamera(this.camera)) {
             this.scale /= dollyScale;
         } else if (this._checkOrthographicCamera(this.camera)) {
-            this.camera.zoom = Math.max(
-                this.minZoom,
-                Math.min(this.maxZoom, this.camera.zoom * dollyScale)
-            );
+            this.camera.zoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.camera.zoom * dollyScale));
             this.camera.updateProjectionMatrix();
             this.zoomChanged = true;
         } else {
-            console.warn(
-                "WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled."
-            );
+            console.warn("WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.");
             this.enableZoom = false;
         }
     }
@@ -802,16 +717,11 @@ export class OrbitControls {
         if (this._checkPerspectiveCamera(this.camera)) {
             this.scale *= dollyScale;
         } else if (this._checkOrthographicCamera(this.camera)) {
-            this.camera.zoom = Math.max(
-                this.minZoom,
-                Math.min(this.maxZoom, this.camera.zoom / dollyScale)
-            );
+            this.camera.zoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.camera.zoom / dollyScale));
             this.camera.updateProjectionMatrix();
             this.zoomChanged = true;
         } else {
-            console.warn(
-                "WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled."
-            );
+            console.warn("WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.");
             this.enableZoom = false;
         }
     }
@@ -841,29 +751,13 @@ export class OrbitControls {
     }
 
     dispose(): void {
-        this.domElement.removeEventListener(
-            "contextmenu",
-            this.onContextMenu,
-            false
-        );
-        this.domElement.removeEventListener(
-            "mousedown",
-            this.onMouseDown,
-            false
-        );
+        this.domElement.removeEventListener("contextmenu", this.onContextMenu, false);
+        this.domElement.removeEventListener("mousedown", this.onMouseDown, false);
         this.domElement.removeEventListener("wheel", this.onMouseWheel, false);
 
-        this.domElement.removeEventListener(
-            "touchstart",
-            this.onTouchStart,
-            false
-        );
+        this.domElement.removeEventListener("touchstart", this.onTouchStart, false);
         this.domElement.removeEventListener("touchend", this.onTouchEnd, false);
-        this.domElement.removeEventListener(
-            "touchmove",
-            this.onTouchMove,
-            false
-        );
+        this.domElement.removeEventListener("touchmove", this.onTouchMove, false);
 
         document.removeEventListener("mousemove", this.onMouseMove, false);
         document.removeEventListener("mouseup", this.onMouseUp, false);
@@ -889,10 +783,7 @@ export class OrbitControls {
         this.target0.copy(this.target);
         this.position0.copy(this.camera.position);
         // Check whether the camera has zoom property
-        if (
-            this._checkOrthographicCamera(this.camera) ||
-            this._checkPerspectiveCamera(this.camera)
-        ) {
+        if (this._checkOrthographicCamera(this.camera) || this._checkPerspectiveCamera(this.camera)) {
             this.zoom0 = this.camera.zoom;
         }
     }
@@ -903,16 +794,12 @@ export class OrbitControls {
         return this.target;
     }
     get noZoom(): boolean {
-        console.warn(
-            "OrbitControls: .noZoom has been deprecated. Use .enableZoom instead."
-        );
+        console.warn("OrbitControls: .noZoom has been deprecated. Use .enableZoom instead.");
         return !this.enableZoom;
     }
 
     set noZoom(value: boolean) {
-        console.warn(
-            "OrbitControls: .noZoom has been deprecated. Use .enableZoom instead."
-        );
+        console.warn("OrbitControls: .noZoom has been deprecated. Use .enableZoom instead.");
         this.enableZoom = !value;
     }
 
@@ -921,9 +808,7 @@ export class OrbitControls {
      * If the check passes (returns true) the passed camera will have the type PerspectiveCamera in the if branch where the check was performed.
      * @param camera Object to be checked.
      */
-    private _checkPerspectiveCamera(
-        camera: Camera
-    ): camera is PerspectiveCamera {
+    private _checkPerspectiveCamera(camera: Camera): camera is PerspectiveCamera {
         return PerspectiveCamera.Is(camera);
     }
     /**
@@ -931,9 +816,7 @@ export class OrbitControls {
      * If the check passes (returns true) the passed camera will have the type OrthographicCamera in the if branch where the check was performed.
      * @param camera Object to be checked.
      */
-    private _checkOrthographicCamera(
-        camera: Camera
-    ): camera is OrthographicCamera {
+    private _checkOrthographicCamera(camera: Camera): camera is OrthographicCamera {
         return OrthographicCamera.Is(camera);
     }
 }

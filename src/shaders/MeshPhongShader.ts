@@ -24,11 +24,7 @@ export class MeshPhongShader extends Shader {
                 @builtin(position) Position : vec4<f32>,
                 ${basic.itemVary_value(uvItem, indexObj)}
                 ${basic.itemVary_value(normalItem, indexObj)}
-                ${basic.customVary_value(
-                    "vViewPosition",
-                    "vec3<f32>",
-                    indexObj
-                )}
+                ${basic.customVary_value("vViewPosition", "vec3<f32>", indexObj)}
             }
 
             @vertex
@@ -165,11 +161,7 @@ export class MeshPhongShader extends Shader {
             fn main(
                 ${basic.itemVary_value(uvItem, indexObj)}
                 ${basic.itemVary_value(normalItem, indexObj)}
-                ${basic.customVary_value(
-                    "vViewPosition",
-                    "vec3<f32>",
-                    indexObj
-                )}
+                ${basic.customVary_value("vViewPosition", "vec3<f32>", indexObj)}
             ) -> @location(0) vec4<f32> {
                 var baseColor:vec4<f32>;
                 ${basic.getColor_frag(

@@ -42,10 +42,7 @@ export class Plane {
     }
 
     setFromCoplanarPoints(a: Vector3, b: Vector3, c: Vector3) {
-        const normal = _vector1
-            .subVectors(c, b)
-            .cross(_vector2.subVectors(a, b))
-            .normalize();
+        const normal = _vector1.subVectors(c, b).cross(_vector2.subVectors(a, b)).normalize();
 
         // Q: should an error be thrown if normal is zero (e.g. degenerate plane)?
 
@@ -87,9 +84,7 @@ export class Plane {
     }
 
     projectPoint(point: Vector3, target: Vector3) {
-        return target
-            .copy(point)
-            .addScaledVector(this.normal, -this.distanceToPoint(point));
+        return target.copy(point).addScaledVector(this.normal, -this.distanceToPoint(point));
     }
 
     intersectLine(line: Line3, target: Vector3) {
@@ -138,11 +133,9 @@ export class Plane {
     }
 
     applyMatrix4(matrix: Matrix4, optionalNormalMatrix: Matrix3) {
-        const normalMatrix =
-            optionalNormalMatrix || _normalMatrix.getNormalMatrix(matrix);
+        const normalMatrix = optionalNormalMatrix || _normalMatrix.getNormalMatrix(matrix);
 
-        const referencePoint =
-            this.coplanarPoint(_vector1).applyMatrix4(matrix);
+        const referencePoint = this.coplanarPoint(_vector1).applyMatrix4(matrix);
 
         const normal = this.normal.applyMatrix3(normalMatrix).normalize();
 
@@ -158,9 +151,7 @@ export class Plane {
     }
 
     equals(plane: Plane) {
-        return (
-            plane.normal.equals(this.normal) && plane.constant === this.constant
-        );
+        return plane.normal.equals(this.normal) && plane.constant === this.constant;
     }
 
     clone() {

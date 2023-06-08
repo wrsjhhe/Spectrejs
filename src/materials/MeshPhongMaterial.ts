@@ -15,37 +15,14 @@ export class MeshPhongMaterial extends Material {
 
         this._shader = new MeshPhongShader(this);
 
-        this._setAttributeItem(
-            "normal",
-            "vec3<f32>",
-            GPUVertexFormat.Float32x3,
-            4 * 3
-        );
+        this._setAttributeItem("normal", "vec3<f32>", GPUVertexFormat.Float32x3, 4 * 3);
 
         this._bindMap.set("specular", new BindBuffer(this._specular.toArray()));
-        this._setBindItem(
-            "specular",
-            "vec3<f32>",
-            BindType.buffer,
-            GPUShaderStage.FRAGMENT
-        );
+        this._setBindItem("specular", "vec3<f32>", BindType.buffer, GPUShaderStage.FRAGMENT);
         this._bindMap.set("emissive", new BindBuffer(this._emissive.toArray()));
-        this._setBindItem(
-            "emissive",
-            "vec3<f32>",
-            BindType.buffer,
-            GPUShaderStage.FRAGMENT
-        );
-        this._bindMap.set(
-            "shininess",
-            new BindBuffer(new Float32Array([this._shininess]))
-        );
-        this._setBindItem(
-            "shininess",
-            "f32",
-            BindType.buffer,
-            GPUShaderStage.FRAGMENT
-        );
+        this._setBindItem("emissive", "vec3<f32>", BindType.buffer, GPUShaderStage.FRAGMENT);
+        this._bindMap.set("shininess", new BindBuffer(new Float32Array([this._shininess])));
+        this._setBindItem("shininess", "f32", BindType.buffer, GPUShaderStage.FRAGMENT);
     }
 
     public override get applyLight() {
@@ -64,8 +41,6 @@ export class MeshPhongMaterial extends Material {
 
     public set shininess(v: number) {
         this._shininess = v;
-        (this._bindMap.get("specular") as BindBuffer).data = new Float32Array([
-            v,
-        ]);
+        (this._bindMap.get("specular") as BindBuffer).data = new Float32Array([v]);
     }
 }

@@ -62,36 +62,11 @@ class PlaneGeometry extends BufferGeometry {
             }
         }
 
-        const indicesAttr = new BufferAttribute(
-            new Uint32Array(indices),
-            GPUIndexFormat.Uint32,
-            1
-        );
+        const indicesAttr = new BufferAttribute(new Uint32Array(indices), GPUIndexFormat.Uint32, 1);
         this.setIndex(indicesAttr);
-        this.setAttribute(
-            "position",
-            new BufferAttribute(
-                new Float32Array(vertices),
-                GPUVertexFormat.Float32x3,
-                3
-            )
-        );
-        this.setAttribute(
-            "normal",
-            new BufferAttribute(
-                new Float32Array(normals),
-                GPUVertexFormat.Float32x3,
-                3
-            )
-        );
-        this.setAttribute(
-            "uv",
-            new BufferAttribute(
-                new Float32Array(uvs),
-                GPUVertexFormat.Float32x2,
-                2
-            )
-        );
+        this.setAttribute("position", new BufferAttribute(new Float32Array(vertices), GPUVertexFormat.Float32x3, 3));
+        this.setAttribute("normal", new BufferAttribute(new Float32Array(normals), GPUVertexFormat.Float32x3, 3));
+        this.setAttribute("uv", new BufferAttribute(new Float32Array(uvs), GPUVertexFormat.Float32x2, 2));
     }
 }
 

@@ -1,88 +1,80 @@
 import { Texture } from "../../textures/Texture";
+import { TextureMipmapGenerator } from "../../textures/TextureMipmapGenerator";
 import { BindType } from "../Defines";
 import { Context, DelayDestroyer } from "../ResourceManagers";
 import { BindValue } from "./BindValue";
 
 export class BindTexture extends BindValue {
     private _texture: Texture;
-    private _textureBuffer: GPUTexture;
-    private _texutureView: GPUTextureView;
+    private _gpuTexture: GPUTexture;
+    private _gpuTexutureView: GPUTextureView;
 
     private _width: number;
     private _height: number;
 
-    constructor(texture: Texture) {
+    constructor(texture: Texture, mipmapSize = 0) {
         super();
 
         this._texture = texture;
-        createImageBitmap(this._texture.image).then(
-            (imageBitmap: ImageBitmap) => {
-                this._width = imageBitmap.width;
-                this._height = imageBitmap.height;
-                this._textureBuffer = Context.activeDevice.createTexture({
-                    size: [this._width, this._height, 1],
-                    //mipLevelCount:8,
-                    format: "rgba8unorm",
-                    usage:
-                        GPUTextureUsage.TEXTURE_BINDING |
-                        GPUTextureUsage.COPY_DST |
-                        GPUTextureUsage.RENDER_ATTACHMENT,
-                });
+        createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
+            this._width = imageBitmap.width;
+            this._height = imageBitmap.height;
+            this._gpuTexture = Context.activeDevice.createTexture({
+                size: [this._width, this._height, 1],
+                mipLevelCount: mipmapSize,
+                format: "rgba8unorm",
+                usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+            });
 
-                Context.activeDevice.queue.copyExternalImageToTexture(
-                    { source: imageBitmap },
-                    { texture: this._textureBuffer },
-                    [this._width, this._height]
-                );
-                this._texutureView = this._textureBuffer.createView();
+            Context.activeDevice.queue.copyExternalImageToTexture(
+                { source: imageBitmap },
+                { texture: this._gpuTexture },
+                [this._width, this._height]
+            );
+            if (mipmapSize > 1) {
+                TextureMipmapGenerator.webGPUGenerateMipmap(texture);
             }
-        );
+            this._gpuTexutureView = this._gpuTexture.createView();
+        });
         this._needsUpdate = false;
     }
 
     public override update() {
         if (this._needsUpdate) {
-            createImageBitmap(this._texture.image).then(
-                (imageBitmap: ImageBitmap) => {
-                    if (
-                        imageBitmap.width !== this._width ||
-                        imageBitmap.height !== this._height
-                    ) {
-                        console.warn(
-                            "new image size must equal with texture,or you should create new texture!"
-                        );
-                    }
-                    // DelayDestroyer.destroy(this._textureBuffer,(data)=>{
-                    //     data.destroy();
-                    // });
-
-                    // this._textureBuffer = Context.activeDevice.createTexture({
-                    //     size: [imageBitmap.width, imageBitmap.height, 1],
-                    //     format: "rgba8unorm",
-                    //     usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
-                    // });
-                    Context.activeDevice.queue.writeTexture(
-                        { texture: this._textureBuffer },
-                        new Uint8Array([0, 0, 0, 0]),
-                        { bytesPerRow: 4 * 4 },
-                        [1, 1]
-                    );
-                    Context.activeDevice.queue.copyExternalImageToTexture(
-                        { source: imageBitmap },
-                        { texture: this._textureBuffer },
-                        [imageBitmap.width, imageBitmap.height]
-                    );
-                    //this._texutureView = this._textureBuffer.createView();
-                    // this.changed = true;
+            createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
+                if (imageBitmap.width !== this._width || imageBitmap.height !== this._height) {
+                    console.warn("new image size must equal with texture,or you should create new texture!");
                 }
-            );
+                // DelayDestroyer.destroy(this._textureBuffer,(data)=>{
+                //     data.destroy();
+                // });
+
+                // this._textureBuffer = Context.activeDevice.createTexture({
+                //     size: [imageBitmap.width, imageBitmap.height, 1],
+                //     format: "rgba8unorm",
+                //     usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+                // });
+                Context.activeDevice.queue.writeTexture(
+                    { texture: this._gpuTexture },
+                    new Uint8Array([0, 0, 0, 0]),
+                    { bytesPerRow: 4 * 4 },
+                    [1, 1]
+                );
+                Context.activeDevice.queue.copyExternalImageToTexture(
+                    { source: imageBitmap },
+                    { texture: this._gpuTexture },
+                    [imageBitmap.width, imageBitmap.height]
+                );
+                //this._texutureView = this._textureBuffer.createView();
+                // this.changed = true;
+            });
 
             this._needsUpdate = false;
         }
     }
 
     public override destroy(): void {
-        DelayDestroyer.destroy(this._textureBuffer, (data) => {
+        DelayDestroyer.destroy(this._gpuTexture, (data) => {
             data.destroy();
         });
     }
@@ -99,11 +91,15 @@ export class BindTexture extends BindValue {
     }
 
     public override get type() {
-        return BindType.sampler;
+        return BindType.texture;
     }
 
-    public get texutureView() {
-        return this._texutureView;
+    public get gpuTexutureView() {
+        return this._gpuTexutureView;
+    }
+
+    public get gpuTexture() {
+        return this._gpuTexture;
     }
 
     public get width() {
