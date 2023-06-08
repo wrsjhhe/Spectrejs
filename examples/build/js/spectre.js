@@ -36,6 +36,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   GPUInputStepMode: () => (/* binding */ GPUInputStepMode),
 /* harmony export */   GPULoadOp: () => (/* binding */ GPULoadOp),
 /* harmony export */   GPUMapModeFlags: () => (/* binding */ GPUMapModeFlags),
+/* harmony export */   GPUMipmapFilterMode: () => (/* binding */ GPUMipmapFilterMode),
 /* harmony export */   GPUPrimitiveTopology: () => (/* binding */ GPUPrimitiveTopology),
 /* harmony export */   GPUSamplerBindingType: () => (/* binding */ GPUSamplerBindingType),
 /* harmony export */   GPUStencilOperation: () => (/* binding */ GPUStencilOperation),
@@ -227,6 +228,10 @@ const GPUAddressMode = {
     MirrorRepeat: 'mirror-repeat'
 };
 const GPUFilterMode = {
+    Linear: 'linear',
+    Nearest: 'nearest'
+};
+const GPUMipmapFilterMode = {
     Linear: 'linear',
     Nearest: 'nearest'
 };
@@ -2775,22 +2780,29 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   BindSampler: () => (/* binding */ BindSampler)
 /* harmony export */ });
-/* harmony import */ var _Defines__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Defines */ "./src/core/Defines.ts");
-/* harmony import */ var _ResourceManagers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../ResourceManagers */ "./src/core/ResourceManagers.ts");
-/* harmony import */ var _BindValue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./BindValue */ "./src/core/binds/BindValue.ts");
+/* harmony import */ var _Constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../Constants */ "./src/Constants.ts");
+/* harmony import */ var _Defines__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../Defines */ "./src/core/Defines.ts");
+/* harmony import */ var _ResourceManagers__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../ResourceManagers */ "./src/core/ResourceManagers.ts");
+/* harmony import */ var _BindValue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./BindValue */ "./src/core/binds/BindValue.ts");
 
 
 
-class BindSampler extends _BindValue__WEBPACK_IMPORTED_MODULE_2__.BindValue {
+
+class BindSampler extends _BindValue__WEBPACK_IMPORTED_MODULE_3__.BindValue {
     constructor() {
         super();
-        this._sampler = _ResourceManagers__WEBPACK_IMPORTED_MODULE_1__.Context.activeDevice.createSampler({
-            magFilter: 'linear',
-            minFilter: 'linear',
+        this._sampler = _ResourceManagers__WEBPACK_IMPORTED_MODULE_2__.Context.activeDevice.createSampler({
+            addressModeU: _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUAddressMode.ClampToEdge,
+            addressModeV: _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUAddressMode.ClampToEdge,
+            addressModeW: _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUAddressMode.ClampToEdge,
+            magFilter: _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUFilterMode.Linear,
+            minFilter: _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUFilterMode.Linear,
+            mipmapFilter: _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUMipmapFilterMode.Linear,
+            maxAnisotropy: 1
         });
     }
     get type() {
-        return _Defines__WEBPACK_IMPORTED_MODULE_0__.BindType.sampler;
+        return _Defines__WEBPACK_IMPORTED_MODULE_1__.BindType.sampler;
     }
     get sampler() {
         return this._sampler;
@@ -2825,6 +2837,7 @@ class BindTexture extends _BindValue__WEBPACK_IMPORTED_MODULE_2__.BindValue {
             this._height = imageBitmap.height;
             this._textureBuffer = _ResourceManagers__WEBPACK_IMPORTED_MODULE_1__.Context.activeDevice.createTexture({
                 size: [this._width, this._height, 1],
+                //mipLevelCount:8,
                 format: "rgba8unorm",
                 usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
             });

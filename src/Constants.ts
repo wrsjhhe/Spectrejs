@@ -170,15 +170,20 @@ export const GPUTextureFormat = {
 };
 
 export const GPUAddressMode = {
-	ClampToEdge: 'clamp-to-edge',
-	Repeat: 'repeat',
-	MirrorRepeat: 'mirror-repeat'
+	ClampToEdge: 'clamp-to-edge' as GPUAddressMode,
+	Repeat: 'repeat' as GPUAddressMode,
+	MirrorRepeat: 'mirror-repeat' as GPUAddressMode
 };
 
 export const GPUFilterMode = {
-	Linear: 'linear',
-	Nearest: 'nearest'
+	Linear: 'linear' as GPUFilterMode,
+	Nearest: 'nearest' as GPUFilterMode
 };
+
+export const GPUMipmapFilterMode = {
+	Linear: 'linear' as GPUMipmapFilterMode,
+	Nearest: 'nearest' as GPUMipmapFilterMode
+}
 
 export const GPUBlendFactor = {
 	Zero: 'zero' as GPUBlendFactor,

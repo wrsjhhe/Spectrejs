@@ -56,23 +56,24 @@
             // }, 2000);
 
             let tex = null;
-            setInterval(() => {
-                if(material.map){
-                    material.map = null;
-                }else{
-                    material.map = tex;
-                }
-            }, 2000);
+            // setInterval(() => {
+            //     if(material.map){
+            //         material.map = null;
+            //     }else{
+            //         material.map = tex;
+            //     }
+            // }, 2000);
 
            
             const loader = new Spectre.TextureLoader();
             loader.load(
                 // resource URL
-                "images/logo.png",
+                "images/brick_diffuse.jpg",
 
                 // onLoad callback
                 function (texture) {
-                    tex = texture;
+                    //tex = texture;
+                    material.map = texture;
                 },
 
                 // onProgress callback currently not supported

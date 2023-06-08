@@ -1,3 +1,4 @@
+import { GPUAddressMode, GPUFilterMode, GPUMipmapFilterMode } from "../../Constants";
 import { BindType } from "../Defines";
 import { Context } from "../ResourceManagers";
 import { BindValue } from "./BindValue";
@@ -9,8 +10,13 @@ export class BindSampler extends BindValue{
         super();
 
         this._sampler = Context.activeDevice.createSampler({
-            magFilter: 'linear',
-            minFilter: 'linear',
+            addressModeU: GPUAddressMode.ClampToEdge,
+            addressModeV: GPUAddressMode.ClampToEdge,
+            addressModeW: GPUAddressMode.ClampToEdge,
+            magFilter: GPUFilterMode.Linear,
+            minFilter: GPUFilterMode.Linear,
+            mipmapFilter: GPUMipmapFilterMode.Linear,
+            maxAnisotropy: 1
         });
     }
 

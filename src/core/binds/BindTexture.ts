@@ -20,6 +20,7 @@ export class BindTexture extends BindValue {
             this._height = imageBitmap.height;
             this._textureBuffer = Context.activeDevice.createTexture({
                 size: [this._width, this._height, 1],
+                //mipLevelCount:8,
                 format: "rgba8unorm",
                 usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
             });
