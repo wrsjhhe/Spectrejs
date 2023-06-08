@@ -65,7 +65,6 @@ export class Texture {
     public matrixAutoUpdate = true;
     public matrix = new Matrix3();
 
-    public generateMipmaps = true;
     public premultiplyAlpha = false;
     public flipY = true;
     public unpackAlignment = 4; // valid values: 1, 2, 4, 8 (see http://www.khronos.org/opengles/sdk/docs/man/xhtml/glPixelStorei.xml)
@@ -174,7 +173,6 @@ export class Texture {
         this.matrixAutoUpdate = source.matrixAutoUpdate;
         this.matrix.copy(source.matrix);
 
-        this.generateMipmaps = source.generateMipmaps;
         this.premultiplyAlpha = source.premultiplyAlpha;
         this.flipY = source.flipY;
         this.unpackAlignment = source.unpackAlignment;

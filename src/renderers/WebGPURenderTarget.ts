@@ -26,7 +26,7 @@ export interface RenderTargetOptions {
     anisotropy?: number | undefined; // 1;
     depthBuffer?: boolean | undefined; // true;
     stencilBuffer?: boolean | undefined; // false;
-    generateMipmaps?: boolean | undefined; // true;
+    mipmapSize?: number | undefined; // true;
     depthTexture?: DepthTexture | undefined;
     colorSpace?: ColorSpace | undefined;
     samples?: number;
@@ -56,7 +56,7 @@ export class RenderTarget {
     repeat: any;
     format: GPUTextureFormat;
     type: any;
-    generateMipmaps: any;
+    mipmapSize: any;
 
     constructor(width = 1, height = 1, options?: RenderTargetOptions) {
         this.width = width;
@@ -89,7 +89,7 @@ export class RenderTarget {
         this.texture.isRenderTargetTexture = true;
 
         this.texture.flipY = false;
-        this.texture.generateMipmaps = options.generateMipmaps !== undefined ? options.generateMipmaps : false;
+        this.texture.mipmapSize = options.mipmapSize !== undefined ? options.mipmapSize : 1;
         this.texture.internalFormat = options.internalFormat !== undefined ? options.internalFormat : null;
         this.texture.minFilter = options.minFilter !== undefined ? options.minFilter : GPUFilterMode.Linear;
 
