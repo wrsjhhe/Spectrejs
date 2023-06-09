@@ -129,22 +129,6 @@ export class WebGPURenderer {
 
         if (this._currentRenderTarget) {
             this._currentRenderTarget.depthTexture;
-            // const descriptor = {
-            //     colorAttachments: [
-            //         {
-            //             view: null,
-            //             resolveTarget: undefined,
-            //             clearValue: { r: this._clearColor.r, g: this._clearColor.g, b: this._clearColor.b, a: 1.0 },
-            //             loadOp: "clear",
-            //             storeOp: "store",
-            //         },
-            //     ],
-            //     depthStencilAttachment: {
-            //         depthClearValue: 1.0,
-            //         depthLoadOp: 'clear',
-            //         depthStoreOp: 'store',
-            //     },
-            // }
         }
 
         const view = this.sampleCount > 1 ? this._colorAttachmentView : this._context.getCurrentTexture().createView();

@@ -6,19 +6,7 @@ import { GPUAddressMode, GPUFilterMode, GPUTextureFormat, GPUMipmapFilterMode } 
 import { BindTexture } from "../core/binds/BindTexture";
 import { BindSampler } from "../core/binds/BindSampler";
 
-const t_nullCanvas = document.createElement("canvas") as HTMLCanvasElement;
-t_nullCanvas.width = 1;
-t_nullCanvas.height = 1;
-const t_ctx = t_nullCanvas.getContext("2d");
-t_ctx.fillStyle = "#ffffff";
-t_ctx.fillRect(0, 0, t_nullCanvas.width, t_nullCanvas.height);
-
-const t_nullImage = document.createElement("img") as HTMLImageElement;
-t_nullImage.width = 1;
-t_nullImage.height = 1;
-t_nullImage.src = t_nullCanvas.toDataURL();
 export class Texture {
-    static DEFAULT_IMAGE: HTMLImageElement = t_nullImage;
     static DEFAULT_ANISOTROPY = 1;
 
     public uuid = MathUtils.generateUUID();
@@ -66,7 +54,7 @@ export class Texture {
     private _sampler: BindSampler;
 
     constructor(
-        image = Texture.DEFAULT_IMAGE,
+        image: HTMLImageElement,
         wrapU: GPUAddressMode = GPUAddressMode.MirrorRepeat,
         wrapV: GPUAddressMode = GPUAddressMode.MirrorRepeat,
         wrapW: GPUAddressMode = GPUAddressMode.MirrorRepeat,
@@ -119,7 +107,7 @@ export class Texture {
     }
 
     clone() {
-        return new Texture().copy(this);
+        return new Texture(this.image).copy(this);
     }
 
     copy(source: Texture) {
@@ -179,4 +167,15 @@ export class Texture {
     }
 }
 
-export const NullTexture = new Texture();
+const _nullCanvas = document.createElement("canvas") as HTMLCanvasElement;
+_nullCanvas.width = 1;
+_nullCanvas.height = 1;
+const _ctx = _nullCanvas.getContext("2d");
+_ctx.fillStyle = "#ffffff";
+_ctx.fillRect(0, 0, _nullCanvas.width, _nullCanvas.height);
+
+const _nullImage = document.createElement("img") as HTMLImageElement;
+_nullImage.width = 1;
+_nullImage.height = 1;
+_nullImage.src = _nullCanvas.toDataURL();
+export const NullTexture = new Texture(_nullImage);

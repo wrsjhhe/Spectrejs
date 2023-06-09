@@ -99,4 +99,23 @@ export class RenderTarget {
         this.viewport.set(0, 0, width, height);
         this.scissor.set(0, 0, width, height);
     }
+
+    public getDescriptor() {
+        const descriptor = {
+            colorAttachments: [
+                {
+                    view: null,
+                    resolveTarget: undefined,
+                    clearValue: { r: 0, g: 0, b: 0, a: 0.0 },
+                    loadOp: "clear",
+                    storeOp: "store",
+                },
+            ] as Iterable<GPURenderPassColorAttachment>,
+            depthStencilAttachment: {
+                depthClearValue: 1.0,
+                depthLoadOp: "clear",
+                depthStoreOp: "store",
+            } as GPURenderPassDepthStencilAttachment,
+        };
+    }
 }
