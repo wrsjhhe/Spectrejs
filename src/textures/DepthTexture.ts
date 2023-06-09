@@ -1,17 +1,10 @@
 import {
-    DeepTexturePixelFormat,
-    DepthFormat,
-    DepthStencilFormat,
     GPUFilterMode,
     GPUTextureFormat,
-    MagnificationTextureFilter,
     Mapping,
-    MinificationTextureFilter,
-    NearestFilter,
     TextureDataType,
     UnsignedInt248Type,
     UnsignedIntType,
-    Wrapping,
 } from "../Constants";
 import { Texture } from "./Texture";
 

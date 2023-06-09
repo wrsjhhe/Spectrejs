@@ -306,12 +306,10 @@ export const CubeUVReflectionMapping = 306;
 export const RepeatWrapping = 1000;
 export const ClampToEdgeWrapping = 1001;
 export const MirroredRepeatWrapping = 1002;
-export const NearestFilter = 1003;
 export const NearestMipmapNearestFilter = 1004;
 export const NearestMipMapNearestFilter = 1004;
 export const NearestMipmapLinearFilter = 1005;
 export const NearestMipMapLinearFilter = 1005;
-export const LinearFilter = 1006;
 export const LinearMipmapNearestFilter = 1007;
 export const LinearMipMapNearestFilter = 1007;
 export const LinearMipmapLinearFilter = 1008;
@@ -331,8 +329,6 @@ export const AlphaFormat = 1021;
 export const RGBAFormat = 1023;
 export const LuminanceFormat = 1024;
 export const LuminanceAlphaFormat = 1025;
-export const DepthFormat = 1026;
-export const DepthStencilFormat = 1027;
 export const RedFormat = 1028;
 export const RedIntegerFormat = 1029;
 export const RGFormat = 1030;
@@ -343,22 +339,6 @@ export const NoColorSpace = "";
 export const SRGBColorSpace = "srgb";
 export const LinearSRGBColorSpace = "srgb-linear";
 export const DisplayP3ColorSpace = "display-p3";
-
-export type MagnificationTextureFilter = typeof NearestFilter | typeof LinearFilter;
-
-export type MinificationTextureFilter =
-    | typeof NearestFilter
-    | typeof NearestMipmapNearestFilter
-    | typeof NearestMipMapNearestFilter
-    | typeof NearestMipmapLinearFilter
-    | typeof NearestMipMapLinearFilter
-    | typeof LinearFilter
-    | typeof LinearMipmapNearestFilter
-    | typeof LinearMipMapNearestFilter
-    | typeof LinearMipmapLinearFilter
-    | typeof LinearMipMapLinearFilter;
-
-export type DeepTexturePixelFormat = typeof DepthFormat | typeof DepthStencilFormat;
 
 export type TextureDataType =
     | typeof UnsignedByteType
@@ -377,8 +357,6 @@ export type Mapping =
     | typeof UVMapping
     | typeof EquirectangularReflectionMapping
     | typeof EquirectangularRefractionMapping;
-
-export type Wrapping = typeof RepeatWrapping | typeof ClampToEdgeWrapping | typeof MirroredRepeatWrapping;
 
 export type ColorSpace =
     | typeof NoColorSpace

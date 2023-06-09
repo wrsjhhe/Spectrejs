@@ -1,17 +1,7 @@
 import { Vector4 } from "./../math/Vector4";
 import { Texture } from "./../textures/Texture";
 import { DepthTexture } from "./../textures/DepthTexture";
-import {
-    Wrapping,
-    TextureDataType,
-    MinificationTextureFilter,
-    MagnificationTextureFilter,
-    ColorSpace,
-    LinearFilter,
-    Mapping,
-    GPUMipmapFilterMode,
-    GPUFilterMode,
-} from "../Constants";
+import { TextureDataType, ColorSpace, Mapping, GPUFilterMode } from "../Constants";
 
 export interface RenderTargetOptions {
     mapping?: Mapping | undefined;

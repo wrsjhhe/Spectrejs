@@ -6,13 +6,10 @@ import { Source } from "./Source";
 import {
     GPUAddressMode,
     GPUFilterMode,
-    GPUMipmapFilterMode,
     GPUTextureFormat,
-    MagnificationTextureFilter,
+    GPUMipmapFilterMode,
     Mapping,
-    MinificationTextureFilter,
     TextureDataType,
-    Wrapping,
 } from "../Constants";
 import { BindTexture } from "../core/binds/BindTexture";
 import { BindSampler } from "../core/binds/BindSampler";

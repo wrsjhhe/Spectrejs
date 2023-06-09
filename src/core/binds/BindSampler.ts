@@ -1,4 +1,3 @@
-import { GPUAddressMode, GPUFilterMode, GPUMipmapFilterMode } from "../../Constants";
 import { Texture } from "../../textures/Texture";
 import { BindType } from "../Defines";
 import { Context } from "../ResourceManagers";
