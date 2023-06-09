@@ -122,10 +122,6 @@ export abstract class Material {
         }
     }
 
-    public get applyLight() {
-        return false;
-    }
-
     public set color(v: Color) {
         this._color = v;
 

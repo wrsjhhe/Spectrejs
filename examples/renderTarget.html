@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset='utf-8'>
-    <title>Spectre</title>
+    <title>RenderTarget</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
 <style>
     body {
@@ -32,12 +32,14 @@
         let mesh;
         let camera;
         let directionalLight;
+        let renderTarget;
         function init() {
             container = document.getElementById("container");
             renderer = new Spectre.WebGPURenderer({
                 powerPreference: "high-performance",
                 antialias: true,
             });
+
             container.appendChild(renderer.domElement);
 
             scene = new Spectre.Scene();
@@ -56,6 +58,15 @@
             scene.add(directionalLight);
             
             scene.add(mesh);
+
+            // renderTarget = new Spectre.RenderTarget(512,512);
+
+            // renderer.setRenderTarget(renderTarget);
+            // renderer.render(scene,camera);
+            
+            // renderer.setRenderTarget(null);
+
+            // material.material.map = renderTarget.texture;
         }
 
         let k = 0.01;

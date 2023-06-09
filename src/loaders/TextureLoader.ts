@@ -11,8 +11,6 @@ class TextureLoader extends Loader {
     }
 
     load(url: string, onLoad: Function, onProgress: Function, onError: Function) {
-        const texture = new Texture();
-
         const loader = new ImageLoader(this.manager);
         loader.setCrossOrigin(this.crossOrigin);
         loader.setPath(this.path);
@@ -20,7 +18,8 @@ class TextureLoader extends Loader {
         loader.load(
             url,
             function (image: HTMLImageElement) {
-                texture.image = image;
+                const texture = new Texture(image);
+
                 texture.needsUpdate = true;
 
                 if (onLoad !== undefined) {
@@ -30,8 +29,6 @@ class TextureLoader extends Loader {
             onProgress,
             onError
         );
-
-        return texture;
     }
 }
 

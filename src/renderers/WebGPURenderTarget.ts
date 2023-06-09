@@ -1,7 +1,8 @@
 import { Vector4 } from "./../math/Vector4";
 import { Texture } from "./../textures/Texture";
 import { DepthTexture } from "./../textures/DepthTexture";
-import { GPUFilterMode } from "../Constants";
+import { GPUAddressMode, GPUFilterMode, GPUMipmapFilterMode, GPUTextureFormat } from "../Constants";
+import { RenderPass } from "./RenderPass";
 
 export interface RenderTargetOptions {
     wrapU?: GPUAddressMode | undefined;
@@ -20,7 +21,7 @@ export interface RenderTargetOptions {
     internalFormat?: any;
 }
 
-export class RenderTarget {
+export class RenderTarget extends RenderPass {
     width: number;
     height: number;
     depth: number;
@@ -32,20 +33,24 @@ export class RenderTarget {
     depthBuffer: boolean;
     stencilBuffer: boolean;
     depthTexture: DepthTexture;
-    samples: number;
-    wrapU: GPUAddressMode;
-    wrapV: GPUAddressMode;
-    wrapW: GPUAddressMode;
-    magFilter: GPUFilterMode;
-    minFilter: GPUFilterMode;
-    anisotropy: number;
+    sampleCount: number;
+
+    wrapU: GPUAddressMode = GPUAddressMode.MirrorRepeat;
+    wrapV: GPUAddressMode = GPUAddressMode.MirrorRepeat;
+    wrapW: GPUAddressMode = GPUAddressMode.MirrorRepeat;
+    magFilter: GPUFilterMode = GPUFilterMode.Linear;
+    minFilter: GPUFilterMode = GPUFilterMode.Linear;
+    mipmapFilter: GPUMipmapFilterMode = GPUMipmapFilterMode.Linear;
+    format: GPUTextureFormat = GPUTextureFormat.RGBA8Unorm;
+    anisotropy = Texture.DEFAULT_ANISOTROPY;
+
     offset: any;
     repeat: any;
-    format: GPUTextureFormat;
     type: any;
     mipmapSize: any;
 
-    constructor(width = 1, height = 1, options?: RenderTargetOptions) {
+    constructor(width = 1, height = 1, options: RenderTargetOptions = {}) {
+        super();
         this.width = width;
         this.height = height;
         this.depth = 1;
@@ -82,7 +87,10 @@ export class RenderTarget {
 
         this.depthTexture = options.depthTexture !== undefined ? options.depthTexture : null;
 
-        this.samples = options.samples !== undefined ? options.samples : 0;
+        this.sampleCount = options.samples !== undefined ? options.samples : 1;
+
+        super._setupColorBuffer({ width, height }, window.devicePixelRatio, this.sampleCount, this.texture.format);
+        super._setupDepthBuffer({ width, height }, window.devicePixelRatio, this.sampleCount);
     }
 
     setSize(width: number, height: number, depth = 1) {
@@ -98,5 +106,35 @@ export class RenderTarget {
 
         this.viewport.set(0, 0, width, height);
         this.scissor.set(0, 0, width, height);
+
+        super._setupColorBuffer({ width, height }, window.devicePixelRatio, this.sampleCount, this.texture.format);
+        super._setupDepthBuffer({ width, height }, window.devicePixelRatio, this.sampleCount);
+    }
+
+    public getDescriptor() {
+        const descriptor = {
+            colorAttachments: [
+                {
+                    view: null,
+                    resolveTarget: undefined,
+                    clearValue: { r: 0, g: 0, b: 0, a: 0.0 },
+                    loadOp: "clear",
+                    storeOp: "store",
+                },
+            ] as Iterable<GPURenderPassColorAttachment>,
+            depthStencilAttachment: {
+                depthClearValue: 1.0,
+                depthLoadOp: "clear",
+                depthStoreOp: "store",
+            } as GPURenderPassDepthStencilAttachment,
+        };
+
+        const view = this.sampleCount > 1 ? this._colorAttachmentView : this.texture.bind.gpuTexture.createView();
+        const resolveTarget = this.sampleCount > 1 ? this.texture.bind.gpuTexture.createView() : undefined;
+        (descriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].view = view;
+        (descriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget = resolveTarget;
+        descriptor.depthStencilAttachment.view = this._depthBuffer.createView();
+
+        return descriptor;
     }
 }

@@ -25,10 +25,6 @@ export class MeshPhongMaterial extends Material {
         this._setBindItem("shininess", "f32", BindType.buffer, GPUShaderStage.FRAGMENT);
     }
 
-    public override get applyLight() {
-        return false;
-    }
-
     public set specular(v: Color) {
         this._specular.copy(v);
         (this._bindMap.get("specular") as BindBuffer).data = v.toArray();
