@@ -2,6 +2,7 @@ import { Vector4 } from "./../math/Vector4";
 import { Texture } from "./../textures/Texture";
 import { DepthTexture } from "./../textures/DepthTexture";
 import { GPUFilterMode } from "../Constants";
+import { RenderPass } from "./RenderPass";
 
 export interface RenderTargetOptions {
     wrapU?: GPUAddressMode | undefined;
@@ -20,7 +21,7 @@ export interface RenderTargetOptions {
     internalFormat?: any;
 }
 
-export class RenderTarget {
+export class RenderTarget extends RenderPass {
     width: number;
     height: number;
     depth: number;
@@ -32,7 +33,7 @@ export class RenderTarget {
     depthBuffer: boolean;
     stencilBuffer: boolean;
     depthTexture: DepthTexture;
-    samples: number;
+    sampleCount: number;
     wrapU: GPUAddressMode;
     wrapV: GPUAddressMode;
     wrapW: GPUAddressMode;
@@ -46,6 +47,7 @@ export class RenderTarget {
     mipmapSize: any;
 
     constructor(width = 1, height = 1, options?: RenderTargetOptions) {
+        super();
         this.width = width;
         this.height = height;
         this.depth = 1;
@@ -82,7 +84,10 @@ export class RenderTarget {
 
         this.depthTexture = options.depthTexture !== undefined ? options.depthTexture : null;
 
-        this.samples = options.samples !== undefined ? options.samples : 0;
+        this.sampleCount = options.samples !== undefined ? options.samples : 0;
+
+        super._setupColorBuffer({ width, height }, window.devicePixelRatio, this.sampleCount, this.texture.format);
+        super._setupDepthBuffer({ width, height }, window.devicePixelRatio, this.sampleCount);
     }
 
     setSize(width: number, height: number, depth = 1) {
@@ -98,9 +103,12 @@ export class RenderTarget {
 
         this.viewport.set(0, 0, width, height);
         this.scissor.set(0, 0, width, height);
+
+        super._setupColorBuffer({ width, height }, window.devicePixelRatio, this.sampleCount, this.texture.format);
+        super._setupDepthBuffer({ width, height }, window.devicePixelRatio, this.sampleCount);
     }
 
-    public getDescriptor() {
+    public getDescriptor(context: GPUCanvasContext) {
         const descriptor = {
             colorAttachments: [
                 {
@@ -117,5 +125,13 @@ export class RenderTarget {
                 depthStoreOp: "store",
             } as GPURenderPassDepthStencilAttachment,
         };
+
+        const view = this.sampleCount > 1 ? this._colorAttachmentView : context.getCurrentTexture().createView();
+        const resolveTarget = this.sampleCount > 1 ? context.getCurrentTexture().createView() : undefined;
+        (descriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].view = view;
+        (descriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget = resolveTarget;
+        descriptor.depthStencilAttachment.view = this._depthBuffer.createView();
+
+        return descriptor;
     }
 }

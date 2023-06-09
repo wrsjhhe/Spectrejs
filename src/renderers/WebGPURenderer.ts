@@ -6,6 +6,7 @@ import { Context } from "../core/ResourceManagers";
 import { Scene } from "../core/Scene";
 import { Material } from "../materials/Material";
 import { Color } from "../math/Color";
+import { RenderPass } from "./RenderPass";
 import { RenderTarget } from "./WebGPURenderTarget";
 
 interface WebGPURendererParameters {
@@ -20,18 +21,15 @@ interface RendererSize {
     height: number;
 }
 
-export class WebGPURenderer {
+export class WebGPURenderer extends RenderPass {
     private _parameters: WebGPURendererParameters;
     private _canvas: HTMLCanvasElement;
     private _device: GPUDevice;
     private _presentationFormat: GPUTextureFormat = Context.textureFormat;
     private _context: GPUCanvasContext;
     private _alphaMode: GPUCanvasAlphaMode = "premultiplied";
-    private _colorBuffer: GPUTexture;
-    private _depthBuffer: GPUTexture;
     private _size: RendererSize;
     private _pixelRatio = window.devicePixelRatio || 1;
-    private _colorAttachmentView: GPUTextureView;
     private _sampleCount = 1;
     private _clearColor = new Color(1, 1, 1);
     private _sizeChanged = false;
@@ -41,6 +39,7 @@ export class WebGPURenderer {
     private _currentRenderTarget: RenderTarget = null;
 
     constructor(parameters: WebGPURendererParameters = {}) {
+        super();
         this._parameters = parameters;
 
         if (this._parameters.antialias === true) {
@@ -84,13 +83,13 @@ export class WebGPURenderer {
                     loadOp: "clear",
                     storeOp: "store",
                 },
-            ],
+            ] as Array<GPURenderPassColorAttachment>,
             depthStencilAttachment: {
                 view: null,
                 depthClearValue: 1.0,
                 depthLoadOp: "clear",
                 depthStoreOp: "store",
-            },
+            } as GPURenderPassDepthStencilAttachment,
         };
     }
 
@@ -105,8 +104,8 @@ export class WebGPURenderer {
         };
         this._canvas.width = width * this._pixelRatio;
         this._canvas.height = height * this._pixelRatio;
-        this._setupColorBuffer();
-        this._setupDepthBuffer();
+        super._setupColorBuffer(this._size, this._pixelRatio, this.sampleCount, this.presentationFormat);
+        super._setupDepthBuffer(this._size, this._pixelRatio, this.sampleCount);
         this._sizeChanged = true;
     }
 
@@ -127,23 +126,26 @@ export class WebGPURenderer {
         camera.update();
         const sceneUpdated = scene.update(camera);
 
+        let descriptor = undefined;
         if (this._currentRenderTarget) {
             this._currentRenderTarget.depthTexture;
+            descriptor = this._currentRenderTarget.getDescriptor(this._context);
+        } else {
+            const view =
+                this.sampleCount > 1 ? this._colorAttachmentView : this._context.getCurrentTexture().createView();
+            const resolveTarget = this.sampleCount > 1 ? this._context.getCurrentTexture().createView() : undefined;
+            (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].view = view;
+            (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget =
+                resolveTarget;
+            this._renderPassDescriptor.depthStencilAttachment.view = this._depthBuffer.createView();
+
+            descriptor = this._renderPassDescriptor;
         }
 
-        const view = this.sampleCount > 1 ? this._colorAttachmentView : this._context.getCurrentTexture().createView();
-        const resolveTarget = this.sampleCount > 1 ? this._context.getCurrentTexture().createView() : undefined;
-        (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].view = view;
-        (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget =
-            resolveTarget;
-        (this._renderPassDescriptor.depthStencilAttachment as GPURenderPassDepthStencilAttachment).view =
-            this._depthBuffer.createView();
+        const commandEncoder = this.device.createCommandEncoder();
+        const passEncoder = commandEncoder.beginRenderPass(descriptor);
 
         const materialObjects = scene.renderableObjs;
-
-        const commandEncoder = this.device.createCommandEncoder();
-        const passEncoder = commandEncoder.beginRenderPass(this._renderPassDescriptor);
-
         for (const [material, objects] of materialObjects) {
             if (sceneUpdated) {
                 material.pipeline.needsCompile = true;
@@ -194,42 +196,6 @@ export class WebGPURenderer {
         } else {
             passEncoder.drawIndirect(object.geometry.drawBuffer.buffer, 0);
         }
-    }
-
-    private _setupColorBuffer() {
-        const device = this._device;
-
-        if (device) {
-            if (this._colorBuffer) this._colorBuffer.destroy();
-
-            this._colorBuffer = this._device.createTexture({
-                size: {
-                    width: Math.floor(this._size.width * this._pixelRatio),
-                    height: Math.floor(this._size.height * this._pixelRatio),
-                    depthOrArrayLayers: 1,
-                },
-                sampleCount: this._sampleCount,
-                format: this._presentationFormat,
-                usage: GPUTextureUsage.RENDER_ATTACHMENT,
-            });
-            this._colorAttachmentView = this._colorBuffer.createView();
-        }
-    }
-
-    private _setupDepthBuffer() {
-        if (this._depthBuffer) this._depthBuffer.destroy();
-
-        this._depthBuffer = this.device.createTexture({
-            label: "depthBuffer",
-            size: {
-                width: Math.floor(this._size.width * this._pixelRatio),
-                height: Math.floor(this._size.height * this._pixelRatio),
-                depthOrArrayLayers: 1,
-            },
-            sampleCount: this._sampleCount,
-            format: GPUTextureFormat.Depth24Plus,
-            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-        });
     }
 
     get domElement() {
