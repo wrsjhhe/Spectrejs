@@ -1,10 +1,9 @@
 import { Material } from "../materials/Material";
 import { Scene } from "../spectre";
 import { Shader } from "./Shader";
-import * as basic from "./ShaderBasic"
+import * as basic from "./ShaderBasic";
 
 export class MeshPhysicalShader extends Shader {
-
     constructor(material: Material) {
         super(material);
     }
@@ -42,9 +41,8 @@ export class MeshPhysicalShader extends Shader {
                 return output;
             }
         
-        `
+        `;
     }
-
 
     protected _createFragmentShader(scene: Scene): void {
         const shaderOptions = this._material.shaderOptions;
@@ -293,7 +291,7 @@ export class MeshPhysicalShader extends Shader {
             ${basic.bind_value(1, shaderOptions.bindValues.get("parameters"))}
             ${basic.bind_value(1, shaderOptions.bindValues.get("color"))}
             ${basic.bind_value(1, shaderOptions.bindValues.get("colorSampler"))}
-            ${basic.bind_value(1, shaderOptions.bindValues.get("texture"))}
+            ${basic.bind_value(1, shaderOptions.bindValues.get("colorTexture"))}
             ${basic.bind_value(1, shaderOptions.bindValues.get("specular"))}
             ${basic.bind_value(1, shaderOptions.bindValues.get("emissive"))}
             ${basic.bind_value(1, shaderOptions.bindValues.get("roughness"))}
@@ -306,7 +304,11 @@ export class MeshPhysicalShader extends Shader {
                 ${basic.customVary_value("vViewPosition", "vec3<f32>", indexObj)}
             ) -> @location(0) vec4<f32> {
                 var baseColor:vec4<f32>;
-                ${basic.getColor_frag(shaderOptions.bindValues.get("texture"), shaderOptions.bindValues.get("color"))}
+                ${basic.getColor_frag(
+                    shaderOptions.bindValues.get("colorTexture"),
+                    shaderOptions.bindValues.get("colorSampler"),
+                    shaderOptions.bindValues.get("color")
+                )}
 
                 var diffuse = baseColor.xyz;
                 // var emissive = vec3<f32>(0.0,0.0,0.0);
@@ -345,7 +347,9 @@ export class MeshPhysicalShader extends Shader {
                 //geometry.viewDir = ( isOrthographic ) ? vec3( 0, 0, 1 ) : normalize( vViewPosition );
                 geometry.viewDir = normalize( vViewPosition );
 
-                ${scene.directionalLights.size > 0 ? `
+                ${
+                    scene.directionalLights.size > 0
+                        ? `
                     for(var i = 0u;i < ${scene.directionalLights.size}u;i++){
                         var directionalLight = directionalLights[i];
         
@@ -363,7 +367,9 @@ export class MeshPhysicalShader extends Shader {
                         // RE_IndirectSpecular_Physical( radiance, iblIrradiance, clearcoatRadiance, geometry, material, &reflectedLight );
                     }
                 
-                `: ``}
+                `
+                        : ``
+                }
 
                
 

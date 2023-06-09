@@ -1,5 +1,5 @@
 import { Material } from "../materials/Material";
-import { Scene } from "../core/Scene";
+import { Scene } from "../spectre";
 import { Shader } from "./Shader";
 import * as basic from "./ShaderBasic";
 
