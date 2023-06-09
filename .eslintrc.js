@@ -1,7 +1,5 @@
 module.exports = {
-    extends: [
-        "plugin:@typescript-eslint/recommended"
-    ],
+    extends: ["plugin:@typescript-eslint/recommended"],
     env: {
         node: false,
         browser: true,
@@ -16,10 +14,9 @@ module.exports = {
         "@typescript-eslint/ban-types": 0,
         "@typescript-eslint/no-this-alias": 0,
         "@typescript-eslint/no-empty-function": 0,
-        "prefer-rest-params":0,
+        "prefer-rest-params": 0,
         "@typescript-eslint/no-empty-interface": 0,
-        "no-unused-vars": 1,
-        "@typescript-eslint/no-unused-vars": 1,
-        "prefer-const": 1
+        "no-unused-vars": 0,
+        "prefer-const": 1,
     },
 };

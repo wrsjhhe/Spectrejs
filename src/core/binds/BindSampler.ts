@@ -1,24 +1,30 @@
+import { Texture } from "../../textures/Texture";
 import { BindType } from "../Defines";
 import { Context } from "../ResourceManagers";
 import { BindValue } from "./BindValue";
 
-export class BindSampler extends BindValue{
-    private _sampler : GPUSampler;
+export class BindSampler extends BindValue {
+    private _sampler: GPUSampler;
 
-    constructor(name:string){
-        super(name);
+    constructor(texture: Texture) {
+        super();
 
         this._sampler = Context.activeDevice.createSampler({
-            magFilter: 'linear',
-            minFilter: 'linear',
+            addressModeU: texture.wrapU,
+            addressModeV: texture.wrapV,
+            addressModeW: texture.wrapW,
+            magFilter: texture.magFilter,
+            minFilter: texture.minFilter,
+            mipmapFilter: texture.mipmapFilter,
+            maxAnisotropy: texture.anisotropy,
         });
     }
 
-    public override get type(){
+    public override get type() {
         return BindType.sampler;
     }
 
-    public get sampler(){
+    public get sampler() {
         return this._sampler;
     }
 }

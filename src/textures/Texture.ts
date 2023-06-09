@@ -1,252 +1,181 @@
-import * as MathUtils from '../math/MathUtils';
-import { Vector2 } from '../math/Vector2';
-import { Matrix3 } from '../math/Matrix3';
-import * as Constants from '../Constants';
-import { Source } from './Source';
+import * as MathUtils from "../math/MathUtils";
+import { Vector2 } from "../math/Vector2";
+import { Matrix3 } from "../math/Matrix3";
+import { Source } from "./Source";
+import { GPUAddressMode, GPUFilterMode, GPUTextureFormat, GPUMipmapFilterMode } from "../Constants";
+import { BindTexture } from "../core/binds/BindTexture";
+import { BindSampler } from "../core/binds/BindSampler";
 
-const t_nullCanvas = document.createElement("canvas") as HTMLCanvasElement;
-t_nullCanvas.width = 1;
-t_nullCanvas.height = 1;
-const t_ctx = t_nullCanvas.getContext("2d");
-t_ctx.fillStyle = "#ffffff";
-t_ctx.fillRect(0, 0, t_nullCanvas.width, t_nullCanvas.height);
-
-const t_nullImage = document.createElement("img") as HTMLImageElement;
-t_nullImage.width = 1;
-t_nullImage.height = 1;
-t_nullImage.src = t_nullCanvas.toDataURL();
 export class Texture {
-    static DEFAULT_IMAGE:HTMLImageElement = t_nullImage;
-    static DEFAULT_MAPPING = Constants.UVMapping;
     static DEFAULT_ANISOTROPY = 1;
 
     public uuid = MathUtils.generateUUID();
 
-    public name = '';
+    public name = "";
 
-    public source:Source;
-    public mipmaps:any = [];
+    public source: Source;
+    public mipmapSize: number;
 
-    public mapping:number;
     public channel = 0;
 
-    public wrapS:number;
-    public wrapT:number;
+    public wrapU: GPUAddressMode;
+    public wrapV: GPUAddressMode;
+    public wrapW: GPUAddressMode;
 
-    public magFilter:number;
-    public minFilter:number;
+    public magFilter: GPUFilterMode;
+    public minFilter: GPUFilterMode;
 
-    public anisotropy:number;
+    public mipmapFilter: GPUMipmapFilterMode;
 
-    public format:number;
-    public type:number;
+    public anisotropy: number;
 
-    public offset = new Vector2( 0, 0 );
-    public repeat = new Vector2( 1, 1 );
-    public center = new Vector2( 0, 0 );
+    public format: GPUTextureFormat;
+
+    public offset = new Vector2(0, 0);
+    public repeat = new Vector2(1, 1);
+    public center = new Vector2(0, 0);
     public rotation = 0;
 
     public matrixAutoUpdate = true;
     public matrix = new Matrix3();
 
-    public generateMipmaps = true;
     public premultiplyAlpha = false;
     public flipY = true;
-    public unpackAlignment = 4;	// valid values: 1, 2, 4, 8 (see http://www.khronos.org/opengles/sdk/docs/man/xhtml/glPixelStorei.xml)
+    public unpackAlignment = 4; // valid values: 1, 2, 4, 8 (see http://www.khronos.org/opengles/sdk/docs/man/xhtml/glPixelStorei.xml)
 
-    public colorSpace: string;
-    
     public version = 0;
 
-	public isRenderTargetTexture = false; // indicates whether a texture belongs to a render target or not
-	public needsPMREMUpdate = false; // indicates whether this texture should be processed by PMREMGenerator or not (only relevant for render target textures)
+    public isRenderTargetTexture = false; // indicates whether a texture belongs to a render target or not
+    public needsPMREMUpdate = false; // indicates whether this texture should be processed by PMREMGenerator or not (only relevant for render target textures)
 
-	constructor( image = Texture.DEFAULT_IMAGE, mapping = Texture.DEFAULT_MAPPING, 
-        wrapS = Constants.ClampToEdgeWrapping, wrapT = Constants.ClampToEdgeWrapping, 
-        magFilter = Constants.LinearFilter, minFilter = Constants.LinearMipmapLinearFilter, 
-        format = Constants.RGBAFormat, type = Constants.UnsignedByteType, anisotropy = Texture.DEFAULT_ANISOTROPY, 
-        colorSpace = Constants.NoColorSpace ) {
+    public internalFormat: any = null;
 
-		this.uuid = MathUtils.generateUUID();
+    private _bind: BindTexture;
+    private _sampler: BindSampler;
 
-		this.name = '';
+    constructor(
+        image: HTMLImageElement,
+        wrapU: GPUAddressMode = GPUAddressMode.MirrorRepeat,
+        wrapV: GPUAddressMode = GPUAddressMode.MirrorRepeat,
+        wrapW: GPUAddressMode = GPUAddressMode.MirrorRepeat,
+        magFilter: GPUFilterMode = GPUFilterMode.Linear,
+        minFilter: GPUFilterMode = GPUFilterMode.Linear,
+        mipmapFilter: GPUMipmapFilterMode = GPUMipmapFilterMode.Linear,
+        format: GPUTextureFormat = GPUTextureFormat.RGBA8Unorm,
+        anisotropy = Texture.DEFAULT_ANISOTROPY
+    ) {
+        this.uuid = MathUtils.generateUUID();
 
-		this.source = new Source( image );
-		this.mipmaps = [];
+        this.name = "";
 
-		this.mapping = mapping;
-		this.channel = 0;
+        this.source = new Source(image);
+        this.mipmapSize = 1;
 
-		this.wrapS = wrapS;
-		this.wrapT = wrapT;
+        this.channel = 0;
 
-		this.magFilter = magFilter;
-		this.minFilter = minFilter;
+        this.wrapU = wrapU;
+        this.wrapV = wrapV;
+        this.wrapW = wrapW;
 
-		this.anisotropy = anisotropy;
+        this.magFilter = magFilter;
+        this.minFilter = minFilter;
+        this.mipmapFilter = mipmapFilter;
 
-		this.format = format;
-		this.type = type;
+        this.anisotropy = anisotropy;
 
-		this.colorSpace = colorSpace;
-	}
+        this.format = format;
+    }
 
-	get image() {
+    get image() {
+        return this.source.data;
+    }
 
-		return this.source.data;
+    set image(value: any) {
+        this.source.data = value;
+    }
 
-	}
+    updateMatrix() {
+        this.matrix.setUvTransform(
+            this.offset.x,
+            this.offset.y,
+            this.repeat.x,
+            this.repeat.y,
+            this.rotation,
+            this.center.x,
+            this.center.y
+        );
+    }
 
-	set image( value:any ) {
+    clone() {
+        return new Texture(this.image).copy(this);
+    }
 
-		this.source.data = value;
+    copy(source: Texture) {
+        this.name = source.name;
 
-	}
+        this.source = source.source;
+        this.mipmapSize = source.mipmapSize;
 
-	updateMatrix() {
+        this.channel = source.channel;
 
-		this.matrix.setUvTransform( this.offset.x, this.offset.y, this.repeat.x, this.repeat.y, this.rotation, this.center.x, this.center.y );
+        this.wrapU = source.wrapU;
+        this.wrapV = source.wrapV;
 
-	}
+        this.magFilter = source.magFilter;
+        this.minFilter = source.minFilter;
 
-	clone() {
+        this.anisotropy = source.anisotropy;
 
-		return new Texture().copy( this );
+        this.format = source.format;
 
-	}
+        this.offset.copy(source.offset);
+        this.repeat.copy(source.repeat);
+        this.center.copy(source.center);
+        this.rotation = source.rotation;
 
-	copy( source:Texture ) {
+        this.matrixAutoUpdate = source.matrixAutoUpdate;
+        this.matrix.copy(source.matrix);
 
-		this.name = source.name;
+        this.premultiplyAlpha = source.premultiplyAlpha;
+        this.flipY = source.flipY;
+        this.unpackAlignment = source.unpackAlignment;
 
-		this.source = source.source;
-		this.mipmaps = source.mipmaps.slice( 0 );
+        this.needsUpdate = true;
 
-		this.mapping = source.mapping;
-		this.channel = source.channel;
+        return this;
+    }
 
-		this.wrapS = source.wrapS;
-		this.wrapT = source.wrapT;
-
-		this.magFilter = source.magFilter;
-		this.minFilter = source.minFilter;
-
-		this.anisotropy = source.anisotropy;
-
-		this.format = source.format;
-		this.type = source.type;
-
-		this.offset.copy( source.offset );
-		this.repeat.copy( source.repeat );
-		this.center.copy( source.center );
-		this.rotation = source.rotation;
-
-		this.matrixAutoUpdate = source.matrixAutoUpdate;
-		this.matrix.copy( source.matrix );
-
-		this.generateMipmaps = source.generateMipmaps;
-		this.premultiplyAlpha = source.premultiplyAlpha;
-		this.flipY = source.flipY;
-		this.unpackAlignment = source.unpackAlignment;
-		this.colorSpace = source.colorSpace;
-
-		this.needsUpdate = true;
-
-		return this;
-
-	}
-
-	transformUv( uv:Vector2 ) {
-
-		if ( this.mapping !== Constants.UVMapping ) return uv;
-
-		uv.applyMatrix3( this.matrix );
-
-		if ( uv.x < 0 || uv.x > 1 ) {
-
-			switch ( this.wrapS ) {
-
-				case Constants.RepeatWrapping:
-
-					uv.x = uv.x - Math.floor( uv.x );
-					break;
-
-				case Constants.ClampToEdgeWrapping:
-
-					uv.x = uv.x < 0 ? 0 : 1;
-					break;
-
-				case Constants.MirroredRepeatWrapping:
-
-					if ( Math.abs( Math.floor( uv.x ) % 2 ) === 1 ) {
-
-						uv.x = Math.ceil( uv.x ) - uv.x;
-
-					} else {
-
-						uv.x = uv.x - Math.floor( uv.x );
-
-					}
-
-					break;
-
-			}
-
-		}
-
-		if ( uv.y < 0 || uv.y > 1 ) {
-
-			switch ( this.wrapT ) {
-
-				case Constants.RepeatWrapping:
-
-					uv.y = uv.y - Math.floor( uv.y );
-					break;
-
-				case Constants.ClampToEdgeWrapping:
-
-					uv.y = uv.y < 0 ? 0 : 1;
-					break;
-
-				case Constants.MirroredRepeatWrapping:
-
-					if ( Math.abs( Math.floor( uv.y ) % 2 ) === 1 ) {
-
-						uv.y = Math.ceil( uv.y ) - uv.y;
-
-					} else {
-
-						uv.y = uv.y - Math.floor( uv.y );
-
-					}
-
-					break;
-
-			}
-
-		}
-
-		if ( this.flipY ) {
-
-			uv.y = 1 - uv.y;
-
-		}
-
-		return uv;
-
-	}
-
-	set needsUpdate( value:boolean ) {
-
-		if ( value === true ) {
-
-			this.version ++;
-			this.source.needsUpdate = true;
-
-		}
-
-	}
-
+    set needsUpdate(value: boolean) {
+        if (value === true) {
+            if (this._bind) this._bind.update();
+
+            this.version++;
+            this.source.needsUpdate = true;
+        }
+    }
+
+    get bind() {
+        if (!this._bind) {
+            this._bind = new BindTexture(this, this.mipmapSize, !this.isRenderTargetTexture);
+        }
+        return this._bind;
+    }
+
+    get sampler() {
+        if (!this._sampler) this._sampler = new BindSampler(this);
+        return this._sampler;
+    }
 }
 
-export const NullTexture = new Texture();
+const _nullCanvas = document.createElement("canvas") as HTMLCanvasElement;
+_nullCanvas.width = 1;
+_nullCanvas.height = 1;
+const _ctx = _nullCanvas.getContext("2d");
+_ctx.fillStyle = "#ffffff";
+_ctx.fillRect(0, 0, _nullCanvas.width, _nullCanvas.height);
+
+const _nullImage = document.createElement("img") as HTMLImageElement;
+_nullImage.width = 1;
+_nullImage.height = 1;
+_nullImage.src = _nullCanvas.toDataURL();
+export const NullTexture = new Texture(_nullImage);

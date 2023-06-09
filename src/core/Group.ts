@@ -1,7 +1,6 @@
 import { Object3D } from "./Object3D";
 
 class Group extends Object3D {
-
     public get type() {
         return "Group";
     }
@@ -10,12 +9,9 @@ class Group extends Object3D {
         return object instanceof Group;
     }
 
-	constructor() {
-
-		super();
-
-	}
-
+    constructor() {
+        super();
+    }
 }
 
 export { Group };

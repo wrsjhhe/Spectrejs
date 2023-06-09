@@ -16,7 +16,7 @@ export class RenderableObject extends Object3D {
         return object instanceof RenderableObject;
     }
 
-    public get isRenderableObject(){
+    public get isRenderableObject() {
         return true;
     }
 
@@ -38,12 +38,10 @@ export class RenderableObject extends Object3D {
     }
 
     public update() {
-
         this.updateMatrixWorld();
 
         this._updateUniformValue();
     }
-
 
     public override updateMatrixWorld() {
         const needsUpdate = this.matrixWorldNeedsUpdate;
@@ -55,8 +53,7 @@ export class RenderableObject extends Object3D {
     }
 
     private _initInitialUniform() {
-
-        const tranformUniform = new BindBuffer(u_modelTranform, IdentifyMatrix4.toArray());
+        const tranformUniform = new BindBuffer(IdentifyMatrix4.toArray());
         this._uniforms.set(u_modelTranform, tranformUniform);
     }
 
@@ -66,12 +63,12 @@ export class RenderableObject extends Object3D {
         }
     }
 
-    public computeBoundingSphere(){
+    public computeBoundingSphere() {
         this._boundingSphere.copy(this.geometry.boundingSphere);
         this._boundingSphere.applyMatrix4(this.matrixWorld);
     }
 
-    public computeBoundingBox(){
+    public computeBoundingBox() {
         this._boundingBox.copy(this.geometry.boundingBox);
         this._boundingBox.applyMatrix4(this.matrixWorld);
     }
@@ -88,15 +85,15 @@ export class RenderableObject extends Object3D {
         return this._material;
     }
 
-    get uniforms(){
+    get uniforms() {
         return this._uniforms;
     }
 
-    get boundingBox(){
+    get boundingBox() {
         return this._boundingBox;
     }
 
-    get boundingSphere(){
+    get boundingSphere() {
         return this._boundingSphere;
     }
 }

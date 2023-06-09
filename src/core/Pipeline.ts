@@ -3,7 +3,7 @@ import { Material } from "../materials/Material";
 import { WebGPURenderer } from "../renderers/WebGPURenderer";
 import { BindGroupLayoutIndexInfo, ObjectGroupLayoutInfo } from "./Defines";
 import { RenderableObject } from "./RenderableObject";
-import { Cache, Context } from "./ResourceManagers"
+import { Cache, Context } from "./ResourceManagers";
 import { Scene } from "./Scene";
 
 export class Pipleline {
@@ -23,31 +23,30 @@ export class Pipleline {
     constructor(material: Material) {
         this._material = material;
 
-        Cache.add("pipelineObjectBindGroup",this._objectBindGroups);
+        Cache.add("pipelineObjectBindGroup", this._objectBindGroups);
     }
 
-    public compilePipeline(renderer: WebGPURenderer,scene:Scene) {
+    public compilePipeline(renderer: WebGPURenderer, scene: Scene) {
         if (!this.needsCompile) return;
 
         this.needsCreateMatBindGroup = true;
 
         this._beforeCompile(scene);
-        this._compile(renderer,scene);
+        this._compile(renderer, scene);
 
         this.needsCompile = false;
     }
 
     public bindCommonUniform(passEncoder: GPURenderPassEncoder) {
-
         passEncoder.setBindGroup(0, this._globalBindGroups);
         passEncoder.setBindGroup(1, this._materialBindGroup);
     }
 
-    public bindObjectUnform(passEncoder: GPURenderPassEncoder,object:RenderableObject){
+    public bindObjectUnform(passEncoder: GPURenderPassEncoder, object: RenderableObject) {
         passEncoder.setBindGroup(2, this._objectBindGroups[object.uuid]);
     }
 
-    private _compile(renderer: WebGPURenderer,scene:Scene) {
+    private _compile(renderer: WebGPURenderer, scene: Scene) {
         const device = renderer.device;
         this.material.shader.recreate(scene);
 
@@ -103,9 +102,8 @@ export class Pipleline {
         this._vertexBufferLayouts.length = 0;
 
         for (const value of this._material.shaderOptions.attributeValues.values()) {
-
             this._vertexBufferLayouts.push({
-                arrayStride:value.itemSize,
+                arrayStride: value.itemSize,
                 attributes: [
                     {
                         shaderLocation: value.index,
@@ -114,11 +112,10 @@ export class Pipleline {
                     },
                 ],
             });
-            
         }
     }
 
-    private _createGlobalBindLayout(scene:Scene) {
+    private _createGlobalBindLayout(scene: Scene) {
         const entries = scene.getBindLayout();
         this._bindGroupLayouts.push(
             Context.activeDevice.createBindGroupLayout({
@@ -154,7 +151,7 @@ export class Pipleline {
         );
     }
 
-    private _createBindLayouts(scene:Scene) {
+    private _createBindLayouts(scene: Scene) {
         this._bindGroupLayouts.length = 0;
         this._createGlobalBindLayout(scene); //Layout 0
         this._createMaterialBindLayout(); //Layout 1
@@ -164,11 +161,10 @@ export class Pipleline {
     /****************************create layout end ***********************************/
 
     /****************************create group start ***********************************/
-    private _createGlobalBindGroup(scene:Scene) {
-        if(!this.needsCreateMatBindGroup)
-            return;
+    private _createGlobalBindGroup(scene: Scene) {
+        if (!this.needsCreateMatBindGroup) return;
 
-        const group =  scene.getBindGroup();
+        const group = scene.getBindGroup();
 
         this._globalBindGroups = Context.activeDevice.createBindGroup({
             layout: this.pipeline.getBindGroupLayout(BindGroupLayoutIndexInfo.global),
@@ -177,18 +173,16 @@ export class Pipleline {
     }
 
     private _createMaterialBindGroup() {
-        if (!this.needsCreateMatBindGroup) 
-            return;
+        if (!this.needsCreateMatBindGroup) return;
         const group = this.material.getBindGroup();
 
         this._materialBindGroup = Context.activeDevice.createBindGroup({
             layout: this.pipeline.getBindGroupLayout(BindGroupLayoutIndexInfo.material),
             entries: group,
         });
-
     }
 
-    public createObjectBindGroup(object: RenderableObject){
+    public createObjectBindGroup(object: RenderableObject) {
         if (this._objectBindGroups[object.uuid]) {
             return;
         }
@@ -206,10 +200,9 @@ export class Pipleline {
             layout: this.pipeline.getBindGroupLayout(BindGroupLayoutIndexInfo.object),
             entries: group,
         });
-
     }
 
-    public createCommonBindGroups(scene:Scene) {
+    public createCommonBindGroups(scene: Scene) {
         this._createGlobalBindGroup(scene); //Group 0
         this._createMaterialBindGroup(); //Group 1
 
@@ -217,7 +210,7 @@ export class Pipleline {
     }
 
     /****************************create group end ***********************************/
-    private _beforeCompile(scene:Scene) {
+    private _beforeCompile(scene: Scene) {
         this._createBindLayouts(scene);
         this._createVertexBufferLayouts();
     }

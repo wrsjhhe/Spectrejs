@@ -13,15 +13,14 @@ export class Spherical {
     public phi = 0;
     public theta = 0;
     constructor(radius = 1, phi = 0, theta = 0) {
-
         this.radius = radius;
-		this.phi = phi; // polar angle
-		this.theta = theta; // azimuthal angle
+        this.phi = phi; // polar angle
+        this.theta = theta; // azimuthal angle
 
         return this;
     }
 
-    set(radius:number, phi:number, theta:number) {
+    set(radius: number, phi: number, theta: number) {
         this.radius = radius;
         this.phi = phi;
         this.theta = theta;
@@ -29,7 +28,7 @@ export class Spherical {
         return this;
     }
 
-    copy(other:Spherical) {
+    copy(other: Spherical) {
         this.radius = other.radius;
         this.phi = other.phi;
         this.theta = other.theta;
@@ -45,11 +44,11 @@ export class Spherical {
         return this;
     }
 
-    setFromVector3(v:Vector3) {
+    setFromVector3(v: Vector3) {
         return this.setFromCartesianCoords(v.x, v.y, v.z);
     }
 
-    setFromCartesianCoords(x:number, y:number, z:number) {
+    setFromCartesianCoords(x: number, y: number, z: number) {
         this.radius = Math.sqrt(x * x + y * y + z * z);
 
         if (this.radius === 0) {
