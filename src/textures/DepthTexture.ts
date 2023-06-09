@@ -1,11 +1,4 @@
-import {
-    GPUFilterMode,
-    GPUTextureFormat,
-    Mapping,
-    TextureDataType,
-    UnsignedInt248Type,
-    UnsignedIntType,
-} from "../Constants";
+import { GPUFilterMode, GPUTextureFormat } from "../Constants";
 import { Texture } from "./Texture";
 
 export class DepthTexture extends Texture {
@@ -14,13 +7,10 @@ export class DepthTexture extends Texture {
     public minFilter: GPUFilterMode;
     public generateMipmaps: boolean;
     public format: GPUTextureFormat;
-    public type: TextureDataType;
 
     constructor(
         width: number,
         height: number,
-        type?: TextureDataType,
-        mapping?: Mapping,
         wrapU?: GPUAddressMode,
         wrapV?: GPUAddressMode,
         wrapW?: GPUAddressMode,
@@ -32,10 +22,7 @@ export class DepthTexture extends Texture {
     ) {
         format = format !== undefined ? format : GPUTextureFormat.Depth24Plus;
 
-        if (type === undefined && format === GPUTextureFormat.Depth24Plus) type = UnsignedIntType;
-        if (type === undefined && format === GPUTextureFormat.Depth24PlusStencil8) type = UnsignedInt248Type;
-
-        super(null, mapping, wrapU, wrapV, wrapW, magFilter, minFilter, mipmapFilter, format, type, anisotropy);
+        super(null, wrapU, wrapV, wrapW, magFilter, minFilter, mipmapFilter, format, anisotropy);
 
         this.image = { width: width, height: height };
 

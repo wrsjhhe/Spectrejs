@@ -1,10 +1,9 @@
 import { Vector4 } from "./../math/Vector4";
 import { Texture } from "./../textures/Texture";
 import { DepthTexture } from "./../textures/DepthTexture";
-import { TextureDataType, ColorSpace, Mapping, GPUFilterMode } from "../Constants";
+import { GPUFilterMode } from "../Constants";
 
 export interface RenderTargetOptions {
-    mapping?: Mapping | undefined;
     wrapU?: GPUAddressMode | undefined;
     wrapV?: GPUAddressMode | undefined;
     wrapW?: GPUAddressMode | undefined;
@@ -12,13 +11,11 @@ export interface RenderTargetOptions {
     minFilter?: GPUFilterMode | undefined;
     mipmapFilter?: GPUMipmapFilterMode | undefined;
     format?: GPUTextureFormat | undefined; // RGBAFormat;
-    type?: TextureDataType | undefined; // UnsignedByteType;
     anisotropy?: number | undefined; // 1;
     depthBuffer?: boolean | undefined; // true;
     stencilBuffer?: boolean | undefined; // false;
     mipmapSize?: number | undefined; // true;
     depthTexture?: DepthTexture | undefined;
-    colorSpace?: ColorSpace | undefined;
     samples?: number;
     internalFormat?: any;
 }
@@ -64,7 +61,6 @@ export class RenderTarget {
 
         this.texture = new Texture(
             image,
-            options.mapping,
             options.wrapU,
             options.wrapV,
             options.wrapW,
@@ -72,9 +68,7 @@ export class RenderTarget {
             options.minFilter,
             options.mipmapFilter,
             options.format,
-            options.type,
-            options.anisotropy,
-            options.colorSpace
+            options.anisotropy
         );
         this.texture.isRenderTargetTexture = true;
 

@@ -1,16 +1,8 @@
 import * as MathUtils from "../math/MathUtils";
 import { Vector2 } from "../math/Vector2";
 import { Matrix3 } from "../math/Matrix3";
-import * as Constants from "../Constants";
 import { Source } from "./Source";
-import {
-    GPUAddressMode,
-    GPUFilterMode,
-    GPUTextureFormat,
-    GPUMipmapFilterMode,
-    Mapping,
-    TextureDataType,
-} from "../Constants";
+import { GPUAddressMode, GPUFilterMode, GPUTextureFormat, GPUMipmapFilterMode } from "../Constants";
 import { BindTexture } from "../core/binds/BindTexture";
 import { BindSampler } from "../core/binds/BindSampler";
 
@@ -27,7 +19,6 @@ t_nullImage.height = 1;
 t_nullImage.src = t_nullCanvas.toDataURL();
 export class Texture {
     static DEFAULT_IMAGE: HTMLImageElement = t_nullImage;
-    static DEFAULT_MAPPING: Mapping = Constants.UVMapping;
     static DEFAULT_ANISOTROPY = 1;
 
     public uuid = MathUtils.generateUUID();
@@ -37,7 +28,6 @@ export class Texture {
     public source: Source;
     public mipmapSize: number;
 
-    public mapping: Mapping;
     public channel = 0;
 
     public wrapU: GPUAddressMode;
@@ -52,7 +42,6 @@ export class Texture {
     public anisotropy: number;
 
     public format: GPUTextureFormat;
-    public type: TextureDataType;
 
     public offset = new Vector2(0, 0);
     public repeat = new Vector2(1, 1);
@@ -66,8 +55,6 @@ export class Texture {
     public flipY = true;
     public unpackAlignment = 4; // valid values: 1, 2, 4, 8 (see http://www.khronos.org/opengles/sdk/docs/man/xhtml/glPixelStorei.xml)
 
-    public colorSpace: string;
-
     public version = 0;
 
     public isRenderTargetTexture = false; // indicates whether a texture belongs to a render target or not
@@ -80,7 +67,6 @@ export class Texture {
 
     constructor(
         image = Texture.DEFAULT_IMAGE,
-        mapping = Texture.DEFAULT_MAPPING,
         wrapU: GPUAddressMode = GPUAddressMode.MirrorRepeat,
         wrapV: GPUAddressMode = GPUAddressMode.MirrorRepeat,
         wrapW: GPUAddressMode = GPUAddressMode.MirrorRepeat,
@@ -88,9 +74,7 @@ export class Texture {
         minFilter: GPUFilterMode = GPUFilterMode.Linear,
         mipmapFilter: GPUMipmapFilterMode = GPUMipmapFilterMode.Linear,
         format: GPUTextureFormat = GPUTextureFormat.RGBA8Unorm,
-        type: TextureDataType = Constants.UnsignedByteType,
-        anisotropy = Texture.DEFAULT_ANISOTROPY,
-        colorSpace = Constants.NoColorSpace
+        anisotropy = Texture.DEFAULT_ANISOTROPY
     ) {
         this.uuid = MathUtils.generateUUID();
 
@@ -99,7 +83,6 @@ export class Texture {
         this.source = new Source(image);
         this.mipmapSize = 1;
 
-        this.mapping = mapping;
         this.channel = 0;
 
         this.wrapU = wrapU;
@@ -113,9 +96,6 @@ export class Texture {
         this.anisotropy = anisotropy;
 
         this.format = format;
-        this.type = type;
-
-        this.colorSpace = colorSpace;
     }
 
     get image() {
@@ -148,7 +128,6 @@ export class Texture {
         this.source = source.source;
         this.mipmapSize = source.mipmapSize;
 
-        this.mapping = source.mapping;
         this.channel = source.channel;
 
         this.wrapU = source.wrapU;
@@ -160,7 +139,6 @@ export class Texture {
         this.anisotropy = source.anisotropy;
 
         this.format = source.format;
-        this.type = source.type;
 
         this.offset.copy(source.offset);
         this.repeat.copy(source.repeat);
@@ -173,65 +151,10 @@ export class Texture {
         this.premultiplyAlpha = source.premultiplyAlpha;
         this.flipY = source.flipY;
         this.unpackAlignment = source.unpackAlignment;
-        this.colorSpace = source.colorSpace;
 
         this.needsUpdate = true;
 
         return this;
-    }
-
-    transformUv(uv: Vector2) {
-        if (this.mapping !== Constants.UVMapping) return uv;
-
-        uv.applyMatrix3(this.matrix);
-
-        if (uv.x < 0 || uv.x > 1) {
-            switch (this.wrapU) {
-                case GPUAddressMode.Repeat:
-                    uv.x = uv.x - Math.floor(uv.x);
-                    break;
-
-                case GPUAddressMode.ClampToEdge:
-                    uv.x = uv.x < 0 ? 0 : 1;
-                    break;
-
-                case GPUAddressMode.MirrorRepeat:
-                    if (Math.abs(Math.floor(uv.x) % 2) === 1) {
-                        uv.x = Math.ceil(uv.x) - uv.x;
-                    } else {
-                        uv.x = uv.x - Math.floor(uv.x);
-                    }
-
-                    break;
-            }
-        }
-
-        if (uv.y < 0 || uv.y > 1) {
-            switch (this.wrapV) {
-                case GPUAddressMode.Repeat:
-                    uv.y = uv.y - Math.floor(uv.y);
-                    break;
-
-                case GPUAddressMode.ClampToEdge:
-                    uv.y = uv.y < 0 ? 0 : 1;
-                    break;
-
-                case GPUAddressMode.MirrorRepeat:
-                    if (Math.abs(Math.floor(uv.y) % 2) === 1) {
-                        uv.y = Math.ceil(uv.y) - uv.y;
-                    } else {
-                        uv.y = uv.y - Math.floor(uv.y);
-                    }
-
-                    break;
-            }
-        }
-
-        if (this.flipY) {
-            uv.y = 1 - uv.y;
-        }
-
-        return uv;
     }
 
     set needsUpdate(value: boolean) {
