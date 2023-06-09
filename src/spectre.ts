@@ -5,6 +5,7 @@ export * as GPUConstances from "./Constants";
 export * as Environment from "./core/Defines";
 
 export { WebGPURenderer } from "./renderers/WebGPURenderer";
+export { RenderTarget } from "./renderers/WebGPURenderTarget";
 
 export { BufferAttribute } from "./core/BufferAttribute";
 export { BufferGeometry } from "./core/BufferGeometry";

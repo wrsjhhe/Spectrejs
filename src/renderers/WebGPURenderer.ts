@@ -47,9 +47,11 @@ export class WebGPURenderer extends RenderPass {
         } else {
             this._sampleCount = 1;
         }
+
+        this._init();
     }
 
-    public init() {
+    private _init() {
         if (!this._parameters.canvas) {
             this._canvas = document.createElement("canvas");
             this._canvas.style.width = "100%";
@@ -129,7 +131,7 @@ export class WebGPURenderer extends RenderPass {
         let descriptor = undefined;
         if (this._currentRenderTarget) {
             this._currentRenderTarget.depthTexture;
-            descriptor = this._currentRenderTarget.getDescriptor(this._context);
+            descriptor = this._currentRenderTarget.getDescriptor();
         } else {
             const view =
                 this.sampleCount > 1 ? this._colorAttachmentView : this._context.getCurrentTexture().createView();

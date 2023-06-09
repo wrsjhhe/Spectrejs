@@ -156,7 +156,7 @@ export class Texture {
 
     get bind() {
         if (!this._bind) {
-            this._bind = new BindTexture(this, this.mipmapSize);
+            this._bind = new BindTexture(this, this.mipmapSize, !this.isRenderTargetTexture);
         }
         return this._bind;
     }

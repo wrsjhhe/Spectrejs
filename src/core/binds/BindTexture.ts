@@ -12,30 +12,33 @@ export class BindTexture extends BindValue {
     private _width: number;
     private _height: number;
 
-    constructor(texture: Texture, mipmapSize = 0) {
+    constructor(texture: Texture, mipmapSize = 0, copyImage = true) {
         super();
 
         this._texture = texture;
-        createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
-            this._width = imageBitmap.width;
-            this._height = imageBitmap.height;
-            this._gpuTexture = Context.activeDevice.createTexture({
-                size: [this._width, this._height, 1],
-                mipLevelCount: mipmapSize,
-                format: "rgba8unorm",
-                usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
-            });
-
-            Context.activeDevice.queue.copyExternalImageToTexture(
-                { source: imageBitmap },
-                { texture: this._gpuTexture },
-                [this._width, this._height]
-            );
-            if (mipmapSize > 1) {
-                TextureMipmapGenerator.webGPUGenerateMipmap(texture);
-            }
-            this._gpuTexutureView = this._gpuTexture.createView();
+        this._gpuTexture = Context.activeDevice.createTexture({
+            size: [this._texture.image.width, this._texture.image.height, 1],
+            mipLevelCount: mipmapSize,
+            format: texture.format,
+            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
         });
+        if (copyImage) {
+            createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
+                this._width = imageBitmap.width;
+                this._height = imageBitmap.height;
+
+                Context.activeDevice.queue.copyExternalImageToTexture(
+                    { source: imageBitmap },
+                    { texture: this._gpuTexture },
+                    [this._width, this._height]
+                );
+                if (mipmapSize > 1) {
+                    TextureMipmapGenerator.webGPUGenerateMipmap(texture);
+                }
+                this._gpuTexutureView = this._gpuTexture.createView();
+            });
+        }
+
         this._needsUpdate = false;
     }
 
