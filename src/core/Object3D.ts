@@ -245,17 +245,9 @@ export class Object3D {
         object._parent = this;
         this.children.push(object);
 
-        let scene: any = null;
-        object.traverse((child) => {
-            if (!scene) {
-                child.traverseAncestors((parent) => {
-                    if ((parent as any).isScene) {
-                        scene = parent as any;
-                        scene.handleAdded(child);
-                    }
-                });
-            } else {
-                scene.handleAdded(child);
+        object.traverseAncestors((parent) => {
+            if ((parent as any).isScene) {
+                (parent as any).handleAdded(object);
             }
         });
         return this;
@@ -269,20 +261,11 @@ export class Object3D {
             this.children.splice(index, 1);
         }
 
-        let scene: any = null;
-        object.traverse((child) => {
-            if (!scene) {
-                child.traverseAncestors((parent) => {
-                    if ((parent as any).isScene) {
-                        scene = parent as any;
-                        scene.handleRemoved(child);
-                    }
-                });
-            } else {
-                scene.handleRemoved(child);
+        object.traverseAncestors((parent) => {
+            if ((parent as any).isScene) {
+                (parent as any).handleRemoved(object);
             }
         });
-
         return this;
     }
 

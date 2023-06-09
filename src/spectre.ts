@@ -26,6 +26,7 @@ export { Vector3 } from "./math/Vector3";
 
 export { Object3D } from "./core/Object3D";
 export { Scene } from "./core/Scene";
+export { Group } from "./core/Group";
 
 export { Mesh } from "./objects/Mesh";
 
