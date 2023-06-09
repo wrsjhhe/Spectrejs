@@ -4151,6 +4151,70 @@ class MeshPhongMaterial extends _Material__WEBPACK_IMPORTED_MODULE_5__.Material 
 
 /***/ }),
 
+/***/ "./src/materials/MeshPhysicalMaterial.ts":
+/*!***********************************************!*\
+  !*** ./src/materials/MeshPhysicalMaterial.ts ***!
+  \***********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   MeshPhysicalMaterial: () => (/* binding */ MeshPhysicalMaterial)
+/* harmony export */ });
+/* harmony import */ var _Constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Constants */ "./src/Constants.ts");
+/* harmony import */ var _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/binds/BindBuffer */ "./src/core/binds/BindBuffer.ts");
+/* harmony import */ var _core_Defines__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../core/Defines */ "./src/core/Defines.ts");
+/* harmony import */ var _math_Color__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../math/Color */ "./src/math/Color.ts");
+/* harmony import */ var _shaders_MeshPhysicalShader__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../shaders/MeshPhysicalShader */ "./src/shaders/MeshPhysicalShader.ts");
+/* harmony import */ var _Material__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./Material */ "./src/materials/Material.ts");
+
+
+
+
+
+
+class MeshPhysicalMaterial extends _Material__WEBPACK_IMPORTED_MODULE_5__.Material {
+    constructor() {
+        super();
+        this._specular = new _math_Color__WEBPACK_IMPORTED_MODULE_3__.Color(0x111111); //高光反射
+        this._emissive = new _math_Color__WEBPACK_IMPORTED_MODULE_3__.Color(0x000000); //自发光
+        this._roughness = 0.5;
+        this._metalness = 0.0;
+        this._shader = new _shaders_MeshPhysicalShader__WEBPACK_IMPORTED_MODULE_4__.MeshPhysicalShader(this);
+        this._setAttributeValue("normal", "vec3<f32>", _Constants__WEBPACK_IMPORTED_MODULE_0__.GPUVertexFormat.Float32x3, 4 * 3);
+        this._uniforms.set("specular", new _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__.BindBuffer("specular", this._specular.toArray()));
+        this._setBindValue("specular", "vec3<f32>", _core_Defines__WEBPACK_IMPORTED_MODULE_2__.BindType.buffer, GPUShaderStage.FRAGMENT);
+        this._uniforms.set("emissive", new _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__.BindBuffer("emissive", this._emissive.toArray()));
+        this._setBindValue("emissive", "vec3<f32>", _core_Defines__WEBPACK_IMPORTED_MODULE_2__.BindType.buffer, GPUShaderStage.FRAGMENT);
+        this._uniforms.set("roughness", new _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__.BindBuffer("roughness", new Float32Array([this._roughness])));
+        this._setBindValue("roughness", "f32", _core_Defines__WEBPACK_IMPORTED_MODULE_2__.BindType.buffer, GPUShaderStage.FRAGMENT);
+        this._uniforms.set("metalness", new _core_binds_BindBuffer__WEBPACK_IMPORTED_MODULE_1__.BindBuffer("metalness", new Float32Array([this._metalness])));
+        this._setBindValue("metalness", "f32", _core_Defines__WEBPACK_IMPORTED_MODULE_2__.BindType.buffer, GPUShaderStage.FRAGMENT);
+    }
+    get applyLight() {
+        return false;
+    }
+    set specular(v) {
+        this._specular.copy(v);
+        this._uniforms.get("specular").data = v.toArray();
+    }
+    set emissive(v) {
+        this._emissive.copy(v);
+        this._uniforms.get("emissive").data = v.toArray();
+    }
+    set roughness(v) {
+        this._roughness = v;
+        this._uniforms.get("roughness").data = new Float32Array([v]);
+    }
+    set metalness(v) {
+        this._metalness = v;
+        this._uniforms.get("metalness").data = new Float32Array([v]);
+    }
+}
+
+
+/***/ }),
+
 /***/ "./src/math/Box3.ts":
 /*!**************************!*\
   !*** ./src/math/Box3.ts ***!
@@ -8922,6 +8986,392 @@ class MeshPhongShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
 
 /***/ }),
 
+/***/ "./src/shaders/MeshPhysicalShader.ts":
+/*!*******************************************!*\
+  !*** ./src/shaders/MeshPhysicalShader.ts ***!
+  \*******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   MeshPhysicalShader: () => (/* binding */ MeshPhysicalShader)
+/* harmony export */ });
+/* harmony import */ var _Shader__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Shader */ "./src/shaders/Shader.ts");
+/* harmony import */ var _ShaderBasic__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ShaderBasic */ "./src/shaders/ShaderBasic.ts");
+
+
+class MeshPhysicalShader extends _Shader__WEBPACK_IMPORTED_MODULE_0__.Shader {
+    constructor(material) {
+        super(material);
+    }
+    _createVertexShader(scene) {
+        const shaderOptions = this._material.shaderOptions;
+        const indexObj = { index: 1 };
+        const uvItem = shaderOptions.attributeValues.get("uv");
+        const normalItem = shaderOptions.attributeValues.get("normal");
+        this._vertexShaderCode = `
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(0, scene.bindValues.get("projectionMatrix"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(0, scene.bindValues.get("matrixWorldInverse"))}
+
+            @group(2) @binding(0) var<uniform> modelMatrix : mat4x4<f32>;
+
+            struct VertexOutput {
+                @builtin(position) Position : vec4<f32>,
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.itemVary_value(uvItem, indexObj)}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.itemVary_value(normalItem, indexObj)}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.customVary_value("vViewPosition", "vec3<f32>", indexObj)}
+            }
+
+            @vertex
+            fn main(
+            @location(0) position : vec3<f32>,
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.location_vert(normalItem)}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.location_vert(uvItem)}
+            ) -> VertexOutput {
+                var output : VertexOutput;
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.transform_vert()}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.uv_vert(uvItem)}
+                output.vViewPosition = - mvPosition.xyz;
+                output.normal = normal;
+                return output;
+            }
+        
+        `;
+    }
+    _createFragmentShader(scene) {
+        const shaderOptions = this._material.shaderOptions;
+        const indexObj = { index: 1 };
+        const uvItem = shaderOptions.attributeValues.get("uv");
+        const normalItem = shaderOptions.attributeValues.get("normal");
+        this._fragmentShaderCode = `
+            const RECIPROCAL_PI = 0.3183098861837907;
+            const EPSILON = 1e-6;
+            struct IncidentLight {
+                color:vec3<f32>,
+                direction:vec3<f32>,
+                visible:bool,
+            };
+
+            struct ReflectedLight {
+                directDiffuse:vec3<f32>,
+                directSpecular:vec3<f32>,
+                indirectDiffuse:vec3<f32>,
+                indirectSpecular:vec3<f32>,
+            };
+
+            struct GeometricContext {
+                position:vec3<f32>,
+                normal:vec3<f32>,
+                viewDir:vec3<f32>,
+            };
+
+            struct PhysicalMaterial {
+                diffuseColor:vec3<f32>,
+                roughness:f32,
+                specularColor:vec3<f32>,
+                specularF90:f32,
+            };
+                   
+            fn Schlick_to_F0( f:vec3<f32>, f90:f32, dotVH:f32)->vec3<f32> {
+                var x = clamp( 1.0 - dotVH, 0.0, 1.0 );
+                var x2 = x * x;
+                var x5 = clamp( x * x2 * x2, 0.0, 0.9999 );
+            
+                return ( f - vec3<f32>( f90,f90,f90) * x5 ) / ( 1.0 - x5 );
+            }
+            
+            fn V_GGX_SmithCorrelated(  alpha:f32, dotNL:f32, dotNV:f32)->f32 {
+            
+                var a2 = pow( alpha , 2.0 );
+            
+                var gv = dotNL * sqrt( a2 + ( 1.0 - a2 ) * pow( dotNV, 2.0) );
+                var gl = dotNV * sqrt( a2 + ( 1.0 - a2 ) * pow( dotNL, 2.0) );
+            
+                return 0.5 / max( gv + gl, EPSILON );
+            
+            }
+            
+            fn D_GGX( alpha:f32,  dotNH:f32 )->f32 {
+            
+                var a2 = pow( alpha , 2.0);
+            
+                var denom = pow( dotNH,2.0 ) * ( a2 - 1.0 ) + 1.0; // avoid alpha = 0 with dotNH = 1
+            
+                return RECIPROCAL_PI * a2 / pow( denom ,2.0);
+            
+            }
+
+            fn F_Schlick( f0:vec3<f32>, f90:f32, dotVH:f32 )->vec3<f32> {
+                var fresnel = exp2( ( - 5.55473 * dotVH - 6.98316 ) * dotVH );
+                return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
+            } 
+            
+        
+            
+            fn BRDF_GGX( lightDir:vec3<f32>, viewDir:vec3<f32>,normal:vec3<f32>, material:PhysicalMaterial )->vec3<f32>{
+            
+                var f0 = material.specularColor;
+                var f90 = material.specularF90;
+                var roughness = material.roughness;
+            
+                var alpha = pow( roughness ,2.0); // UE4's roughness
+            
+                var halfDir = normalize( lightDir + viewDir );
+            
+                var dotNL = saturate( dot( normal, lightDir ) );
+                var dotNV = saturate( dot( normal, viewDir ) );
+                var dotNH = saturate( dot( normal, halfDir ) );
+                var dotVH = saturate( dot( viewDir, halfDir ) );
+            
+                var F = F_Schlick( f0, f90, dotVH );
+            
+                var V = V_GGX_SmithCorrelated( alpha, dotNL, dotNV );
+            
+                var D = D_GGX( alpha, dotNH );
+              
+                return F * ( V * D );
+            
+            }
+            
+            
+            fn LTC_Uv( N:vec3<f32>, V:vec3<f32>, roughness:f32 )->vec2<f32> {
+            
+                var LUT_SIZE = 64.0;
+                var LUT_SCALE = ( LUT_SIZE - 1.0 ) / LUT_SIZE;
+                var LUT_BIAS = 0.5 / LUT_SIZE;
+            
+                var dotNV = saturate( dot( N, V ) );
+            
+                // texture parameterized by sqrt( GGX alpha ) and sqrt( 1 - cos( theta ) )
+                var uv = vec2<f32> ( roughness, sqrt( 1.0 - dotNV ) );
+            
+                uv = uv * LUT_SCALE + LUT_BIAS;
+            
+                return uv;
+            
+            }
+            
+            fn LTC_ClippedSphereFormFactor(  f:vec3<f32>  )->f32 {
+            
+                var l = length( f );
+            
+                return max( ( l * l + f.z ) / ( l + 1.0 ), 0.0 );
+            
+            }
+                 
+
+            fn IBLSheenBRDF( normal:vec3<f32>,viewDir:vec3<f32>, roughness:f32 )->f32 {
+            
+                var dotNV = saturate( dot( normal, viewDir ) );
+            
+                var r2 = roughness * roughness;
+            
+                var a = select(-8.48 * r2 + 14.3 * roughness - 9.95,  -339.2 * r2 + 161.4 * roughness - 25.9 , roughness < 0.25);
+            
+                var b = select(1.97 * r2 - 3.27 * roughness + 0.72, 44.0 * r2 - 23.7 * roughness + 3.26,roughness < 0.25 );
+            
+                var DG = exp( a * dotNV + b ) + select( 0.1 * ( roughness - 0.25 ), 0.0 ,roughness < 0.25 );
+            
+                return saturate( DG * RECIPROCAL_PI );
+            
+            }
+
+            fn DFGApprox( normal:vec3<f32>, viewDir:vec3<f32>, roughness:f32 )->vec2<f32>{
+            
+                var dotNV = saturate( dot( normal, viewDir ) );
+            
+                var c0 = vec4<f32>( - 1, - 0.0275, - 0.572, 0.022 );
+            
+                var c1 = vec4<f32>( 1, 0.0425, 1.04, - 0.04 );
+            
+                var r = roughness * c0 + c1;
+            
+                var a004 = min( r.x * r.x, exp2( - 9.28 * dotNV ) ) * r.x + r.y;
+            
+                var fab = vec2<f32>( - 1.04, 1.04 ) * a004 + r.zw;
+            
+                return fab;
+            
+            }
+            
+            fn EnvironmentBRDF( normal:vec3<f32>, viewDir:vec3<f32>, specularColor:vec3<f32>,specularF90:f32 ,roughness:f32  )->vec3<f32> {
+            
+                var fab = DFGApprox( normal, viewDir, roughness );
+            
+                return specularColor * fab.x + specularF90 * fab.y;
+            
+            }
+            
+            fn computeMultiscattering(  normal:vec3<f32>, viewDir:vec3<f32>, specularColor:vec3<f32>, specularF90:f32 , roughness:f32, singleScatter:ptr<function,vec3<f32>>, multiScatter:ptr<function,vec3<f32>> ) {
+            
+                var fab = DFGApprox( normal, viewDir, roughness );
+            
+            
+                var Fr = specularColor;
+            
+                var FssEss = Fr * fab.x + specularF90 * fab.y;
+            
+                var Ess = fab.x + fab.y;
+                var Ems = 1.0 - Ess;
+            
+                var Favg = Fr + ( 1.0 - Fr ) * 0.047619; // 1/21
+                var Fms = FssEss * Favg / ( 1.0 - Ems * Favg );
+            
+                (*singleScatter) += FssEss;
+                (*multiScatter) += Fms * Ems;
+            
+            }
+
+            fn BRDF_Lambert(diffuseColor:vec3<f32>  ) ->vec3<f32> {
+
+                return RECIPROCAL_PI * diffuseColor;
+            
+            }
+            
+            fn RE_Direct_Physical(directLight:IncidentLight, geometry:GeometricContext, material:PhysicalMaterial, reflectedLight:ptr<function,ReflectedLight> ) {
+            
+                var dotNL = saturate( dot( geometry.normal, directLight.direction ) );
+            
+                var irradiance = dotNL * directLight.color;
+            
+                (*reflectedLight).directSpecular += irradiance * BRDF_GGX( directLight.direction, geometry.viewDir, geometry.normal, material );
+            
+                (*reflectedLight).directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );
+            }
+            
+            fn RE_IndirectDiffuse_Physical( irradiance:vec3<f32>, geometry:GeometricContext, material:PhysicalMaterial, reflectedLight:ptr<function,ReflectedLight> ) {
+            
+                (*reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );
+            
+            }
+            
+            fn RE_IndirectSpecular_Physical( radiance:vec3<f32>, irradiance:vec3<f32>, clearcoatRadiance:vec3<f32>, geometry:GeometricContext, material:PhysicalMaterial, reflectedLight:ptr<function,ReflectedLight>) {      
+                // Both indirect specular and indirect diffuse light accumulate here
+            
+                var singleScattering = vec3<f32>( 0.0 );
+                var multiScattering = vec3<f32>( 0.0 );
+                var cosineWeightedIrradiance = irradiance * RECIPROCAL_PI;
+                computeMultiscattering( geometry.normal, geometry.viewDir, material.specularColor, material.specularF90, material.roughness, &singleScattering, &multiScattering );
+            
+                var totalScattering = singleScattering + multiScattering;
+                var diffuse = material.diffuseColor * ( 1.0 - max( max( totalScattering.r, totalScattering.g ), totalScattering.b ) );
+            
+                (*reflectedLight).indirectSpecular += radiance * singleScattering;
+                (*reflectedLight).indirectSpecular += multiScattering * cosineWeightedIrradiance;
+            
+                (*reflectedLight).indirectDiffuse += diffuse * cosineWeightedIrradiance;
+            
+            }
+            
+      
+            fn computeSpecularOcclusion(dotNV:f32, ambientOcclusion:f32, roughness:f32 )->f32 {
+            
+                return saturate( pow( dotNV + ambientOcclusion, exp2( - 16.0 * roughness - 1.0 ) ) - 1.0 + ambientOcclusion );
+            
+            }
+
+            struct DirectionalLight {
+                color:vec4<f32>,
+                direction:vec4<f32>,
+            };
+
+            fn saturate( a:f32 )->f32 {
+                return clamp( a, 0.0, 1.0 );
+            } 
+
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(0, scene.bindValues.get("directionalLights"))}
+
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("parameters"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("color"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("colorSampler"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("texture"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("specular"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("emissive"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("roughness"))}
+            ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.bind_value(1, shaderOptions.bindValues.get("metalness"))}
+
+            @fragment
+            fn main(
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.itemVary_value(uvItem, indexObj)}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.itemVary_value(normalItem, indexObj)}
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.customVary_value("vViewPosition", "vec3<f32>", indexObj)}
+            ) -> @location(0) vec4<f32> {
+                var baseColor:vec4<f32>;
+                ${_ShaderBasic__WEBPACK_IMPORTED_MODULE_1__.getColor_frag(shaderOptions.bindValues.get("texture"), shaderOptions.bindValues.get("color"))}
+
+                var diffuse = baseColor.xyz;
+                // var emissive = vec3<f32>(0.0,0.0,0.0);
+                // var specular = vec3<f32>(0.043,0.043,0.043);
+                // var shininess = 30.;
+                var opacity = 1.;
+                var specularStrength = 1.;
+
+                var diffuseColor = vec4<f32>( diffuse, opacity );
+                var reflectedLight:ReflectedLight;
+                reflectedLight.directDiffuse = vec3<f32>( 0.0 );
+                reflectedLight.directSpecular = vec3<f32>( 0.0 );
+                reflectedLight.indirectDiffuse = vec3<f32>( 0.0 );
+                reflectedLight.indirectSpecular = vec3<f32>( 0.0 );
+
+                var totalEmissiveRadiance = emissive;
+                var geometryNormal = normal;
+                var roughnessFactor = roughness;
+                var metalnessFactor = metalness;
+                var material:PhysicalMaterial;
+                material.diffuseColor = diffuseColor.rgb * ( 1.0 - metalnessFactor );
+                material.specularColor = mix( vec3<f32>( 0.04 ), diffuseColor.rgb, metalnessFactor );
+	            material.specularF90 = 1.0;
+
+                var dxy = max( abs( dpdx( geometryNormal ) ), abs( dpdy( geometryNormal ) ) );
+                var geometryRoughness = max( max( dxy.x, dxy.y ), dxy.z );
+
+                material.roughness = max( roughnessFactor, 0.0525 );// 0.0525 corresponds to the base mip of a 256 cubemap.
+                material.roughness += geometryRoughness;
+                material.roughness = min( material.roughness, 1.0 );
+
+                var geometry:GeometricContext;
+
+                geometry.position = - vViewPosition;
+                geometry.normal = normal;
+                //geometry.viewDir = ( isOrthographic ) ? vec3( 0, 0, 1 ) : normalize( vViewPosition );
+                geometry.viewDir = normalize( vViewPosition );
+
+                ${scene.directionalLights.size > 0 ? `
+                    for(var i = 0u;i < ${scene.directionalLights.size}u;i++){
+                        var directionalLight = directionalLights[i];
+        
+                        var directLight:IncidentLight;
+                        directLight.color = directionalLight.color.xyz;
+                        directLight.direction = directionalLight.direction.xyz;
+                        //directLight.direction = vec3<f32>(0.,1.,0.);
+                        directLight.visible = true;
+        
+                        RE_Direct_Physical( directLight, geometry, material, &reflectedLight );
+
+                        // var radiance = vec3<f32>( 0.0 );
+                        // var iblIrradiance = vec3<f32>( 0.0 );
+                        // var clearcoatRadiance = vec3<f32>( 0.0 );
+                        // RE_IndirectSpecular_Physical( radiance, iblIrradiance, clearcoatRadiance, geometry, material, &reflectedLight );
+                    }
+                
+                ` : ``}
+
+               
+
+                var totalDiffuse = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
+                var totalSpecular = reflectedLight.directSpecular + reflectedLight.indirectSpecular;
+                var outgoingLight = totalDiffuse + totalSpecular + totalEmissiveRadiance;
+                var finalColor = vec4( reflectedLight.directSpecular, diffuseColor.a );
+
+                return finalColor;
+            }
+        `;
+    }
+}
+
+
+/***/ }),
+
 /***/ "./src/shaders/Shader.ts":
 /*!*******************************!*\
   !*** ./src/shaders/Shader.ts ***!
@@ -9033,30 +9483,31 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   BoxGeometry: () => (/* reexport safe */ _geometries_BoxGeometry__WEBPACK_IMPORTED_MODULE_5__.BoxGeometry),
 /* harmony export */   BufferAttribute: () => (/* reexport safe */ _core_BufferAttribute__WEBPACK_IMPORTED_MODULE_3__.BufferAttribute),
 /* harmony export */   BufferGeometry: () => (/* reexport safe */ _core_BufferGeometry__WEBPACK_IMPORTED_MODULE_4__.BufferGeometry),
-/* harmony export */   Color: () => (/* reexport safe */ _math_Color__WEBPACK_IMPORTED_MODULE_10__.Color),
-/* harmony export */   ConstantsValues: () => (/* reexport module object */ _utils_TempValues__WEBPACK_IMPORTED_MODULE_27__),
-/* harmony export */   DirectionalLight: () => (/* reexport safe */ _lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_20__.DirectionalLight),
+/* harmony export */   Color: () => (/* reexport safe */ _math_Color__WEBPACK_IMPORTED_MODULE_11__.Color),
+/* harmony export */   ConstantsValues: () => (/* reexport module object */ _utils_TempValues__WEBPACK_IMPORTED_MODULE_28__),
+/* harmony export */   DirectionalLight: () => (/* reexport safe */ _lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_21__.DirectionalLight),
 /* harmony export */   Environment: () => (/* reexport module object */ _core_Defines__WEBPACK_IMPORTED_MODULE_1__),
-/* harmony export */   Euler: () => (/* reexport safe */ _math_Euler__WEBPACK_IMPORTED_MODULE_11__.Euler),
-/* harmony export */   FileLoader: () => (/* reexport safe */ _loaders_FileLoader__WEBPACK_IMPORTED_MODULE_24__.FileLoader),
+/* harmony export */   Euler: () => (/* reexport safe */ _math_Euler__WEBPACK_IMPORTED_MODULE_12__.Euler),
+/* harmony export */   FileLoader: () => (/* reexport safe */ _loaders_FileLoader__WEBPACK_IMPORTED_MODULE_25__.FileLoader),
 /* harmony export */   GPUConstances: () => (/* reexport module object */ _Constants__WEBPACK_IMPORTED_MODULE_0__),
-/* harmony export */   ImageLoader: () => (/* reexport safe */ _loaders_ImageLoader__WEBPACK_IMPORTED_MODULE_25__.ImageLoader),
-/* harmony export */   Matrix3: () => (/* reexport safe */ _math_Matrix3__WEBPACK_IMPORTED_MODULE_12__.Matrix3),
-/* harmony export */   Matrix4: () => (/* reexport safe */ _math_Matrix4__WEBPACK_IMPORTED_MODULE_13__.Matrix4),
-/* harmony export */   Mesh: () => (/* reexport safe */ _objects_Mesh__WEBPACK_IMPORTED_MODULE_19__.Mesh),
+/* harmony export */   ImageLoader: () => (/* reexport safe */ _loaders_ImageLoader__WEBPACK_IMPORTED_MODULE_26__.ImageLoader),
+/* harmony export */   Matrix3: () => (/* reexport safe */ _math_Matrix3__WEBPACK_IMPORTED_MODULE_13__.Matrix3),
+/* harmony export */   Matrix4: () => (/* reexport safe */ _math_Matrix4__WEBPACK_IMPORTED_MODULE_14__.Matrix4),
+/* harmony export */   Mesh: () => (/* reexport safe */ _objects_Mesh__WEBPACK_IMPORTED_MODULE_20__.Mesh),
 /* harmony export */   MeshBasicMaterial: () => (/* reexport safe */ _materials_MeshBasicMaterial__WEBPACK_IMPORTED_MODULE_8__.MeshBasicMaterial),
 /* harmony export */   MeshPhongMaterial: () => (/* reexport safe */ _materials_MeshPhongMaterial__WEBPACK_IMPORTED_MODULE_9__.MeshPhongMaterial),
-/* harmony export */   Object3D: () => (/* reexport safe */ _core_Object3D__WEBPACK_IMPORTED_MODULE_17__.Object3D),
-/* harmony export */   OrbitControls: () => (/* reexport safe */ _controls_OrbitControls__WEBPACK_IMPORTED_MODULE_23__.OrbitControls),
-/* harmony export */   OrthographicCamera: () => (/* reexport safe */ _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_22__.OrthographicCamera),
-/* harmony export */   PerspectiveCamera: () => (/* reexport safe */ _cameras_PerspectiveCamera__WEBPACK_IMPORTED_MODULE_21__.PerspectiveCamera),
+/* harmony export */   MeshPhysicalMaterial: () => (/* reexport safe */ _materials_MeshPhysicalMaterial__WEBPACK_IMPORTED_MODULE_10__.MeshPhysicalMaterial),
+/* harmony export */   Object3D: () => (/* reexport safe */ _core_Object3D__WEBPACK_IMPORTED_MODULE_18__.Object3D),
+/* harmony export */   OrbitControls: () => (/* reexport safe */ _controls_OrbitControls__WEBPACK_IMPORTED_MODULE_24__.OrbitControls),
+/* harmony export */   OrthographicCamera: () => (/* reexport safe */ _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_23__.OrthographicCamera),
+/* harmony export */   PerspectiveCamera: () => (/* reexport safe */ _cameras_PerspectiveCamera__WEBPACK_IMPORTED_MODULE_22__.PerspectiveCamera),
 /* harmony export */   PlaneGeometry: () => (/* reexport safe */ _geometries_PlaneGeometry__WEBPACK_IMPORTED_MODULE_6__.PlaneGeometry),
-/* harmony export */   Quaternion: () => (/* reexport safe */ _math_Quaternion__WEBPACK_IMPORTED_MODULE_14__.Quaternion),
-/* harmony export */   Scene: () => (/* reexport safe */ _core_Scene__WEBPACK_IMPORTED_MODULE_18__.Scene),
+/* harmony export */   Quaternion: () => (/* reexport safe */ _math_Quaternion__WEBPACK_IMPORTED_MODULE_15__.Quaternion),
+/* harmony export */   Scene: () => (/* reexport safe */ _core_Scene__WEBPACK_IMPORTED_MODULE_19__.Scene),
 /* harmony export */   SphereGeometry: () => (/* reexport safe */ _geometries_SphereGeometry__WEBPACK_IMPORTED_MODULE_7__.SphereGeometry),
-/* harmony export */   TextureLoader: () => (/* reexport safe */ _loaders_TextureLoader__WEBPACK_IMPORTED_MODULE_26__.TextureLoader),
-/* harmony export */   Vector2: () => (/* reexport safe */ _math_Vector2__WEBPACK_IMPORTED_MODULE_15__.Vector2),
-/* harmony export */   Vector3: () => (/* reexport safe */ _math_Vector3__WEBPACK_IMPORTED_MODULE_16__.Vector3),
+/* harmony export */   TextureLoader: () => (/* reexport safe */ _loaders_TextureLoader__WEBPACK_IMPORTED_MODULE_27__.TextureLoader),
+/* harmony export */   Vector2: () => (/* reexport safe */ _math_Vector2__WEBPACK_IMPORTED_MODULE_16__.Vector2),
+/* harmony export */   Vector3: () => (/* reexport safe */ _math_Vector3__WEBPACK_IMPORTED_MODULE_17__.Vector3),
 /* harmony export */   WebGPURenderer: () => (/* reexport safe */ _renderers_WebGPURenderer__WEBPACK_IMPORTED_MODULE_2__.WebGPURenderer)
 /* harmony export */ });
 /* harmony import */ var _Constants__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
@@ -9069,24 +9520,26 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _geometries_SphereGeometry__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./geometries/SphereGeometry */ "./src/geometries/SphereGeometry.ts");
 /* harmony import */ var _materials_MeshBasicMaterial__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./materials/MeshBasicMaterial */ "./src/materials/MeshBasicMaterial.ts");
 /* harmony import */ var _materials_MeshPhongMaterial__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./materials/MeshPhongMaterial */ "./src/materials/MeshPhongMaterial.ts");
-/* harmony import */ var _math_Color__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./math/Color */ "./src/math/Color.ts");
-/* harmony import */ var _math_Euler__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./math/Euler */ "./src/math/Euler.ts");
-/* harmony import */ var _math_Matrix3__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./math/Matrix3 */ "./src/math/Matrix3.ts");
-/* harmony import */ var _math_Matrix4__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./math/Matrix4 */ "./src/math/Matrix4.ts");
-/* harmony import */ var _math_Quaternion__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./math/Quaternion */ "./src/math/Quaternion.ts");
-/* harmony import */ var _math_Vector2__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./math/Vector2 */ "./src/math/Vector2.ts");
-/* harmony import */ var _math_Vector3__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./math/Vector3 */ "./src/math/Vector3.ts");
-/* harmony import */ var _core_Object3D__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./core/Object3D */ "./src/core/Object3D.ts");
-/* harmony import */ var _core_Scene__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./core/Scene */ "./src/core/Scene.ts");
-/* harmony import */ var _objects_Mesh__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./objects/Mesh */ "./src/objects/Mesh.ts");
-/* harmony import */ var _lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./lights/DirectionalLight */ "./src/lights/DirectionalLight.ts");
-/* harmony import */ var _cameras_PerspectiveCamera__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./cameras/PerspectiveCamera */ "./src/cameras/PerspectiveCamera.ts");
-/* harmony import */ var _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./cameras/OrthographicCamera */ "./src/cameras/OrthographicCamera.ts");
-/* harmony import */ var _controls_OrbitControls__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ./controls/OrbitControls */ "./src/controls/OrbitControls.ts");
-/* harmony import */ var _loaders_FileLoader__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ./loaders/FileLoader */ "./src/loaders/FileLoader.ts");
-/* harmony import */ var _loaders_ImageLoader__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ./loaders/ImageLoader */ "./src/loaders/ImageLoader.ts");
-/* harmony import */ var _loaders_TextureLoader__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ./loaders/TextureLoader */ "./src/loaders/TextureLoader.ts");
-/* harmony import */ var _utils_TempValues__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ./utils/TempValues */ "./src/utils/TempValues.ts");
+/* harmony import */ var _materials_MeshPhysicalMaterial__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./materials/MeshPhysicalMaterial */ "./src/materials/MeshPhysicalMaterial.ts");
+/* harmony import */ var _math_Color__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./math/Color */ "./src/math/Color.ts");
+/* harmony import */ var _math_Euler__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./math/Euler */ "./src/math/Euler.ts");
+/* harmony import */ var _math_Matrix3__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./math/Matrix3 */ "./src/math/Matrix3.ts");
+/* harmony import */ var _math_Matrix4__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./math/Matrix4 */ "./src/math/Matrix4.ts");
+/* harmony import */ var _math_Quaternion__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./math/Quaternion */ "./src/math/Quaternion.ts");
+/* harmony import */ var _math_Vector2__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./math/Vector2 */ "./src/math/Vector2.ts");
+/* harmony import */ var _math_Vector3__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./math/Vector3 */ "./src/math/Vector3.ts");
+/* harmony import */ var _core_Object3D__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./core/Object3D */ "./src/core/Object3D.ts");
+/* harmony import */ var _core_Scene__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./core/Scene */ "./src/core/Scene.ts");
+/* harmony import */ var _objects_Mesh__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./objects/Mesh */ "./src/objects/Mesh.ts");
+/* harmony import */ var _lights_DirectionalLight__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./lights/DirectionalLight */ "./src/lights/DirectionalLight.ts");
+/* harmony import */ var _cameras_PerspectiveCamera__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./cameras/PerspectiveCamera */ "./src/cameras/PerspectiveCamera.ts");
+/* harmony import */ var _cameras_OrthographicCamera__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ./cameras/OrthographicCamera */ "./src/cameras/OrthographicCamera.ts");
+/* harmony import */ var _controls_OrbitControls__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ./controls/OrbitControls */ "./src/controls/OrbitControls.ts");
+/* harmony import */ var _loaders_FileLoader__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ./loaders/FileLoader */ "./src/loaders/FileLoader.ts");
+/* harmony import */ var _loaders_ImageLoader__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ./loaders/ImageLoader */ "./src/loaders/ImageLoader.ts");
+/* harmony import */ var _loaders_TextureLoader__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ./loaders/TextureLoader */ "./src/loaders/TextureLoader.ts");
+/* harmony import */ var _utils_TempValues__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ./utils/TempValues */ "./src/utils/TempValues.ts");
+
 
 
 
@@ -9445,6 +9898,7 @@ const Vector1 = new _math_Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
 /******/ var __webpack_exports__Mesh = __webpack_exports__.Mesh;
 /******/ var __webpack_exports__MeshBasicMaterial = __webpack_exports__.MeshBasicMaterial;
 /******/ var __webpack_exports__MeshPhongMaterial = __webpack_exports__.MeshPhongMaterial;
+/******/ var __webpack_exports__MeshPhysicalMaterial = __webpack_exports__.MeshPhysicalMaterial;
 /******/ var __webpack_exports__Object3D = __webpack_exports__.Object3D;
 /******/ var __webpack_exports__OrbitControls = __webpack_exports__.OrbitControls;
 /******/ var __webpack_exports__OrthographicCamera = __webpack_exports__.OrthographicCamera;
@@ -9457,7 +9911,7 @@ const Vector1 = new _math_Vector3__WEBPACK_IMPORTED_MODULE_1__.Vector3();
 /******/ var __webpack_exports__Vector2 = __webpack_exports__.Vector2;
 /******/ var __webpack_exports__Vector3 = __webpack_exports__.Vector3;
 /******/ var __webpack_exports__WebGPURenderer = __webpack_exports__.WebGPURenderer;
-/******/ export { __webpack_exports__BoxGeometry as BoxGeometry, __webpack_exports__BufferAttribute as BufferAttribute, __webpack_exports__BufferGeometry as BufferGeometry, __webpack_exports__Color as Color, __webpack_exports__ConstantsValues as ConstantsValues, __webpack_exports__DirectionalLight as DirectionalLight, __webpack_exports__Environment as Environment, __webpack_exports__Euler as Euler, __webpack_exports__FileLoader as FileLoader, __webpack_exports__GPUConstances as GPUConstances, __webpack_exports__ImageLoader as ImageLoader, __webpack_exports__Matrix3 as Matrix3, __webpack_exports__Matrix4 as Matrix4, __webpack_exports__Mesh as Mesh, __webpack_exports__MeshBasicMaterial as MeshBasicMaterial, __webpack_exports__MeshPhongMaterial as MeshPhongMaterial, __webpack_exports__Object3D as Object3D, __webpack_exports__OrbitControls as OrbitControls, __webpack_exports__OrthographicCamera as OrthographicCamera, __webpack_exports__PerspectiveCamera as PerspectiveCamera, __webpack_exports__PlaneGeometry as PlaneGeometry, __webpack_exports__Quaternion as Quaternion, __webpack_exports__Scene as Scene, __webpack_exports__SphereGeometry as SphereGeometry, __webpack_exports__TextureLoader as TextureLoader, __webpack_exports__Vector2 as Vector2, __webpack_exports__Vector3 as Vector3, __webpack_exports__WebGPURenderer as WebGPURenderer };
+/******/ export { __webpack_exports__BoxGeometry as BoxGeometry, __webpack_exports__BufferAttribute as BufferAttribute, __webpack_exports__BufferGeometry as BufferGeometry, __webpack_exports__Color as Color, __webpack_exports__ConstantsValues as ConstantsValues, __webpack_exports__DirectionalLight as DirectionalLight, __webpack_exports__Environment as Environment, __webpack_exports__Euler as Euler, __webpack_exports__FileLoader as FileLoader, __webpack_exports__GPUConstances as GPUConstances, __webpack_exports__ImageLoader as ImageLoader, __webpack_exports__Matrix3 as Matrix3, __webpack_exports__Matrix4 as Matrix4, __webpack_exports__Mesh as Mesh, __webpack_exports__MeshBasicMaterial as MeshBasicMaterial, __webpack_exports__MeshPhongMaterial as MeshPhongMaterial, __webpack_exports__MeshPhysicalMaterial as MeshPhysicalMaterial, __webpack_exports__Object3D as Object3D, __webpack_exports__OrbitControls as OrbitControls, __webpack_exports__OrthographicCamera as OrthographicCamera, __webpack_exports__PerspectiveCamera as PerspectiveCamera, __webpack_exports__PlaneGeometry as PlaneGeometry, __webpack_exports__Quaternion as Quaternion, __webpack_exports__Scene as Scene, __webpack_exports__SphereGeometry as SphereGeometry, __webpack_exports__TextureLoader as TextureLoader, __webpack_exports__Vector2 as Vector2, __webpack_exports__Vector3 as Vector3, __webpack_exports__WebGPURenderer as WebGPURenderer };
 /******/ 
 
 //# sourceMappingURL=spectre.js.map

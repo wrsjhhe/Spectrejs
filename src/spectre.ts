@@ -15,6 +15,7 @@ export { SphereGeometry } from "./geometries/SphereGeometry";
 
 export { MeshBasicMaterial } from "./materials/MeshBasicMaterial";
 export { MeshPhongMaterial } from "./materials/MeshPhongMaterial";
+export { MeshPhysicalMaterial } from "./materials/MeshPhysicalMaterial";
 
 export { Color } from "./math/Color";
 export { Euler } from "./math/Euler";
