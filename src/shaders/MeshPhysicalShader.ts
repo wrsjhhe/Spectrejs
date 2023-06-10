@@ -376,7 +376,7 @@ export class MeshPhysicalShader extends Shader {
                 var totalDiffuse = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
                 var totalSpecular = reflectedLight.directSpecular + reflectedLight.indirectSpecular;
                 var outgoingLight = totalDiffuse + totalSpecular + totalEmissiveRadiance;
-                var finalColor = vec4( reflectedLight.directSpecular, diffuseColor.a );
+                var finalColor = vec4( outgoingLight, diffuseColor.a );
 
                 return finalColor;
             }
