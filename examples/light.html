@@ -47,15 +47,24 @@
             camera.lookAt(new Spectre.Vector3(0, 0, 0));
 
             const controls = new Spectre.OrbitControls(camera, renderer.domElement);
-            const material = new Spectre.MeshPhongMaterial();
-            material.color = new Spectre.Color(1, 1, 1);
-            const geometry = new Spectre.SphereGeometry(100);
-            const mesh = new Spectre.Mesh(geometry, material);
-
-            directionalLight = new Spectre.DirectionalLight(new Spectre.Color(1,1,0));
+            const pbrMaterial = new Spectre.MeshPhysicalMaterial();
+            pbrMaterial.color = new Spectre.Color(1, 0, 0);
+            pbrMaterial.metalness = 0.5;
+            pbrMaterial.roughness = 0.5;
+            const phongMaterial = new Spectre.MeshPhongMaterial();
+            phongMaterial.color = new Spectre.Color(1, 1, 1);
+            const geometry = new Spectre.SphereGeometry(100,128,128);
+            const mesh = new Spectre.Mesh(geometry, phongMaterial);
+            const mesh2 = new Spectre.Mesh(geometry, pbrMaterial);
+            mesh2.position.x = 250;
+            mesh2.matrixWorldAutoUpdate = false;
+            mesh2.matrixAutoUpdate = false;
+            mesh2.updateMatrix();
+            directionalLight = new Spectre.DirectionalLight(new Spectre.Color(1,1,1));
             scene.add(directionalLight);
             
             scene.add(mesh);
+            scene.add(mesh2);
         }
 
         let k = 0.01;
