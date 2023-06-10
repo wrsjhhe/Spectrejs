@@ -85,6 +85,8 @@ export class MeshPhongShader extends Shader {
                 direction:vec4<f32>,
             };
 
+            ${basic.encoding_pars()}
+
             fn saturate( a:f32 )->f32 {
                 return clamp( a, 0.0, 1.0 );
             } 
@@ -170,6 +172,7 @@ export class MeshPhongShader extends Shader {
                     shaderOptions.bindValues.get("color")
                 )}
 
+                ${basic.input_encoding("baseColor")}
                 var diffuse = baseColor.xyz;
                 // var emissive = vec3<f32>(0.0,0.0,0.0);
                 // var specular = vec3<f32>(0.043,0.043,0.043);
@@ -235,6 +238,7 @@ export class MeshPhongShader extends Shader {
                 var outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;
 
                 var finalColor = vec4( outgoingLight, diffuseColor.a );
+                ${basic.end_encoding("finalColor")}
 
                 return finalColor;
             }
