@@ -48,3 +48,29 @@ export function getColor_frag(textureItem: ShaderItem, samplerItem: ShaderItem, 
         else return `baseColor = ${colorItem.name};`;
     }
 }
+
+export function encoding_pars() {
+    return `
+            //return ( c < 0.04045 ) ? c * 0.0773993808 : Math.pow( c * 0.9478672986 + 0.0521327014, 2.4 );
+            fn SRGBToLinear( value:vec4<f32> )->vec4<f32>  {
+                return vec4<f32>( mix( pow( value.rgb * 0.9478672986 + 0.0521327014, vec3<f32>( 2.4 ) ) , value.rgb * 0.0773993808, vec3<f32>(  value.rgb <= vec3<f32>( 0.04045 ) ) ), value.a );
+            }
+
+            //return ( c < 0.0031308 ) ? c * 12.92 : 1.055 * ( Math.pow( c, 0.41666 ) ) - 0.055;
+            fn LinearTosRGB( value:vec4<f32> )->vec4<f32>  {
+                return vec4<f32>( mix( pow( value.rgb, vec3<f32>( 0.41666 ) ) * 1.055 - vec3<f32>( 0.055 ), value.rgb * 12.92, vec3<f32>( value.rgb <=  vec3<f32>( 0.0031308 ) ) ), value.a );
+            }
+            `;
+}
+
+export function input_encoding(color: string) {
+    if (color) {
+        return `${color} = SRGBToLinear(${color});`;
+    }
+}
+
+export function end_encoding(color: string) {
+    if (color) {
+        return `${color} = LinearTosRGB(${color});`;
+    }
+}

@@ -78,7 +78,9 @@ export class MeshPhysicalShader extends Shader {
                 specularColor:vec3<f32>,
                 specularF90:f32,
             };
-                   
+
+            ${basic.encoding_pars()}
+    
             fn Schlick_to_F0( f:vec3<f32>, f90:f32, dotVH:f32)->vec3<f32> {
                 var x = clamp( 1.0 - dotVH, 0.0, 1.0 );
                 var x2 = x * x;
@@ -310,6 +312,7 @@ export class MeshPhysicalShader extends Shader {
                     shaderOptions.bindValues.get("color")
                 )}
 
+                ${basic.input_encoding("baseColor")}
                 var diffuse = baseColor.xyz;
                 // var emissive = vec3<f32>(0.0,0.0,0.0);
                 // var specular = vec3<f32>(0.043,0.043,0.043);
@@ -377,7 +380,9 @@ export class MeshPhysicalShader extends Shader {
                 var totalSpecular = reflectedLight.directSpecular + reflectedLight.indirectSpecular;
                 var outgoingLight = totalDiffuse + totalSpecular + totalEmissiveRadiance;
                 var finalColor = vec4( outgoingLight, diffuseColor.a );
-
+                
+                
+                ${basic.end_encoding("finalColor")}
                 return finalColor;
             }
         `;
