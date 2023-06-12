@@ -1,8 +1,9 @@
 import { Camera } from "../cameras/Camera";
 import { PerspectiveCamera } from "../cameras/PerspectiveCamera";
 import { GPUIndexFormat, GPUTextureFormat } from "../Constants";
+import { Pipleline } from "../core/Pipeline";
 import { RenderableObject } from "../core/RenderableObject";
-import { Context } from "../core/ResourceManagers";
+import { Context, PipelineCache } from "../core/ResourceManagers";
 import { Scene } from "../core/Scene";
 import { Material } from "../materials/Material";
 import { Color } from "../math/Color";
@@ -25,12 +26,10 @@ export class WebGPURenderer extends RenderPass {
     private _parameters: WebGPURendererParameters;
     private _canvas: HTMLCanvasElement;
     private _device: GPUDevice;
-    private _presentationFormat: GPUTextureFormat = Context.textureFormat;
     private _context: GPUCanvasContext;
     private _alphaMode: GPUCanvasAlphaMode = "premultiplied";
     private _size: RendererSize;
     private _pixelRatio = window.devicePixelRatio || 1;
-    private _sampleCount = 1;
     private _clearColor = new Color(1, 1, 1);
     private _sizeChanged = false;
 
@@ -99,6 +98,20 @@ export class WebGPURenderer extends RenderPass {
         Context.activeDevice = this._device;
     }
 
+    public set clearColor(v: Color) {
+        this._clearColor.copy(v);
+        (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].clearValue = {
+            r: this._clearColor.r,
+            g: this._clearColor.g,
+            b: this._clearColor.b,
+            a: 1.0,
+        };
+    }
+
+    public setRenderTarget(renderTarget: RenderTarget) {
+        this._currentRenderTarget = renderTarget;
+    }
+
     public setSize(width: number, height: number) {
         this._size = {
             width: width,
@@ -128,10 +141,12 @@ export class WebGPURenderer extends RenderPass {
         camera.update();
         const sceneUpdated = scene.update(camera);
 
+        let pass = this as RenderPass;
         let descriptor = undefined;
         if (this._currentRenderTarget) {
             this._currentRenderTarget.depthTexture;
             descriptor = this._currentRenderTarget.getDescriptor();
+            pass = this._currentRenderTarget;
         } else {
             const view =
                 this.sampleCount > 1 ? this._colorAttachmentView : this._context.getCurrentTexture().createView();
@@ -149,10 +164,8 @@ export class WebGPURenderer extends RenderPass {
 
         const materialObjects = scene.renderableObjs;
         for (const [material, objects] of materialObjects) {
-            if (sceneUpdated) {
-                material.pipeline.needsCompile = true;
-            }
-            this._renderSamePipeline(passEncoder, material, objects, scene);
+            const pipeline = PipelineCache.get(pass, material, scene, sceneUpdated);
+            this._renderSamePipeline(passEncoder, material, objects, scene, pipeline);
         }
 
         passEncoder.end();
@@ -160,28 +173,23 @@ export class WebGPURenderer extends RenderPass {
         this.device.queue.submit([commandEncoder.finish()]);
     }
 
-    public setRenderTarget(renderTarget: RenderTarget) {
-        this._currentRenderTarget = renderTarget;
-    }
-
     private _renderSamePipeline(
         passEncoder: GPURenderPassEncoder,
         material: Material,
         objects: Array<RenderableObject>,
-        scene: Scene
+        scene: Scene,
+        pipeline: Pipleline
     ) {
-        if (material.pipeline.needsCompile) material.pipeline.compilePipeline(this, scene);
-
-        passEncoder.setPipeline(material.pipeline.pipeline);
-
-        material.pipeline.createCommonBindGroups(scene);
-        material.pipeline.bindCommonUniform(passEncoder);
-
         material.updateBinds();
 
+        passEncoder.setPipeline(pipeline.GPUPipeline);
+
+        pipeline.createCommonBindGroups(scene);
+        pipeline.bindCommonUniform(passEncoder);
+
         for (let i = 0; i < objects.length; ++i) {
-            material.pipeline.createObjectBindGroup(objects[i]);
-            material.pipeline.bindObjectUnform(passEncoder, objects[i]);
+            pipeline.createObjectBindGroup(objects[i]);
+            pipeline.bindObjectUnform(passEncoder, objects[i]);
             this._renderObject(passEncoder, objects[i]);
         }
     }

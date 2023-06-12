@@ -18,6 +18,7 @@ export class BindSampler extends BindValue {
             mipmapFilter: texture.mipmapFilter,
             maxAnisotropy: texture.anisotropy,
         });
+        this._needsUpdate = false;
     }
 
     public override get type() {

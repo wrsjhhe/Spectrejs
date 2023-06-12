@@ -33,7 +33,6 @@ export class RenderTarget extends RenderPass {
     depthBuffer: boolean;
     stencilBuffer: boolean;
     depthTexture: DepthTexture;
-    sampleCount: number;
 
     wrapU: GPUAddressMode = GPUAddressMode.MirrorRepeat;
     wrapV: GPUAddressMode = GPUAddressMode.MirrorRepeat;
@@ -41,7 +40,6 @@ export class RenderTarget extends RenderPass {
     magFilter: GPUFilterMode = GPUFilterMode.Linear;
     minFilter: GPUFilterMode = GPUFilterMode.Linear;
     mipmapFilter: GPUMipmapFilterMode = GPUMipmapFilterMode.Linear;
-    format: GPUTextureFormat = GPUTextureFormat.RGBA8Unorm;
     anisotropy = Texture.DEFAULT_ANISOTROPY;
 
     offset: any;
@@ -87,10 +85,10 @@ export class RenderTarget extends RenderPass {
 
         this.depthTexture = options.depthTexture !== undefined ? options.depthTexture : null;
 
-        this.sampleCount = options.samples !== undefined ? options.samples : 1;
+        this._sampleCount = options.samples !== undefined ? options.samples : 1;
 
-        super._setupColorBuffer({ width, height }, window.devicePixelRatio, this.sampleCount, this.texture.format);
-        super._setupDepthBuffer({ width, height }, window.devicePixelRatio, this.sampleCount);
+        super._setupColorBuffer({ width, height }, window.devicePixelRatio, this._sampleCount, this.texture.format);
+        super._setupDepthBuffer({ width, height }, window.devicePixelRatio, this._sampleCount);
     }
 
     setSize(width: number, height: number, depth = 1) {
@@ -107,8 +105,8 @@ export class RenderTarget extends RenderPass {
         this.viewport.set(0, 0, width, height);
         this.scissor.set(0, 0, width, height);
 
-        super._setupColorBuffer({ width, height }, window.devicePixelRatio, this.sampleCount, this.texture.format);
-        super._setupDepthBuffer({ width, height }, window.devicePixelRatio, this.sampleCount);
+        super._setupColorBuffer({ width, height }, window.devicePixelRatio, this._sampleCount, this.texture.format);
+        super._setupDepthBuffer({ width, height }, window.devicePixelRatio, this._sampleCount);
     }
 
     public getDescriptor() {
@@ -129,8 +127,8 @@ export class RenderTarget extends RenderPass {
             } as GPURenderPassDepthStencilAttachment,
         };
 
-        const view = this.sampleCount > 1 ? this._colorAttachmentView : this.texture.bind.gpuTexture.createView();
-        const resolveTarget = this.sampleCount > 1 ? this.texture.bind.gpuTexture.createView() : undefined;
+        const view = this._sampleCount > 1 ? this._colorAttachmentView : this.texture.bind.gpuTexture.createView();
+        const resolveTarget = this._sampleCount > 1 ? this.texture.bind.gpuTexture.createView() : undefined;
         (descriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].view = view;
         (descriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget = resolveTarget;
         descriptor.depthStencilAttachment.view = this._depthBuffer.createView();

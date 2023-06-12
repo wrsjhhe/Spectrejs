@@ -61,7 +61,7 @@ export class Texture {
         magFilter: GPUFilterMode = GPUFilterMode.Linear,
         minFilter: GPUFilterMode = GPUFilterMode.Linear,
         mipmapFilter: GPUMipmapFilterMode = GPUMipmapFilterMode.Linear,
-        format: GPUTextureFormat = GPUTextureFormat.RGBA8Unorm,
+        format: GPUTextureFormat = GPUTextureFormat.BGRA8Unorm,
         anisotropy = Texture.DEFAULT_ANISOTROPY
     ) {
         this.uuid = MathUtils.generateUUID();

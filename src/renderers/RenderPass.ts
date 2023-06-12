@@ -12,6 +12,12 @@ export abstract class RenderPass {
 
     protected _colorAttachmentView: GPUTextureView;
 
+    protected _sampleCount = 1;
+
+    protected _presentationFormat: GPUTextureFormat = Context.textureFormat;
+
+    constructor() {}
+
     protected _setupColorBuffer(
         size: RendererSize,
         pixelRatio: number,
@@ -52,5 +58,13 @@ export abstract class RenderPass {
             format: GPUTextureFormat.Depth24Plus,
             usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
         });
+    }
+
+    public get sampleCount() {
+        return this._sampleCount;
+    }
+
+    public get presentationFormat() {
+        return this._presentationFormat;
     }
 }

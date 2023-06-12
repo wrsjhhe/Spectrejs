@@ -42,7 +42,7 @@ export class BindBuffer extends BindValue {
         }
     }
 
-    public get buffer() {
+    public get GPUBuffer() {
         return this._buffer.buffer;
     }
 }

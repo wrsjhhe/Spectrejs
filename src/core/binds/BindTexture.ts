@@ -35,7 +35,6 @@ export class BindTexture extends BindValue {
                 if (mipmapSize > 1) {
                     TextureMipmapGenerator.webGPUGenerateMipmap(texture);
                 }
-                this._gpuTexutureView = this._gpuTexture.createView();
             });
         }
 
@@ -99,6 +98,7 @@ export class BindTexture extends BindValue {
     }
 
     public get gpuTexutureView() {
+        if (!this._gpuTexutureView) this._gpuTexutureView = this._gpuTexture.createView();
         return this._gpuTexutureView;
     }
 
