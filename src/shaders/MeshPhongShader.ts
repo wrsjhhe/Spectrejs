@@ -174,9 +174,7 @@ export class MeshPhongShader extends Shader {
 
                 ${basic.input_encoding("baseColor")}
                 var diffuse = baseColor.xyz;
-                // var emissive = vec3<f32>(0.0,0.0,0.0);
-                // var specular = vec3<f32>(0.043,0.043,0.043);
-                // var shininess = 30.;
+
                 var opacity = 1.;
                 var specularStrength = 1.;
 

@@ -1,9 +1,10 @@
 import { Camera } from "../cameras/Camera";
 import { PerspectiveCamera } from "../cameras/PerspectiveCamera";
-import { GPUIndexFormat, GPUTextureFormat } from "../Constants";
+import { GPUIndexFormat } from "../Constants";
+import { Context } from "../core/Context";
 import { Pipleline } from "../core/Pipeline";
 import { RenderableObject } from "../core/RenderableObject";
-import { Context, PipelineCache } from "../core/ResourceManagers";
+import { PipelineCache } from "../core/ResourceManagers";
 import { Scene } from "../core/Scene";
 import { Material } from "../materials/Material";
 import { Color } from "../math/Color";
@@ -29,7 +30,7 @@ export class WebGPURenderer extends RenderPass {
     private _context: GPUCanvasContext;
     private _alphaMode: GPUCanvasAlphaMode = "premultiplied";
     private _size: RendererSize;
-    private _pixelRatio = window.devicePixelRatio || 1;
+    private _pixelRatio = Context.pixelRatio;
     private _clearColor = new Color(1, 1, 1);
     private _sizeChanged = false;
 
@@ -100,12 +101,6 @@ export class WebGPURenderer extends RenderPass {
 
     public set clearColor(v: Color) {
         this._clearColor.copy(v);
-        (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].clearValue = {
-            r: this._clearColor.r,
-            g: this._clearColor.g,
-            b: this._clearColor.b,
-            a: 1.0,
-        };
     }
 
     public setRenderTarget(renderTarget: RenderTarget) {
@@ -119,8 +114,8 @@ export class WebGPURenderer extends RenderPass {
         };
         this._canvas.width = width * this._pixelRatio;
         this._canvas.height = height * this._pixelRatio;
-        super._setupColorBuffer(this._size, this._pixelRatio, this.sampleCount, this.presentationFormat);
-        super._setupDepthBuffer(this._size, this._pixelRatio, this.sampleCount);
+        super._setupColorBuffer(this._size, this.sampleCount, this.presentationFormat);
+        super._setupDepthBuffer(this._size, this.sampleCount);
         this._sizeChanged = true;
     }
 
@@ -157,9 +152,16 @@ export class WebGPURenderer extends RenderPass {
             this._renderPassDescriptor.depthStencilAttachment.view = this._depthBuffer.createView();
 
             descriptor = this._renderPassDescriptor;
+
+            (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].clearValue = {
+                r: this._clearColor.r,
+                g: this._clearColor.g,
+                b: this._clearColor.b,
+                a: 1.0,
+            };
         }
 
-        const commandEncoder = this.device.createCommandEncoder();
+        const commandEncoder = Context.beginCommandEncoder();
         const passEncoder = commandEncoder.beginRenderPass(descriptor);
 
         const materialObjects = scene.renderableObjs;
@@ -169,8 +171,10 @@ export class WebGPURenderer extends RenderPass {
         }
 
         passEncoder.end();
-
-        this.device.queue.submit([commandEncoder.finish()]);
+        if (this._currentRenderTarget) {
+            this._currentRenderTarget.updated();
+        }
+        Context.finishCommand();
     }
 
     private _renderSamePipeline(
@@ -196,6 +200,8 @@ export class WebGPURenderer extends RenderPass {
 
     private _renderObject(passEncoder: GPURenderPassEncoder, object: RenderableObject) {
         object.update();
+
+        if (!object.visible) return;
 
         const geometry = object.geometry;
         geometry.update();

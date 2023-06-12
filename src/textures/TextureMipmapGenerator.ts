@@ -1,5 +1,5 @@
 import { GPUSamplerBindingType, GPUTextureFormat } from "../Constants";
-import { Context } from "../core/ResourceManagers";
+import { Context } from "../core/Context";
 import { Texture } from "./Texture";
 
 export class TextureMipmapGenerator {

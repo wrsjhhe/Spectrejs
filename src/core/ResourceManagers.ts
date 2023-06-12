@@ -34,24 +34,6 @@ export class Cache {
     }
 }
 
-export class Context {
-    private static _activeDevice: GPUDevice;
-    public static get activeDevice(): GPUDevice {
-        return Context._activeDevice;
-    }
-    public static set activeDevice(v: GPUDevice) {
-        Context._activeDevice = v;
-    }
-
-    private static _textureFormat: GPUTextureFormat = GPUTextureFormat.BGRA8Unorm;
-    public static get textureFormat() {
-        return Context._textureFormat;
-    }
-    public static set textureFormat(v: GPUTextureFormat) {
-        Context._textureFormat = v;
-    }
-}
-
 export class DelayDestroyer {
     public static delayTime = 5000;
 

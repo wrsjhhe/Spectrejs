@@ -1,9 +1,10 @@
 import { GPUBlendFactor, GPUCompareFunction, GPUCullMode, GPUPrimitiveTopology, GPUTextureFormat } from "../Constants";
 import { Material } from "../materials/Material";
 import { RenderPass } from "../renderers/RenderPass";
+import { Context } from "./Context";
 import { BindGroupLayoutIndexInfo, ObjectGroupLayoutInfo } from "./Defines";
 import { RenderableObject } from "./RenderableObject";
-import { Cache, Context } from "./ResourceManagers";
+import { Cache } from "./ResourceManagers";
 import { Scene } from "./Scene";
 
 export class Pipleline {

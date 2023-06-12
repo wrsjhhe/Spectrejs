@@ -6,7 +6,14 @@ import { BindBuffer } from "../core/binds/BindBuffer";
 import { BindSampler } from "../core/binds/BindSampler";
 import { BindTexture } from "../core/binds/BindTexture";
 import { MathUtils } from "../math/MathUtils";
-import { AttributeShaderItem, BindShaderItem, BindType, getLayoutEntity, ShaderItem } from "../core/Defines";
+import {
+    AttributeShaderItem,
+    BindShaderItem,
+    BindType,
+    getLayoutEntity,
+    ShaderItem,
+    TextureBindShaderItem,
+} from "../core/Defines";
 import { Shader } from "../shaders/Shader";
 
 export abstract class Material {
@@ -99,17 +106,19 @@ export abstract class Material {
 
     protected _setBindItem(name: string, itemType: string, bindType: BindType, visibility: GPUShaderStageFlags) {
         const values = this.shaderOptions.bindValues;
-        values.set(name, {
+        const item = {
             name: name,
             index: this._shaderOptions.bindValues.size,
             bindType: bindType,
             shaderItemType: itemType,
             visibility: visibility,
-        });
+        };
+        values.set(name, item);
         let index = 0;
         for (const value of values.values()) {
             value.index = index++;
         }
+        return item;
     }
 
     protected _deleteValue(values: Map<string, ShaderItem>, name: string) {
@@ -171,7 +180,13 @@ export abstract class Material {
             this._setBindItem("colorSampler", "sampler", BindType.sampler, GPUShaderStage.FRAGMENT);
             this._bindMap.set("colorSampler", v.sampler);
 
-            this._setBindItem("colorTexture", "texture_2d<f32>", BindType.texture, GPUShaderStage.FRAGMENT);
+            const textureItem = this._setBindItem(
+                "colorTexture",
+                "texture_2d<f32>",
+                BindType.texture,
+                GPUShaderStage.FRAGMENT
+            );
+            (textureItem as TextureBindShaderItem).flipY = v.flipY;
             this._bindMap.set("colorTexture", v.bind);
 
             (this._bindMap.get("colorTexture") as BindTexture).texture = v;

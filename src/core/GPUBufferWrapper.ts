@@ -1,5 +1,5 @@
 import { NumberArrayType } from "../Constants";
-import { Context } from "./ResourceManagers";
+import { Context } from "./Context";
 
 export class GPUBufferWrapper {
     private _size: GPUSize64;
