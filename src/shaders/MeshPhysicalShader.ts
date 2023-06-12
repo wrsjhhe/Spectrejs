@@ -14,11 +14,12 @@ export class MeshPhysicalShader extends Shader {
         const uvItem = shaderOptions.attributeValues.get("uv");
         const normalItem = shaderOptions.attributeValues.get("normal");
 
-        this._vertexShaderCode = `
+        this._vertexShaderCode = /* wgsl */ `
             ${basic.bind_value(0, scene.bindValues.get("projectionMatrix"))}
             ${basic.bind_value(0, scene.bindValues.get("matrixWorldInverse"))}
 
             @group(2) @binding(0) var<uniform> modelMatrix : mat4x4<f32>;
+            @group(2) @binding(1) var<uniform> normalMatrix : mat3x3<f32>;
 
             struct VertexOutput {
                 @builtin(position) Position : vec4<f32>,
@@ -37,7 +38,7 @@ export class MeshPhysicalShader extends Shader {
                 ${basic.transform_vert()}
                 ${basic.uv_vert(uvItem)}
                 output.vViewPosition = - mvPosition.xyz;
-                output.normal = normal;
+                output.normal = normalMatrix * normal;
                 return output;
             }
         
@@ -50,7 +51,7 @@ export class MeshPhysicalShader extends Shader {
         const uvItem = shaderOptions.attributeValues.get("uv");
         const normalItem = shaderOptions.attributeValues.get("normal");
 
-        this._fragmentShaderCode = `
+        this._fragmentShaderCode = /* wgsl */ `
             const RECIPROCAL_PI = 0.3183098861837907;
             const EPSILON = 1e-6;
             struct IncidentLight {
@@ -379,7 +380,7 @@ export class MeshPhysicalShader extends Shader {
                 var totalDiffuse = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
                 var totalSpecular = reflectedLight.directSpecular + reflectedLight.indirectSpecular;
                 var outgoingLight = totalDiffuse + totalSpecular + totalEmissiveRadiance;
-                var finalColor = vec4( outgoingLight, diffuseColor.a );
+                var finalColor = vec4( outgoingLight , diffuseColor.a );
                 
                 
                 ${basic.end_encoding("finalColor")}

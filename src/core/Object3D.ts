@@ -1,6 +1,7 @@
 import { Quaternion } from "../math/Quaternion";
 import { Vector3 } from "../math/Vector3";
 import { Matrix4 } from "../math/Matrix4";
+import { Matrix3 } from "../math/Matrix3";
 import { Euler } from "../math/Euler";
 import * as MathUtils from "../math/MathUtils";
 import { Color } from "../math/Color";
@@ -49,6 +50,9 @@ export class Object3D {
 
     public matrix = new Matrix4();
     public matrixWorld = new Matrix4();
+
+    public modelViewMatrix = new Matrix4();
+    public normalMatrix = new Matrix3();
 
     public matrixAutoUpdate = Object3D.DEFAULT_MATRIX_AUTO_UPDATE;
     public matrixWorldNeedsUpdate = false;

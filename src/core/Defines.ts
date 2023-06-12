@@ -38,6 +38,11 @@ export const ObjectGroupLayoutInfo = {
         bindType: BindType.buffer,
         visibility: GPUShaderStage.VERTEX,
     } as BindShaderItem,
+    normalMatrix: {
+        index: 1,
+        bindType: BindType.buffer,
+        visibility: GPUShaderStage.VERTEX,
+    } as BindShaderItem,
 };
 
 export function getLayoutEntity(item: BindShaderItem) {

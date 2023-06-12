@@ -152,7 +152,7 @@ export class WebGPURenderer extends RenderPass {
             if (sceneUpdated) {
                 material.pipeline.needsCompile = true;
             }
-            this._renderSamePipeline(passEncoder, material, objects, scene);
+            this._renderSamePipeline(passEncoder, material, objects, scene, camera);
         }
 
         passEncoder.end();
@@ -168,7 +168,8 @@ export class WebGPURenderer extends RenderPass {
         passEncoder: GPURenderPassEncoder,
         material: Material,
         objects: Array<RenderableObject>,
-        scene: Scene
+        scene: Scene,
+        camera: Camera
     ) {
         if (material.pipeline.needsCompile) material.pipeline.compilePipeline(this, scene);
 
@@ -182,12 +183,13 @@ export class WebGPURenderer extends RenderPass {
         for (let i = 0; i < objects.length; ++i) {
             material.pipeline.createObjectBindGroup(objects[i]);
             material.pipeline.bindObjectUnform(passEncoder, objects[i]);
-            this._renderObject(passEncoder, objects[i]);
+            this._renderObject(passEncoder, objects[i], camera);
         }
     }
 
-    private _renderObject(passEncoder: GPURenderPassEncoder, object: RenderableObject) {
+    private _renderObject(passEncoder: GPURenderPassEncoder, object: RenderableObject, camera: Camera) {
         object.update();
+        object.updateNormalMatrix(camera);
 
         const geometry = object.geometry;
         geometry.update();
