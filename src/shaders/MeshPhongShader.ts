@@ -174,9 +174,7 @@ export class MeshPhongShader extends Shader {
 
                 ${basic.input_encoding("baseColor")}
                 var diffuse = baseColor.xyz;
-                // var emissive = vec3<f32>(0.0,0.0,0.0);
-                // var specular = vec3<f32>(0.043,0.043,0.043);
-                // var shininess = 30.;
+
                 var opacity = 1.;
                 var specularStrength = 1.;
 
@@ -220,20 +218,6 @@ export class MeshPhongShader extends Shader {
                 `
                         : ``
                 }
-                //var directionalLight:DirectionalLight;
-                
-
-                // directionalLight.direction = vec3<f32>(0.,1.,1.);
-                // directionalLight.color = vec3<f32>(1.,1.,1.);
-
-                // var directLight:IncidentLight;
-                // directLight.color = directionalLight.color;
-                // directLight.direction = directionalLight.direction;
-                // directLight.visible = true;
-
-                // //getDirectionalLightInfo( directionalLight, geometry, directLight );
-
-                // RE_Direct_BlinnPhong( directLight, geometry, material, &reflectedLight );
 
                 var outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;
 

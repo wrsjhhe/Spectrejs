@@ -1,4 +1,4 @@
-import { Context } from "./core/ResourceManagers";
+import { Context } from "./core/Context";
 
 export * as GPUConstances from "./Constants";
 

@@ -1,5 +1,5 @@
 import { GPUSamplerBindingType, GPUTextureFormat } from "../Constants";
-import { Context } from "../core/ResourceManagers";
+import { Context } from "../core/Context";
 import { Texture } from "./Texture";
 
 export class TextureMipmapGenerator {
@@ -159,7 +159,7 @@ export class TextureMipmapGenerator {
         });
 
         // Loop through each mip level and renders the previous level's contents into it.
-        const commandEncoder = Context.commandEncoder;
+        const commandEncoder = device.createCommandEncoder();
         for (let i = 1; i < texture.mipmapSize; ++i) {
             const dstView = texture.bind.gpuTexture.createView({
                 baseMipLevel: i, // Make sure we're getting the right mip level...

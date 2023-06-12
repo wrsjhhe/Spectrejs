@@ -1,14 +1,15 @@
 import { GPUBlendFactor, GPUCompareFunction, GPUCullMode, GPUPrimitiveTopology, GPUTextureFormat } from "../Constants";
 import { Material } from "../materials/Material";
-import { WebGPURenderer } from "../renderers/WebGPURenderer";
+import { RenderPass } from "../renderers/RenderPass";
+import { Context } from "./Context";
 import { BindGroupLayoutIndexInfo, ObjectGroupLayoutInfo } from "./Defines";
 import { RenderableObject } from "./RenderableObject";
-import { Cache, Context } from "./ResourceManagers";
+import { Cache } from "./ResourceManagers";
 import { Scene } from "./Scene";
 
 export class Pipleline {
     private _material: Material;
-    private _pipeline: GPURenderPipeline;
+    private _GPUPipeline: GPURenderPipeline;
 
     private _bindGroupLayouts: Array<GPUBindGroupLayout> = [];
     private _vertexBufferLayouts: Array<GPUVertexBufferLayout> = [];
@@ -17,24 +18,22 @@ export class Pipleline {
     private _materialBindGroup: GPUBindGroup;
     private _objectBindGroups: any = {};
 
-    public needsCompile = true;
-    public needsCreateMatBindGroup = true;
+    private _pass: RenderPass;
 
-    constructor(material: Material) {
+    public needsCreateBindGroup = true;
+
+    constructor(pass: RenderPass, material: Material) {
+        this._pass = pass;
         this._material = material;
 
         Cache.add("pipelineObjectBindGroup", this._objectBindGroups);
     }
 
-    public compilePipeline(renderer: WebGPURenderer, scene: Scene) {
-        if (!this.needsCompile) return;
-
-        this.needsCreateMatBindGroup = true;
+    public compilePipeline(scene: Scene) {
+        this.needsCreateBindGroup = true;
 
         this._beforeCompile(scene);
-        this._compile(renderer, scene);
-
-        this.needsCompile = false;
+        this._compile(scene);
     }
 
     public bindCommonUniform(passEncoder: GPURenderPassEncoder) {
@@ -46,11 +45,11 @@ export class Pipleline {
         passEncoder.setBindGroup(2, this._objectBindGroups[object.uuid]);
     }
 
-    private _compile(renderer: WebGPURenderer, scene: Scene) {
-        const device = renderer.device;
+    private _compile(scene: Scene) {
+        const device = Context.activeDevice;
         this.material.shader.recreate(scene);
 
-        this._pipeline = device.createRenderPipeline({
+        this._GPUPipeline = device.createRenderPipeline({
             layout: device.createPipelineLayout({
                 bindGroupLayouts: [...this._bindGroupLayouts],
             }),
@@ -68,7 +67,7 @@ export class Pipleline {
                 entryPoint: "main",
                 targets: [
                     {
-                        format: renderer.presentationFormat,
+                        format: this._pass.presentationFormat,
                         blend: {
                             color: {
                                 srcFactor: GPUBlendFactor.SrcAlpha,
@@ -87,7 +86,7 @@ export class Pipleline {
                 cullMode: GPUCullMode.Back,
             },
             multisample: {
-                count: renderer.sampleCount,
+                count: this._pass.sampleCount,
             },
             depthStencil: {
                 depthWriteEnabled: true,
@@ -162,22 +161,19 @@ export class Pipleline {
 
     /****************************create group start ***********************************/
     private _createGlobalBindGroup(scene: Scene) {
-        if (!this.needsCreateMatBindGroup) return;
-
         const group = scene.getBindGroup();
 
         this._globalBindGroups = Context.activeDevice.createBindGroup({
-            layout: this.pipeline.getBindGroupLayout(BindGroupLayoutIndexInfo.global),
+            layout: this.GPUPipeline.getBindGroupLayout(BindGroupLayoutIndexInfo.global),
             entries: group,
         });
     }
 
     private _createMaterialBindGroup() {
-        if (!this.needsCreateMatBindGroup) return;
         const group = this.material.getBindGroup();
 
         this._materialBindGroup = Context.activeDevice.createBindGroup({
-            layout: this.pipeline.getBindGroupLayout(BindGroupLayoutIndexInfo.material),
+            layout: this.GPUPipeline.getBindGroupLayout(BindGroupLayoutIndexInfo.material),
             entries: group,
         });
     }
@@ -192,21 +188,23 @@ export class Pipleline {
             group.push({
                 binding: (ObjectGroupLayoutInfo as any)[key].index,
                 resource: {
-                    buffer: object.uniforms.get(key).buffer,
+                    buffer: object.uniforms.get(key).GPUBuffer,
                 },
             });
         }
         this._objectBindGroups[object.uuid] = Context.activeDevice.createBindGroup({
-            layout: this.pipeline.getBindGroupLayout(BindGroupLayoutIndexInfo.object),
+            layout: this.GPUPipeline.getBindGroupLayout(BindGroupLayoutIndexInfo.object),
             entries: group,
         });
     }
 
     public createCommonBindGroups(scene: Scene) {
+        if (!this.needsCreateBindGroup) return;
+
         this._createGlobalBindGroup(scene); //Group 0
         this._createMaterialBindGroup(); //Group 1
 
-        this.needsCreateMatBindGroup = false;
+        this.needsCreateBindGroup = false;
     }
 
     /****************************create group end ***********************************/
@@ -215,8 +213,8 @@ export class Pipleline {
         this._createVertexBufferLayouts();
     }
 
-    public get pipeline() {
-        return this._pipeline;
+    public get GPUPipeline() {
+        return this._GPUPipeline;
     }
 
     public get material() {

@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8" />
-        <title>Spectre</title>
+        <title>Cubes</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style>
             body {
@@ -28,7 +28,7 @@
             import * as Spectre from "./build/js/spectre.js";
             let container;
             let renderer;
-            let scene,group;
+            let scene, group;
             let mesh;
             let camera;
             function init() {
@@ -71,7 +71,7 @@
 
                     // onLoad callback
                     function (texture) {
-                        texture.mipmapSize = 8;
+                        texture.mipmapSize = 11;
                         //tex = texture;
                         material.map = texture;
                     },

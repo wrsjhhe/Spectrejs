@@ -2,6 +2,11 @@
 
 import { GPUBufferBindingType, GPUSamplerBindingType } from "../Constants";
 
+export interface Size {
+    width: number;
+    height: number;
+}
+
 export const BindGroupLayoutIndexInfo = {
     global: 0,
     material: 1,
@@ -30,6 +35,10 @@ export interface AttributeShaderItem extends ShaderItem {
 export interface BindShaderItem extends ShaderItem {
     bindType: BindType;
     visibility: GPUShaderStageFlags;
+}
+
+export interface TextureBindShaderItem extends BindShaderItem {
+    flipY: boolean;
 }
 
 export const ObjectGroupLayoutInfo = {

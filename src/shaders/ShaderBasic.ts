@@ -1,4 +1,4 @@
-import { BindShaderItem, BindType, ShaderItem } from "../core/Defines";
+import { BindShaderItem, BindType, ShaderItem, TextureBindShaderItem } from "../core/Defines";
 
 export interface IndexObj {
     index: number;
@@ -42,8 +42,16 @@ export function bind_value(groupIndex: number, item: BindShaderItem) {
 }
 
 export function getColor_frag(textureItem: ShaderItem, samplerItem: ShaderItem, colorItem: ShaderItem) {
-    if (textureItem) return `baseColor = textureSample(${textureItem.name}, ${samplerItem.name}, uv);`;
-    else {
+    if (textureItem) {
+        const _textureItem = textureItem as TextureBindShaderItem;
+        let strUv;
+        if (_textureItem.flipY) {
+            strUv = "vec2(uv.x,1-uv.y)";
+        } else {
+            strUv = "uv";
+        }
+        return `baseColor = textureSample(${textureItem.name}, ${samplerItem.name}, ${strUv});`;
+    } else {
         if (colorItem.shaderItemType === "vec3<f32>") return `baseColor = vec4(${colorItem.name},1.0);`;
         else return `baseColor = ${colorItem.name};`;
     }

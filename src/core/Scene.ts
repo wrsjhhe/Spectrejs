@@ -98,13 +98,13 @@ export class Scene extends Object3D {
         this._entriesGroup.push({
             binding: 0,
             resource: {
-                buffer: this._lastSetCamera.uniforms.get("projectionMatrix").buffer,
+                buffer: this._lastSetCamera.uniforms.get("projectionMatrix").GPUBuffer,
             },
         });
         this._entriesGroup.push({
             binding: 1,
             resource: {
-                buffer: this._lastSetCamera.uniforms.get("matrixWorldInverse").buffer,
+                buffer: this._lastSetCamera.uniforms.get("matrixWorldInverse").GPUBuffer,
             },
         });
 
@@ -112,7 +112,7 @@ export class Scene extends Object3D {
             this._entriesGroup.push({
                 binding: 2,
                 resource: {
-                    buffer: this._directionalLightBuffer.buffer,
+                    buffer: this._directionalLightBuffer.GPUBuffer,
                 },
             });
         }

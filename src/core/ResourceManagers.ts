@@ -1,4 +1,8 @@
 import { GPUTextureFormat } from "../Constants";
+import { Material } from "../materials/Material";
+import { RenderPass } from "../renderers/RenderPass";
+import { Pipleline } from "./Pipeline";
+import { Scene } from "./Scene";
 
 export class Cache {
     public static enabled = false;
@@ -30,33 +34,6 @@ export class Cache {
     }
 }
 
-export class Context {
-    private static _activeDevice: GPUDevice;
-    public static get activeDevice(): GPUDevice {
-        return Context._activeDevice;
-    }
-    public static set activeDevice(v: GPUDevice) {
-        Context._activeDevice = v;
-    }
-
-    private static _textureFormat: GPUTextureFormat = GPUTextureFormat.BGRA8Unorm;
-    public static get textureFormat() {
-        return Context._textureFormat;
-    }
-    public static set textureFormat(v: GPUTextureFormat) {
-        Context._textureFormat = v;
-    }
-
-    private static _commandEncoder: GPUCommandEncoder;
-    public static get commandEncoder() {
-        if (!Context._commandEncoder) {
-            Context._commandEncoder = Context._activeDevice.createCommandEncoder();
-        }
-
-        return Context._commandEncoder;
-    }
-}
-
 export class DelayDestroyer {
     public static delayTime = 5000;
 
@@ -64,5 +41,31 @@ export class DelayDestroyer {
         setTimeout(() => {
             destroyFunc(garbage);
         }, time);
+    }
+}
+
+export class PipelineCache {
+    private static _pipelineMap = new Map<RenderPass, Map<Material, Pipleline>>();
+
+    public static get(pass: RenderPass, material: Material, scene: Scene, needsCompile: boolean) {
+        const pipelines = PipelineCache._pipelineMap.get(pass);
+        if (!pipelines) {
+            PipelineCache._pipelineMap.set(pass, new Map<Material, Pipleline>());
+        }
+
+        let pipeline = PipelineCache._pipelineMap.get(pass).get(material);
+        if (!pipeline) {
+            pipeline = new Pipleline(pass, material);
+            PipelineCache._pipelineMap.get(pass).set(material, pipeline);
+
+            pipeline.compilePipeline(scene);
+        } else {
+            if (material.needsUpdate || needsCompile) {
+                pipeline.compilePipeline(scene);
+                material.needsUpdate = false;
+            }
+        }
+
+        return pipeline;
     }
 }

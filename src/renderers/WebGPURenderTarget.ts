@@ -3,6 +3,7 @@ import { Texture } from "./../textures/Texture";
 import { DepthTexture } from "./../textures/DepthTexture";
 import { GPUAddressMode, GPUFilterMode, GPUMipmapFilterMode, GPUTextureFormat } from "../Constants";
 import { RenderPass } from "./RenderPass";
+import { Context } from "../core/Context";
 
 export interface RenderTargetOptions {
     wrapU?: GPUAddressMode | undefined;
@@ -33,15 +34,13 @@ export class RenderTarget extends RenderPass {
     depthBuffer: boolean;
     stencilBuffer: boolean;
     depthTexture: DepthTexture;
-    sampleCount: number;
 
-    wrapU: GPUAddressMode = GPUAddressMode.MirrorRepeat;
-    wrapV: GPUAddressMode = GPUAddressMode.MirrorRepeat;
-    wrapW: GPUAddressMode = GPUAddressMode.MirrorRepeat;
+    wrapU: GPUAddressMode = GPUAddressMode.ClampToEdge;
+    wrapV: GPUAddressMode = GPUAddressMode.ClampToEdge;
+    wrapW: GPUAddressMode = GPUAddressMode.ClampToEdge;
     magFilter: GPUFilterMode = GPUFilterMode.Linear;
     minFilter: GPUFilterMode = GPUFilterMode.Linear;
     mipmapFilter: GPUMipmapFilterMode = GPUMipmapFilterMode.Linear;
-    format: GPUTextureFormat = GPUTextureFormat.RGBA8Unorm;
     anisotropy = Texture.DEFAULT_ANISOTROPY;
 
     offset: any;
@@ -61,8 +60,8 @@ export class RenderTarget extends RenderPass {
         this.viewport = new Vector4(0, 0, width, height);
 
         const image = document.createElement("img") as HTMLImageElement;
-        image.width = width;
-        image.height = height;
+        image.width = width * Context.pixelRatio;
+        image.height = height * Context.pixelRatio;
 
         this.texture = new Texture(
             image,
@@ -77,7 +76,7 @@ export class RenderTarget extends RenderPass {
         );
         this.texture.isRenderTargetTexture = true;
 
-        this.texture.flipY = false;
+        this.texture.flipY = true;
         this.texture.mipmapSize = options.mipmapSize !== undefined ? options.mipmapSize : 1;
         this.texture.internalFormat = options.internalFormat !== undefined ? options.internalFormat : null;
         this.texture.minFilter = options.minFilter !== undefined ? options.minFilter : GPUFilterMode.Linear;
@@ -87,16 +86,20 @@ export class RenderTarget extends RenderPass {
 
         this.depthTexture = options.depthTexture !== undefined ? options.depthTexture : null;
 
-        this.sampleCount = options.samples !== undefined ? options.samples : 1;
+        this._sampleCount = options.samples !== undefined ? options.samples : 1;
 
-        super._setupColorBuffer({ width, height }, window.devicePixelRatio, this.sampleCount, this.texture.format);
-        super._setupDepthBuffer({ width, height }, window.devicePixelRatio, this.sampleCount);
+        super._setupColorBuffer({ width, height }, this._sampleCount, this.texture.format);
+        super._setupDepthBuffer({ width, height }, this._sampleCount);
+    }
+
+    public updated() {
+        this.texture.needsUpdate = true;
     }
 
     setSize(width: number, height: number, depth = 1) {
         if (this.width !== width || this.height !== height || this.depth !== depth) {
-            this.width = width;
-            this.height = height;
+            this.width = width * Context.pixelRatio;
+            this.height = height * Context.pixelRatio;
             this.depth = depth;
 
             this.texture.image.width = width;
@@ -107,8 +110,8 @@ export class RenderTarget extends RenderPass {
         this.viewport.set(0, 0, width, height);
         this.scissor.set(0, 0, width, height);
 
-        super._setupColorBuffer({ width, height }, window.devicePixelRatio, this.sampleCount, this.texture.format);
-        super._setupDepthBuffer({ width, height }, window.devicePixelRatio, this.sampleCount);
+        super._setupColorBuffer({ width, height }, this._sampleCount, this.texture.format);
+        super._setupDepthBuffer({ width, height }, this._sampleCount);
     }
 
     public getDescriptor() {
@@ -129,8 +132,8 @@ export class RenderTarget extends RenderPass {
             } as GPURenderPassDepthStencilAttachment,
         };
 
-        const view = this.sampleCount > 1 ? this._colorAttachmentView : this.texture.bind.gpuTexture.createView();
-        const resolveTarget = this.sampleCount > 1 ? this.texture.bind.gpuTexture.createView() : undefined;
+        const view = this._sampleCount > 1 ? this._colorAttachmentView : this.texture.targetTexture.gpuTexutureView;
+        const resolveTarget = this._sampleCount > 1 ? this.texture.targetTexture.gpuTexutureView : undefined;
         (descriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].view = view;
         (descriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget = resolveTarget;
         descriptor.depthStencilAttachment.view = this._depthBuffer.createView();

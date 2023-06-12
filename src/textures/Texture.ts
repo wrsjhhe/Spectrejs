@@ -5,6 +5,8 @@ import { Source } from "./Source";
 import { GPUAddressMode, GPUFilterMode, GPUTextureFormat, GPUMipmapFilterMode } from "../Constants";
 import { BindTexture } from "../core/binds/BindTexture";
 import { BindSampler } from "../core/binds/BindSampler";
+import { Context } from "../core/Context";
+import { Size } from "../core/Defines";
 
 export class Texture {
     static DEFAULT_ANISOTROPY = 1;
@@ -40,7 +42,7 @@ export class Texture {
     public matrix = new Matrix3();
 
     public premultiplyAlpha = false;
-    public flipY = true;
+    public flipY = false;
     public unpackAlignment = 4; // valid values: 1, 2, 4, 8 (see http://www.khronos.org/opengles/sdk/docs/man/xhtml/glPixelStorei.xml)
 
     public version = 0;
@@ -50,18 +52,22 @@ export class Texture {
 
     public internalFormat: any = null;
 
+    private _targetTexture: BindTexture;
     private _bind: BindTexture;
     private _sampler: BindSampler;
 
+    public readonly width: number;
+    public readonly height: number;
+
     constructor(
-        image: HTMLImageElement,
-        wrapU: GPUAddressMode = GPUAddressMode.MirrorRepeat,
-        wrapV: GPUAddressMode = GPUAddressMode.MirrorRepeat,
-        wrapW: GPUAddressMode = GPUAddressMode.MirrorRepeat,
+        image: HTMLImageElement | Size,
+        wrapU: GPUAddressMode = GPUAddressMode.ClampToEdge,
+        wrapV: GPUAddressMode = GPUAddressMode.ClampToEdge,
+        wrapW: GPUAddressMode = GPUAddressMode.ClampToEdge,
         magFilter: GPUFilterMode = GPUFilterMode.Linear,
         minFilter: GPUFilterMode = GPUFilterMode.Linear,
         mipmapFilter: GPUMipmapFilterMode = GPUMipmapFilterMode.Linear,
-        format: GPUTextureFormat = GPUTextureFormat.RGBA8Unorm,
+        format: GPUTextureFormat = GPUTextureFormat.BGRA8Unorm,
         anisotropy = Texture.DEFAULT_ANISOTROPY
     ) {
         this.uuid = MathUtils.generateUUID();
@@ -69,6 +75,9 @@ export class Texture {
         this.name = "";
 
         this.source = new Source(image);
+        this.width = image.width;
+        this.height = image.height;
+
         this.mipmapSize = 1;
 
         this.channel = 0;
@@ -147,21 +156,50 @@ export class Texture {
 
     set needsUpdate(value: boolean) {
         if (value === true) {
-            if (this._bind) this._bind.update();
+            if (this._bind && this._targetTexture) {
+                const commandEncoder = Context.beginCommandEncoder();
+                commandEncoder.copyTextureToTexture(
+                    {
+                        texture: this._targetTexture.gpuTexture,
+                    },
+                    {
+                        texture: this._bind.gpuTexture,
+                    },
+                    [this.width, this.height]
+                );
+                this._targetTexture.gpuTexture;
+                Context.finishCommand();
+            }
 
             this.version++;
             this.source.needsUpdate = true;
         }
     }
 
-    get bind() {
-        if (!this._bind) {
-            this._bind = new BindTexture(this, this.mipmapSize, !this.isRenderTargetTexture);
+    public get targetTexture() {
+        if (!this._targetTexture) {
+            this._targetTexture = new BindTexture(
+                this,
+                GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+                this.mipmapSize
+            );
         }
+        return this._targetTexture;
+    }
+
+    public get bind() {
+        if (!this._bind) {
+            let usage = GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
+            if (!this.isRenderTargetTexture) {
+                usage |= GPUTextureUsage.RENDER_ATTACHMENT;
+            }
+            this._bind = new BindTexture(this, usage, this.mipmapSize);
+        }
+
         return this._bind;
     }
 
-    get sampler() {
+    public get sampler() {
         if (!this._sampler) this._sampler = new BindSampler(this);
         return this._sampler;
     }

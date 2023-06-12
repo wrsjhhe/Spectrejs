@@ -1,6 +1,6 @@
 import { Texture } from "../../textures/Texture";
 import { BindType } from "../Defines";
-import { Context } from "../ResourceManagers";
+import { Context } from "../Context";
 import { BindValue } from "./BindValue";
 
 export class BindSampler extends BindValue {
@@ -18,6 +18,7 @@ export class BindSampler extends BindValue {
             mipmapFilter: texture.mipmapFilter,
             maxAnisotropy: texture.anisotropy,
         });
+        this._needsUpdate = false;
     }
 
     public override get type() {

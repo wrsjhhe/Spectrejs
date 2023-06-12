@@ -1,5 +1,5 @@
 import { GPUTextureFormat } from "../Constants";
-import { Context } from "../core/ResourceManagers";
+import { Context } from "../core/Context";
 
 export interface RendererSize {
     width: number;
@@ -12,12 +12,13 @@ export abstract class RenderPass {
 
     protected _colorAttachmentView: GPUTextureView;
 
-    protected _setupColorBuffer(
-        size: RendererSize,
-        pixelRatio: number,
-        sampleCount: number,
-        presentationFormat: GPUTextureFormat
-    ) {
+    protected _sampleCount = 1;
+
+    protected _presentationFormat: GPUTextureFormat = Context.textureFormat;
+
+    constructor() {}
+
+    protected _setupColorBuffer(size: RendererSize, sampleCount: number, presentationFormat: GPUTextureFormat) {
         const device = Context.activeDevice;
 
         if (device) {
@@ -25,8 +26,8 @@ export abstract class RenderPass {
 
             this._colorBuffer = device.createTexture({
                 size: {
-                    width: Math.floor(size.width * pixelRatio),
-                    height: Math.floor(size.height * pixelRatio),
+                    width: Math.floor(size.width * Context.pixelRatio),
+                    height: Math.floor(size.height * Context.pixelRatio),
                     depthOrArrayLayers: 1,
                 },
                 sampleCount: sampleCount,
@@ -37,20 +38,28 @@ export abstract class RenderPass {
         }
     }
 
-    protected _setupDepthBuffer(size: RendererSize, pixelRatio: number, sampleCount: number) {
+    protected _setupDepthBuffer(size: RendererSize, sampleCount: number) {
         const device = Context.activeDevice;
         if (this._depthBuffer) this._depthBuffer.destroy();
 
         this._depthBuffer = device.createTexture({
             label: "depthBuffer",
             size: {
-                width: Math.floor(size.width * pixelRatio),
-                height: Math.floor(size.height * pixelRatio),
+                width: Math.floor(size.width * Context.pixelRatio),
+                height: Math.floor(size.height * Context.pixelRatio),
                 depthOrArrayLayers: 1,
             },
             sampleCount: sampleCount,
             format: GPUTextureFormat.Depth24Plus,
             usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
         });
+    }
+
+    public get sampleCount() {
+        return this._sampleCount;
+    }
+
+    public get presentationFormat() {
+        return this._presentationFormat;
     }
 }
