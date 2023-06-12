@@ -34,8 +34,8 @@ export class MeshPhysicalShader extends Shader {
             ${basic.location_vert(uvItem)}
             ) -> VertexOutput {
                 var output : VertexOutput;
-                ${basic.transform_vert()}
-                ${basic.uv_vert(uvItem)}
+                ${basic.transform_vert(this.flipY)}
+                ${basic.uv_vert(uvItem, this.flipY)}
                 output.vViewPosition = - mvPosition.xyz;
                 output.normal = normal;
                 return output;

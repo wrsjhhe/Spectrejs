@@ -16,6 +16,8 @@ export abstract class RenderPass {
 
     protected _presentationFormat: GPUTextureFormat = Context.textureFormat;
 
+    protected _flipY = false;
+
     constructor() {}
 
     protected _setupColorBuffer(size: RendererSize, sampleCount: number, presentationFormat: GPUTextureFormat) {
@@ -61,5 +63,9 @@ export abstract class RenderPass {
 
     public get presentationFormat() {
         return this._presentationFormat;
+    }
+
+    public get flipY() {
+        return this._flipY;
     }
 }

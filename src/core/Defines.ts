@@ -37,10 +37,6 @@ export interface BindShaderItem extends ShaderItem {
     visibility: GPUShaderStageFlags;
 }
 
-export interface TextureBindShaderItem extends BindShaderItem {
-    flipY: boolean;
-}
-
 export const ObjectGroupLayoutInfo = {
     matrixWorld: {
         index: 0,

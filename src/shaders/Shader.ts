@@ -6,6 +6,8 @@ export abstract class Shader {
     protected _fragmentShaderCode: string;
     protected _material: Material;
 
+    public flipY = false;
+
     constructor(material: Material) {
         this._material = material;
     }

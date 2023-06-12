@@ -58,10 +58,10 @@ export class PipelineCache {
             pipeline = new Pipleline(pass, material);
             PipelineCache._pipelineMap.get(pass).set(material, pipeline);
 
-            pipeline.compilePipeline(scene);
+            pipeline.compilePipeline(pass, scene);
         } else {
             if (material.needsUpdate || needsCompile) {
-                pipeline.compilePipeline(scene);
+                pipeline.compilePipeline(pass, scene);
                 material.needsUpdate = false;
             }
         }

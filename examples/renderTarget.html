@@ -48,7 +48,10 @@
                 camera.position.z = 500;
                 camera.lookAt(new Spectre.Vector3(0, 0, 0));
 
-                renderTarget = new Spectre.RenderTarget(512, 512);
+                renderTarget = new Spectre.RenderTarget(512, 512, {
+                    sampleCount: 4,
+                    mipmapSize: 8,
+                });
 
                 const controls = new Spectre.OrbitControls(camera, renderer.domElement);
                 const geometry = new Spectre.PlaneGeometry(100, 100);

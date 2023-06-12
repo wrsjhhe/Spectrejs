@@ -6,14 +6,7 @@ import { BindBuffer } from "../core/binds/BindBuffer";
 import { BindSampler } from "../core/binds/BindSampler";
 import { BindTexture } from "../core/binds/BindTexture";
 import { MathUtils } from "../math/MathUtils";
-import {
-    AttributeShaderItem,
-    BindShaderItem,
-    BindType,
-    getLayoutEntity,
-    ShaderItem,
-    TextureBindShaderItem,
-} from "../core/Defines";
+import { AttributeShaderItem, BindShaderItem, BindType, getLayoutEntity, ShaderItem } from "../core/Defines";
 import { Shader } from "../shaders/Shader";
 
 export abstract class Material {
@@ -180,13 +173,7 @@ export abstract class Material {
             this._setBindItem("colorSampler", "sampler", BindType.sampler, GPUShaderStage.FRAGMENT);
             this._bindMap.set("colorSampler", v.sampler);
 
-            const textureItem = this._setBindItem(
-                "colorTexture",
-                "texture_2d<f32>",
-                BindType.texture,
-                GPUShaderStage.FRAGMENT
-            );
-            (textureItem as TextureBindShaderItem).flipY = v.flipY;
+            this._setBindItem("colorTexture", "texture_2d<f32>", BindType.texture, GPUShaderStage.FRAGMENT);
             this._bindMap.set("colorTexture", v.bind);
 
             (this._bindMap.get("colorTexture") as BindTexture).texture = v;

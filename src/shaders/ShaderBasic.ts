@@ -1,4 +1,4 @@
-import { BindShaderItem, BindType, ShaderItem, TextureBindShaderItem } from "../core/Defines";
+import { BindShaderItem, BindType, ShaderItem } from "../core/Defines";
 
 export interface IndexObj {
     index: number;
@@ -21,15 +21,20 @@ export function customVary_value(name: string, itemType: string, indexObj: Index
     return `@location(${indexObj.index++}) ${name} : ${itemType},`;
 }
 
-export function transform_vert() {
+export function transform_vert(flipY: boolean) {
     return `
             var mvPosition = matrixWorldInverse * modelMatrix * vec4<f32>(position, 1.0);
             output.Position = projectionMatrix * mvPosition;
+            ${flipY ? "output.Position.y = output.Position.y * -1.f;" : ""}
             `;
 }
 
-export function uv_vert(item: ShaderItem) {
-    if (item) return `output.uv = uv;`;
+export function uv_vert(item: ShaderItem, flipY: boolean) {
+    if (item)
+        return `
+    output.uv = uv;
+    ${flipY ? "output.uv.y = output.uv.y * -1.f;" : ""}
+    `;
     return "";
 }
 
@@ -43,14 +48,7 @@ export function bind_value(groupIndex: number, item: BindShaderItem) {
 
 export function getColor_frag(textureItem: ShaderItem, samplerItem: ShaderItem, colorItem: ShaderItem) {
     if (textureItem) {
-        const _textureItem = textureItem as TextureBindShaderItem;
-        let strUv;
-        if (_textureItem.flipY) {
-            strUv = "vec2(uv.x,1-uv.y)";
-        } else {
-            strUv = "uv";
-        }
-        return `baseColor = textureSample(${textureItem.name}, ${samplerItem.name}, ${strUv});`;
+        return `baseColor = textureSample(${textureItem.name}, ${samplerItem.name}, uv);`;
     } else {
         if (colorItem.shaderItemType === "vec3<f32>") return `baseColor = vec4(${colorItem.name},1.0);`;
         else return `baseColor = ${colorItem.name};`;

@@ -18,7 +18,7 @@ export interface RenderTargetOptions {
     stencilBuffer?: boolean | undefined; // false;
     mipmapSize?: number | undefined; // true;
     depthTexture?: DepthTexture | undefined;
-    samples?: number;
+    sampleCount?: number;
     internalFormat?: any;
 }
 
@@ -50,6 +50,9 @@ export class RenderTarget extends RenderPass {
 
     constructor(width = 1, height = 1, options: RenderTargetOptions = {}) {
         super();
+
+        this._flipY = true;
+
         this.width = width;
         this.height = height;
         this.depth = 1;
@@ -86,7 +89,7 @@ export class RenderTarget extends RenderPass {
 
         this.depthTexture = options.depthTexture !== undefined ? options.depthTexture : null;
 
-        this._sampleCount = options.samples !== undefined ? options.samples : 1;
+        this._sampleCount = options.sampleCount !== undefined ? options.sampleCount : 1;
 
         super._setupColorBuffer({ width, height }, this._sampleCount, this.texture.format);
         super._setupDepthBuffer({ width, height }, this._sampleCount);

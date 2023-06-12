@@ -7,6 +7,7 @@ import { BindTexture } from "../core/binds/BindTexture";
 import { BindSampler } from "../core/binds/BindSampler";
 import { Context } from "../core/Context";
 import { Size } from "../core/Defines";
+import { TextureMipmapGenerator } from "./TextureMipmapGenerator";
 
 export class Texture {
     static DEFAULT_ANISOTROPY = 1;
@@ -157,20 +158,9 @@ export class Texture {
     set needsUpdate(value: boolean) {
         if (value === true) {
             if (this._bind && this._targetTexture) {
-                const commandEncoder = Context.beginCommandEncoder();
-                commandEncoder.copyTextureToTexture(
-                    {
-                        texture: this._targetTexture.gpuTexture,
-                    },
-                    {
-                        texture: this._bind.gpuTexture,
-                    },
-                    [this.width, this.height]
-                );
-                this._targetTexture.gpuTexture;
-                Context.finishCommand();
+                this._bind.copyTexture(this._targetTexture.gpuTexture);
             }
-
+            if (this.mipmapSize > 1) TextureMipmapGenerator.webGPUGenerateMipmap(this);
             this.version++;
             this.source.needsUpdate = true;
         }
@@ -178,21 +168,16 @@ export class Texture {
 
     public get targetTexture() {
         if (!this._targetTexture) {
-            this._targetTexture = new BindTexture(
-                this,
-                GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-                this.mipmapSize
-            );
+            this._targetTexture = new BindTexture(this, GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC);
         }
         return this._targetTexture;
     }
 
     public get bind() {
         if (!this._bind) {
-            let usage = GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST;
-            if (!this.isRenderTargetTexture) {
-                usage |= GPUTextureUsage.RENDER_ATTACHMENT;
-            }
+            const usage =
+                GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT;
+
             this._bind = new BindTexture(this, usage, this.mipmapSize);
         }
 

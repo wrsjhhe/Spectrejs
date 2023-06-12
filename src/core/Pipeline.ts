@@ -29,11 +29,11 @@ export class Pipleline {
         Cache.add("pipelineObjectBindGroup", this._objectBindGroups);
     }
 
-    public compilePipeline(scene: Scene) {
+    public compilePipeline(pass: RenderPass, scene: Scene) {
         this.needsCreateBindGroup = true;
 
         this._beforeCompile(scene);
-        this._compile(scene);
+        this._compile(pass, scene);
     }
 
     public bindCommonUniform(passEncoder: GPURenderPassEncoder) {
@@ -45,8 +45,9 @@ export class Pipleline {
         passEncoder.setBindGroup(2, this._objectBindGroups[object.uuid]);
     }
 
-    private _compile(scene: Scene) {
+    private _compile(pass: RenderPass, scene: Scene) {
         const device = Context.activeDevice;
+        this.material.shader.flipY = pass.flipY;
         this.material.shader.recreate(scene);
 
         this._GPUPipeline = device.createRenderPipeline({
@@ -83,7 +84,7 @@ export class Pipleline {
             },
             primitive: {
                 topology: GPUPrimitiveTopology.TriangleList,
-                cullMode: GPUCullMode.Back,
+                cullMode: pass.flipY ? GPUCullMode.Front : GPUCullMode.Back,
             },
             multisample: {
                 count: this._pass.sampleCount,

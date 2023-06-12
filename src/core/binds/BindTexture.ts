@@ -13,8 +13,10 @@ export class BindTexture extends BindValue {
     private _width: number;
     private _height: number;
 
-    constructor(texture: Texture, usage: number, mipmapSize = 0) {
+    constructor(texture: Texture, usage: number, mipmapSize = 1) {
         super();
+        this._width = texture.width;
+        this._height = texture.height;
 
         this._texture = texture;
         this._gpuTexture = Context.activeDevice.createTexture({
@@ -25,9 +27,6 @@ export class BindTexture extends BindValue {
         });
         if (!texture.isRenderTargetTexture) {
             createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
-                this._width = imageBitmap.width;
-                this._height = imageBitmap.height;
-
                 Context.activeDevice.queue.copyExternalImageToTexture(
                     { source: imageBitmap },
                     { texture: this._gpuTexture },
@@ -40,6 +39,21 @@ export class BindTexture extends BindValue {
         }
 
         this._needsUpdate = false;
+    }
+
+    public copyTexture(src: GPUTexture) {
+        const commandEncoder = Context.beginCommandEncoder();
+        commandEncoder.copyTextureToTexture(
+            {
+                texture: src,
+            },
+            {
+                texture: this._gpuTexture,
+            },
+            [this._width, this._height]
+        );
+
+        Context.finishCommand();
     }
 
     public override destroy(): void {
