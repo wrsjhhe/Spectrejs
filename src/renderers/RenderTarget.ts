@@ -1,6 +1,6 @@
-import { Vector4 } from "./../math/Vector4";
-import { Texture } from "./../textures/Texture";
-import { DepthTexture } from "./../textures/DepthTexture";
+import { Vector4 } from "../math/Vector4";
+import { Texture } from "../textures/Texture";
+import { DepthTexture } from "../textures/DepthTexture";
 import { GPUAddressMode, GPUFilterMode, GPUMipmapFilterMode, GPUTextureFormat } from "../Constants";
 import { RenderPass } from "./RenderPass";
 import { Context } from "../core/Context";
