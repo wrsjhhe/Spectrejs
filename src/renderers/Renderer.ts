@@ -9,7 +9,7 @@ import { Scene } from "../core/Scene";
 import { Material } from "../materials/Material";
 import { Color } from "../math/Color";
 import { RenderPass } from "./RenderPass";
-import { RenderTarget } from "./WebGPURenderTarget";
+import { RenderTarget } from "./RenderTarget";
 
 interface WebGPURendererParameters {
     canvas?: HTMLCanvasElement;
@@ -23,7 +23,7 @@ interface RendererSize {
     height: number;
 }
 
-export class WebGPURenderer extends RenderPass {
+export class Renderer extends RenderPass {
     private _parameters: WebGPURendererParameters;
     private _canvas: HTMLCanvasElement;
     private _device: GPUDevice;
