@@ -9,7 +9,7 @@ export class DepthTarget extends RenderPass {
 
         this._flipY = true;
 
-        this.depthTexture;
+        this.depthTexture = new DepthTexture({ width, height });
     }
 
     public override setSize(width: number, height: number) {

@@ -35,8 +35,6 @@ export abstract class Texture {
     public matrixAutoUpdate = true;
     public matrix = new Matrix3();
 
-    public flipY = false;
-
     public isRenderTargetTexture = false; // indicates whether a texture belongs to a render target or not
 
     private _targetTexture: BindTexture;
