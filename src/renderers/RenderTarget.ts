@@ -24,13 +24,8 @@ export interface RenderTargetOptions {
 }
 
 export class RenderTarget extends RenderPass {
-    width: number;
-    height: number;
     depth: number;
 
-    scissor: Vector4;
-    scissorTest: boolean;
-    viewport: Vector4;
     texture: Texture;
     depthBuffer: boolean;
     stencilBuffer: boolean;
@@ -49,19 +44,10 @@ export class RenderTarget extends RenderPass {
     type: any;
     mipmapSize: any;
 
-    constructor(width = 1, height = 1, options: RenderTargetOptions = {}) {
-        super();
+    constructor(width: number, height: number, options: RenderTargetOptions = {}) {
+        super({ width, height });
 
         this._flipY = true;
-
-        this.width = width;
-        this.height = height;
-        this.depth = 1;
-
-        this.scissor = new Vector4(0, 0, width, height);
-        this.scissorTest = false;
-
-        this.viewport = new Vector4(0, 0, width, height);
 
         this.texture = new FrameBufferTexture(
             { width: width * Context.pixelRatio, height: height * Context.pixelRatio },
@@ -87,26 +73,21 @@ export class RenderTarget extends RenderPass {
 
         this._sampleCount = options.sampleCount !== undefined ? options.sampleCount : 1;
 
-        super._setupColorBuffer({ width, height }, this._sampleCount, this.texture.format);
-        super._setupDepthBuffer({ width, height }, this._sampleCount);
+        super._setupColorBuffer(this.texture.format);
+        super._setupDepthBuffer();
     }
 
     public updated() {
         this.texture.needsUpdate = true;
     }
 
-    setSize(width: number, height: number, depth = 1) {
-        if (this.width !== width || this.height !== height || this.depth !== depth) {
-            this.width = width * Context.pixelRatio;
-            this.height = height * Context.pixelRatio;
-            this.depth = depth;
+    public override setSize(width: number, height: number) {
+        const res = super.setSize(width, height);
+        if (res) {
+            super._setupColorBuffer(this.texture.format);
+            super._setupDepthBuffer();
         }
-
-        this.viewport.set(0, 0, width, height);
-        this.scissor.set(0, 0, width, height);
-
-        super._setupColorBuffer({ width, height }, this._sampleCount, this.texture.format);
-        super._setupDepthBuffer({ width, height }, this._sampleCount);
+        return res;
     }
 
     public getDescriptor() {
