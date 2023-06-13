@@ -60,8 +60,6 @@ export class RenderTarget extends RenderPass {
             options.format,
             options.anisotropy
         );
-        this.texture.isRenderTargetTexture = true;
-
         this.texture.mipmapSize = options.mipmapSize !== undefined ? options.mipmapSize : 1;
         this.texture.minFilter = options.minFilter !== undefined ? options.minFilter : GPUFilterMode.Linear;
 
