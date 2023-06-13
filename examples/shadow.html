@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8" />
-        <title>RenderTarget</title>
+        <title>Shadow</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style>
             body {
@@ -29,77 +29,65 @@
             let container;
             let renderer;
             let scene;
-            let mesh5;
+            let mesh;
             let camera;
             let directionalLight;
-            let renderTarget;
             function init() {
                 container = document.getElementById("container");
                 renderer = new Spectre.WebGPURenderer({
                     powerPreference: "high-performance",
                     antialias: true,
                 });
-                renderer.clearColor = new Spectre.Color(0.2, 0.2, 0.2);
                 container.appendChild(renderer.domElement);
 
                 scene = new Spectre.Scene();
 
                 camera = new Spectre.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
-                camera.position.z = 500;
+                camera.position.y = 1000;
                 camera.lookAt(new Spectre.Vector3(0, 0, 0));
 
-                renderTarget = new Spectre.RenderTarget(512, 512, {
-                    sampleCount: 4,
-                    mipmapSize: 8,
-                });
+                directionalLight = new Spectre.DirectionalLight(new Spectre.Color(1, 1, 1));
+                directionalLight.position.x = 1;
+                directionalLight.position.z = -1;
+                directionalLight.needsUpdate = true;
+                scene.add(directionalLight);
 
                 const controls = new Spectre.OrbitControls(camera, renderer.domElement);
-                const geometry = new Spectre.PlaneGeometry(100, 100);
+                const pbrMaterial = new Spectre.MeshPhysicalMaterial();
+                pbrMaterial.color = new Spectre.Color(1, 0, 0);
+                pbrMaterial.metalness = 0.5;
+                pbrMaterial.roughness = 0.5;
+                const phongMaterial = new Spectre.MeshPhongMaterial();
+                phongMaterial.color = new Spectre.Color(1, 0, 0);
+                phongMaterial.specular = new Spectre.Color(0.7, 0.7, 0.7);
 
-                const material1 = new Spectre.MeshBasicMaterial();
-                material1.color = new Spectre.Color(1, 0, 0);
-                const mesh1 = new Spectre.Mesh(geometry, material1);
-                scene.add(mesh1);
+                const sphereGeometry = new Spectre.SphereGeometry(100, 128, 128);
+                const boxGeometry = new Spectre.BoxGeometry(100, 100, 100);
+                const mesh = new Spectre.Mesh(boxGeometry, phongMaterial);
+                mesh.position.y = 100;
+                mesh.updateMatrix();
 
-                const material2 = new Spectre.MeshBasicMaterial();
-                material2.color = new Spectre.Color(0, 1, 0);
-                const mesh2 = new Spectre.Mesh(geometry, material2);
-                scene.add(mesh2);
-                mesh2.translateX(100);
+                const mesh2 = new Spectre.Mesh(sphereGeometry, pbrMaterial);
+                mesh2.position.x = 250;
+                mesh2.position.y = 150;
                 mesh2.updateMatrix();
 
-                const material3 = new Spectre.MeshBasicMaterial();
-                material3.color = new Spectre.Color(1, 1, 0);
-                const mesh3 = new Spectre.Mesh(geometry, material3);
-                scene.add(mesh3);
-                mesh3.translateY(100);
-                mesh3.updateMatrix();
+                scene.add(mesh);
+                scene.add(mesh2);
 
-                const material4 = new Spectre.MeshBasicMaterial();
-                material4.color = new Spectre.Color(1, 1, 1);
-                const mesh4 = new Spectre.Mesh(geometry, material4);
-                scene.add(mesh4);
-                mesh4.translateX(100);
-                mesh4.translateY(100);
-                mesh4.updateMatrix();
+                const planeGeometry = new Spectre.PlaneGeometry(1000, 1000);
+                const planeMaterial = new Spectre.MeshBasicMaterial();
+                planeMaterial.color = new Spectre.Color(0.7, 0.7, 0.7);
+                const plane = new Spectre.Mesh(planeGeometry, planeMaterial);
+                plane.rotateX(-Math.PI / 2);
+                plane.updateMatrix();
 
-                const material5 = new Spectre.MeshBasicMaterial();
-                material5.map = renderTarget.texture;
-                mesh5 = new Spectre.Mesh(geometry, material5);
-                scene.add(mesh5);
-                mesh5.translateX(200);
-                mesh5.translateY(200);
-                mesh5.updateMatrix();
+                scene.add(plane);
             }
 
             function frame() {
+                renderer.render(scene, camera);
                 render();
-                mesh5.visible = false;
-                renderer.setRenderTarget(renderTarget);
-                renderer.render(scene, camera);
-                renderer.setRenderTarget(null);
-                mesh5.visible = true;
-                renderer.render(scene, camera);
             }
 
             function render() {
