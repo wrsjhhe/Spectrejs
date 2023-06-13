@@ -5,8 +5,8 @@ import { Size } from "../core/Defines";
 export abstract class RenderPass {
     protected _size: Size;
 
-    protected _colorBuffer: GPUTexture;
-    protected _depthBuffer: GPUTexture;
+    protected _colorTexture: GPUTexture;
+    protected _depthTexture: GPUTexture;
 
     protected _colorAttachmentView: GPUTextureView;
 
@@ -35,9 +35,9 @@ export abstract class RenderPass {
         const device = Context.activeDevice;
 
         if (device) {
-            if (this._colorBuffer) this._colorBuffer.destroy();
+            if (this._colorTexture) this._colorTexture.destroy();
 
-            this._colorBuffer = device.createTexture({
+            this._colorTexture = device.createTexture({
                 size: {
                     width: Math.floor(this._size.width * Context.pixelRatio),
                     height: Math.floor(this._size.height * Context.pixelRatio),
@@ -47,15 +47,15 @@ export abstract class RenderPass {
                 format: presentationFormat,
                 usage: GPUTextureUsage.RENDER_ATTACHMENT,
             });
-            this._colorAttachmentView = this._colorBuffer.createView();
+            this._colorAttachmentView = this._colorTexture.createView();
         }
     }
 
     protected _setupDepthBuffer() {
         const device = Context.activeDevice;
-        if (this._depthBuffer) this._depthBuffer.destroy();
+        if (this._depthTexture) this._depthTexture.destroy();
 
-        this._depthBuffer = device.createTexture({
+        this._depthTexture = device.createTexture({
             label: "depthBuffer",
             size: {
                 width: Math.floor(this._size.width * Context.pixelRatio),

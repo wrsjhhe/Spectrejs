@@ -11,7 +11,7 @@ export class DepthTexture extends Texture {
         magFilter: GPUFilterMode = GPUFilterMode.Linear,
         minFilter: GPUFilterMode = GPUFilterMode.Linear,
         mipmapFilter: GPUMipmapFilterMode = GPUMipmapFilterMode.Linear,
-        format: GPUTextureFormat = GPUTextureFormat.BGRA8Unorm,
+        format: GPUTextureFormat = GPUTextureFormat.Depth24Plus,
         anisotropy = 1
     ) {
         format = format !== undefined ? format : GPUTextureFormat.Depth24Plus;

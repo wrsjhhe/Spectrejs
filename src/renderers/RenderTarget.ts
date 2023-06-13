@@ -26,10 +26,10 @@ export interface RenderTargetOptions {
 export class RenderTarget extends RenderPass {
     depth: number;
 
-    texture: Texture;
-    depthBuffer: boolean;
-    stencilBuffer: boolean;
-    depthTexture: DepthTexture;
+    texture: FrameBufferTexture;
+    // depthBuffer: boolean;
+    // stencilBuffer: boolean;
+    // depthTexture: DepthTexture;
 
     wrapU: GPUAddressMode = GPUAddressMode.ClampToEdge;
     wrapV: GPUAddressMode = GPUAddressMode.ClampToEdge;
@@ -50,7 +50,7 @@ export class RenderTarget extends RenderPass {
         this._flipY = true;
 
         this.texture = new FrameBufferTexture(
-            { width: width * Context.pixelRatio, height: height * Context.pixelRatio },
+            { width, height },
             options.wrapU,
             options.wrapV,
             options.wrapW,
@@ -66,10 +66,10 @@ export class RenderTarget extends RenderPass {
         this.texture.mipmapSize = options.mipmapSize !== undefined ? options.mipmapSize : 1;
         this.texture.minFilter = options.minFilter !== undefined ? options.minFilter : GPUFilterMode.Linear;
 
-        this.depthBuffer = options.depthBuffer !== undefined ? options.depthBuffer : true;
-        this.stencilBuffer = options.stencilBuffer !== undefined ? options.stencilBuffer : false;
+        // this.depthBuffer = options.depthBuffer !== undefined ? options.depthBuffer : true;
+        // this.stencilBuffer = options.stencilBuffer !== undefined ? options.stencilBuffer : false;
 
-        this.depthTexture = options.depthTexture !== undefined ? options.depthTexture : null;
+        // this.depthTexture = options.depthTexture !== undefined ? options.depthTexture : null;
 
         this._sampleCount = options.sampleCount !== undefined ? options.sampleCount : 1;
 
@@ -112,7 +112,7 @@ export class RenderTarget extends RenderPass {
         const resolveTarget = this._sampleCount > 1 ? this.texture.targetTexture.gpuTexutureView : undefined;
         (descriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].view = view;
         (descriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget = resolveTarget;
-        descriptor.depthStencilAttachment.view = this._depthBuffer.createView();
+        descriptor.depthStencilAttachment.view = this._depthTexture.createView();
 
         return descriptor;
     }

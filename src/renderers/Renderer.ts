@@ -133,7 +133,6 @@ export class Renderer extends RenderPass {
         let pass = this as RenderPass;
         let descriptor = undefined;
         if (this._currentRenderTarget) {
-            this._currentRenderTarget.depthTexture;
             descriptor = this._currentRenderTarget.getDescriptor();
             pass = this._currentRenderTarget;
         } else {
@@ -143,7 +142,7 @@ export class Renderer extends RenderPass {
             (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].view = view;
             (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget =
                 resolveTarget;
-            this._renderPassDescriptor.depthStencilAttachment.view = this._depthBuffer.createView();
+            this._renderPassDescriptor.depthStencilAttachment.view = this._depthTexture.createView();
 
             descriptor = this._renderPassDescriptor;
 
