@@ -1,4 +1,3 @@
-import { GPUTextureFormat } from "../Constants";
 import { Material } from "../materials/Material";
 import { RenderPass } from "../renderers/RenderPass";
 import { Pipleline } from "./Pipeline";

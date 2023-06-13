@@ -18,19 +18,12 @@ interface WebGPURendererParameters {
     antialias?: boolean;
 }
 
-interface RendererSize {
-    width: number;
-    height: number;
-}
-
 export class Renderer extends RenderPass {
     private _parameters: WebGPURendererParameters;
     private _canvas: HTMLCanvasElement;
     private _device: GPUDevice;
     private _context: GPUCanvasContext;
     private _alphaMode: GPUCanvasAlphaMode = "premultiplied";
-    private _size: RendererSize;
-    private _pixelRatio = Context.pixelRatio;
     private _clearColor = new Color(0, 0, 0);
     private _sizeChanged = false;
 
@@ -108,15 +101,15 @@ export class Renderer extends RenderPass {
     }
 
     public setSize(width: number, height: number) {
-        this._size = {
-            width: width,
-            height: height,
-        };
-        this._canvas.width = width * this._pixelRatio;
-        this._canvas.height = height * this._pixelRatio;
-        super._setupColorBuffer(this._size, this.sampleCount, this.presentationFormat);
-        super._setupDepthBuffer(this._size, this.sampleCount);
-        this._sizeChanged = true;
+        const res = super.setSize(width, height);
+        if (res) {
+            this._canvas.width = width * Context.pixelRatio;
+            this._canvas.height = height * Context.pixelRatio;
+            super._setupColorBuffer(this.presentationFormat);
+            super._setupDepthBuffer();
+            this._sizeChanged = true;
+        }
+        return res;
     }
 
     public render(scene: Scene, camera: Camera) {
@@ -139,7 +132,6 @@ export class Renderer extends RenderPass {
         let pass = this as RenderPass;
         let descriptor = undefined;
         if (this._currentRenderTarget) {
-            this._currentRenderTarget.depthTexture;
             descriptor = this._currentRenderTarget.getDescriptor();
             pass = this._currentRenderTarget;
         } else {
@@ -149,7 +141,7 @@ export class Renderer extends RenderPass {
             (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].view = view;
             (this._renderPassDescriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget =
                 resolveTarget;
-            this._renderPassDescriptor.depthStencilAttachment.view = this._depthBuffer.createView();
+            this._renderPassDescriptor.depthStencilAttachment.view = this._depthTexture.createView();
 
             descriptor = this._renderPassDescriptor;
 

@@ -39,8 +39,6 @@ export { OrthographicCamera } from "./cameras/OrthographicCamera";
 
 export { OrbitControls } from "./controls/OrbitControls";
 
-export { FrameBufferTexture } from "./textures/FrameBufferTexture";
-
 export { FileLoader } from "./loaders/FileLoader";
 export { ImageLoader } from "./loaders/ImageLoader";
 export { TextureLoader } from "./loaders/ImageTextureLoader";
