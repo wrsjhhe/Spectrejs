@@ -19,4 +19,18 @@ export class DepthTarget extends RenderPass {
         }
         return res;
     }
+
+    public getDescriptor() {
+        const descriptor = {
+            depthStencilAttachment: {
+                depthClearValue: 1.0,
+                depthLoadOp: "clear",
+                depthStoreOp: "store",
+            } as GPURenderPassDepthStencilAttachment,
+        };
+
+        descriptor.depthStencilAttachment.view = this.depthTexture.bind.gpuTexutureView;
+
+        return descriptor;
+    }
 }

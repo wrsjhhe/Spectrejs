@@ -2,7 +2,6 @@ import { Camera } from "../cameras/Camera";
 import { PerspectiveCamera } from "../cameras/PerspectiveCamera";
 import { GPUIndexFormat } from "../Constants";
 import { Context } from "../core/Context";
-import { Size } from "../core/Defines";
 import { Pipleline } from "../core/Pipeline";
 import { RenderableObject } from "../core/RenderableObject";
 import { PipelineCache } from "../core/ResourceManagers";

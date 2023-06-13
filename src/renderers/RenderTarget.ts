@@ -1,11 +1,7 @@
-import { Vector4 } from "../math/Vector4";
-import { Texture } from "../textures/Texture";
 import { DepthTexture } from "../textures/DepthTexture";
-import { GPUAddressMode, GPUFilterMode, GPUMipmapFilterMode, GPUTextureFormat } from "../Constants";
+import { GPUAddressMode, GPUFilterMode, GPUMipmapFilterMode } from "../Constants";
 import { RenderPass } from "./RenderPass";
-import { Context } from "../core/Context";
 import { FrameBufferTexture } from "../textures/FrameBufferTexture";
-
 export interface RenderTargetOptions {
     wrapU?: GPUAddressMode | undefined;
     wrapV?: GPUAddressMode | undefined;
@@ -61,7 +57,6 @@ export class RenderTarget extends RenderPass {
             options.anisotropy
         );
         this.texture.mipmapSize = options.mipmapSize !== undefined ? options.mipmapSize : 1;
-        this.texture.minFilter = options.minFilter !== undefined ? options.minFilter : GPUFilterMode.Linear;
 
         // this.depthBuffer = options.depthBuffer !== undefined ? options.depthBuffer : true;
         // this.stencilBuffer = options.stencilBuffer !== undefined ? options.stencilBuffer : false;
