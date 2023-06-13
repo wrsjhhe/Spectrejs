@@ -2,7 +2,7 @@ import { GPUAddressMode, GPUFilterMode, GPUMipmapFilterMode, GPUTextureFormat } 
 import { Size } from "../core/Defines";
 import { Texture } from "./Texture";
 
-export class DepthTexture extends Texture {
+export class FrameBufferTexture extends Texture {
     constructor(
         size: Size,
         wrapU: GPUAddressMode = GPUAddressMode.ClampToEdge,
@@ -14,8 +14,6 @@ export class DepthTexture extends Texture {
         format: GPUTextureFormat = GPUTextureFormat.BGRA8Unorm,
         anisotropy = 1
     ) {
-        format = format !== undefined ? format : GPUTextureFormat.Depth24Plus;
-
         super(size, wrapU, wrapV, wrapW, magFilter, minFilter, mipmapFilter, format, anisotropy);
     }
 }

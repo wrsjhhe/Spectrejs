@@ -31,7 +31,7 @@ export class WebGPURenderer extends RenderPass {
     private _alphaMode: GPUCanvasAlphaMode = "premultiplied";
     private _size: RendererSize;
     private _pixelRatio = Context.pixelRatio;
-    private _clearColor = new Color(1, 1, 1);
+    private _clearColor = new Color(0, 0, 0);
     private _sizeChanged = false;
 
     private _renderPassDescriptor: GPURenderPassDescriptor;

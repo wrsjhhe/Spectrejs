@@ -4,6 +4,7 @@ import { DepthTexture } from "./../textures/DepthTexture";
 import { GPUAddressMode, GPUFilterMode, GPUMipmapFilterMode, GPUTextureFormat } from "../Constants";
 import { RenderPass } from "./RenderPass";
 import { Context } from "../core/Context";
+import { FrameBufferTexture } from "../textures/FrameBufferTexture";
 
 export interface RenderTargetOptions {
     wrapU?: GPUAddressMode | undefined;
@@ -41,7 +42,7 @@ export class RenderTarget extends RenderPass {
     magFilter: GPUFilterMode = GPUFilterMode.Linear;
     minFilter: GPUFilterMode = GPUFilterMode.Linear;
     mipmapFilter: GPUMipmapFilterMode = GPUMipmapFilterMode.Linear;
-    anisotropy = Texture.DEFAULT_ANISOTROPY;
+    anisotropy = 1;
 
     offset: any;
     repeat: any;
@@ -62,12 +63,8 @@ export class RenderTarget extends RenderPass {
 
         this.viewport = new Vector4(0, 0, width, height);
 
-        const image = document.createElement("img") as HTMLImageElement;
-        image.width = width * Context.pixelRatio;
-        image.height = height * Context.pixelRatio;
-
-        this.texture = new Texture(
-            image,
+        this.texture = new FrameBufferTexture(
+            { width: width * Context.pixelRatio, height: height * Context.pixelRatio },
             options.wrapU,
             options.wrapV,
             options.wrapW,
@@ -81,7 +78,6 @@ export class RenderTarget extends RenderPass {
 
         this.texture.flipY = true;
         this.texture.mipmapSize = options.mipmapSize !== undefined ? options.mipmapSize : 1;
-        this.texture.internalFormat = options.internalFormat !== undefined ? options.internalFormat : null;
         this.texture.minFilter = options.minFilter !== undefined ? options.minFilter : GPUFilterMode.Linear;
 
         this.depthBuffer = options.depthBuffer !== undefined ? options.depthBuffer : true;
@@ -104,10 +100,6 @@ export class RenderTarget extends RenderPass {
             this.width = width * Context.pixelRatio;
             this.height = height * Context.pixelRatio;
             this.depth = depth;
-
-            this.texture.image.width = width;
-            this.texture.image.height = height;
-            this.texture.image.depth = depth;
         }
 
         this.viewport.set(0, 0, width, height);
