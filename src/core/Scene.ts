@@ -62,9 +62,9 @@ export class Scene extends Object3D {
             this._createLayout();
             this._createBindGroup();
             this.needsRecreateBind = false;
-            this._updateLightsUniform(camera.matrixWorldInverse);
             return true;
         }
+        this._updateLightsUniform(camera.matrixWorldInverse);
         return false;
     }
 
