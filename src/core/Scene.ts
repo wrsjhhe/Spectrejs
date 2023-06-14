@@ -53,15 +53,17 @@ export class Scene extends Object3D {
     }
 
     public update(camera: Camera): boolean {
-        this._lastSetCamera = camera;
+        if (this._lastSetCamera !== camera) {
+            this._lastSetCamera = camera;
+            this.needsRecreateBind = true;
+        }
 
         if (this.needsRecreateBind) {
             this._createLayout();
             this._createBindGroup();
             this.needsRecreateBind = false;
-            return true;
-        } else {
             this._updateLightsUniform(camera.matrixWorldInverse);
+            return true;
         }
         return false;
     }

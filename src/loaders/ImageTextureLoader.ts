@@ -1,9 +1,9 @@
 import { ImageLoader } from "./ImageLoader";
-import { Texture } from "../textures/Texture";
 import { Loader } from "./Loader";
 import { LoadingManager } from "./LoadingManager";
+import { ImageTexture } from "../textures/ImageTexture";
 
-class TextureLoader extends Loader {
+class ImageTextureLoader extends Loader {
     public image: HTMLImageElement;
 
     constructor(manager: LoadingManager = undefined) {
@@ -18,7 +18,7 @@ class TextureLoader extends Loader {
         loader.load(
             url,
             function (image: HTMLImageElement) {
-                const texture = new Texture(image);
+                const texture = new ImageTexture(image);
 
                 texture.needsUpdate = true;
 
@@ -32,4 +32,4 @@ class TextureLoader extends Loader {
     }
 }
 
-export { TextureLoader };
+export { ImageTextureLoader as TextureLoader };

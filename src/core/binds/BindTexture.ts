@@ -1,5 +1,4 @@
 import { Texture } from "../../textures/Texture";
-import { TextureMipmapGenerator } from "../../textures/TextureMipmapGenerator";
 import { Context } from "../Context";
 import { BindType } from "../Defines";
 import { DelayDestroyer } from "../ResourceManagers";
@@ -13,30 +12,18 @@ export class BindTexture extends BindValue {
     private _width: number;
     private _height: number;
 
-    constructor(texture: Texture, usage: number, mipmapSize = 1) {
+    constructor(texture: Texture, usage: number, mipmapSize: number) {
         super();
         this._width = texture.width;
         this._height = texture.height;
 
         this._texture = texture;
         this._gpuTexture = Context.activeDevice.createTexture({
-            size: [this._texture.image.width, this._texture.image.height, 1],
+            size: [this._width, this._height, 1],
             mipLevelCount: mipmapSize,
             format: texture.format,
             usage,
         });
-        if (!texture.isRenderTargetTexture) {
-            createImageBitmap(this._texture.image).then((imageBitmap: ImageBitmap) => {
-                Context.activeDevice.queue.copyExternalImageToTexture(
-                    { source: imageBitmap },
-                    { texture: this._gpuTexture },
-                    [this._width, this._height]
-                );
-                if (mipmapSize > 1) {
-                    TextureMipmapGenerator.webGPUGenerateMipmap(texture);
-                }
-            });
-        }
 
         this._needsUpdate = false;
     }

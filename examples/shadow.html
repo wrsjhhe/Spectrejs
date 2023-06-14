@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8" />
-        <title>Light</title>
+        <title>Shadow</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style>
             body {
@@ -46,6 +46,12 @@
                 camera.position.y = 1000;
                 camera.lookAt(new Spectre.Vector3(0, 0, 0));
 
+                directionalLight = new Spectre.DirectionalLight(new Spectre.Color(1, 1, 1));
+                directionalLight.position.x = 1;
+                directionalLight.position.z = -1;
+                directionalLight.needsUpdate = true;
+                scene.add(directionalLight);
+
                 const controls = new Spectre.OrbitControls(camera, renderer.domElement);
                 const pbrMaterial = new Spectre.MeshPhysicalMaterial();
                 pbrMaterial.color = new Spectre.Color(1, 0, 0);
@@ -54,30 +60,34 @@
                 const phongMaterial = new Spectre.MeshPhongMaterial();
                 phongMaterial.color = new Spectre.Color(1, 0, 0);
                 phongMaterial.specular = new Spectre.Color(0.7, 0.7, 0.7);
-                const geometry = new Spectre.SphereGeometry(100, 128, 128);
-                const mesh = new Spectre.Mesh(geometry, phongMaterial);
-                const mesh2 = new Spectre.Mesh(geometry, pbrMaterial);
+
+                const sphereGeometry = new Spectre.SphereGeometry(100, 128, 128);
+                const boxGeometry = new Spectre.BoxGeometry(100, 100, 100);
+                const mesh = new Spectre.Mesh(boxGeometry, phongMaterial);
+                mesh.position.y = 100;
+                mesh.updateMatrix();
+
+                const mesh2 = new Spectre.Mesh(sphereGeometry, pbrMaterial);
                 mesh2.position.x = 250;
-                mesh2.matrixWorldAutoUpdate = false;
-                mesh2.matrixAutoUpdate = false;
+                mesh2.position.y = 150;
                 mesh2.updateMatrix();
-                directionalLight = new Spectre.DirectionalLight(new Spectre.Color(1, 1, 1));
-                scene.add(directionalLight);
 
                 scene.add(mesh);
                 scene.add(mesh2);
+
+                const planeGeometry = new Spectre.PlaneGeometry(1000, 1000);
+                const planeMaterial = new Spectre.MeshBasicMaterial();
+                planeMaterial.color = new Spectre.Color(0.7, 0.7, 0.7);
+                const plane = new Spectre.Mesh(planeGeometry, planeMaterial);
+                plane.rotateX(-Math.PI / 2);
+                plane.updateMatrix();
+
+                scene.add(plane);
             }
 
-            let k = 0.01;
             function frame() {
                 renderer.render(scene, camera);
                 render();
-
-                // directionalLight.position.x += k;
-                // if (directionalLight.position.x >= 1 || directionalLight.position.x <= -1) {
-                //     k = -k;
-                // }
-                // directionalLight.needsUpdate = true;
             }
 
             function render() {

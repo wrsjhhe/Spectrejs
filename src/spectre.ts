@@ -4,8 +4,8 @@ export * as GPUConstances from "./Constants";
 
 export * as Environment from "./core/Defines";
 
-export { WebGPURenderer } from "./renderers/WebGPURenderer";
-export { RenderTarget } from "./renderers/WebGPURenderTarget";
+export { Renderer } from "./renderers/Renderer";
+export { RenderTarget } from "./renderers/RenderTarget";
 
 export { BufferAttribute } from "./core/BufferAttribute";
 export { BufferGeometry } from "./core/BufferGeometry";
@@ -41,7 +41,7 @@ export { OrbitControls } from "./controls/OrbitControls";
 
 export { FileLoader } from "./loaders/FileLoader";
 export { ImageLoader } from "./loaders/ImageLoader";
-export { TextureLoader } from "./loaders/TextureLoader";
+export { TextureLoader } from "./loaders/ImageTextureLoader";
 
 export * as ConstantsValues from "./utils/TempValues";
 

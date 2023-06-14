@@ -1,14 +1,12 @@
 import { GPUTextureFormat } from "../Constants";
 import { Context } from "../core/Context";
-
-export interface RendererSize {
-    width: number;
-    height: number;
-}
+import { Size } from "../core/Defines";
 
 export abstract class RenderPass {
-    protected _colorBuffer: GPUTexture;
-    protected _depthBuffer: GPUTexture;
+    protected _size: Size;
+
+    protected _colorTexture: GPUTexture;
+    protected _depthTexture: GPUTexture;
 
     protected _colorAttachmentView: GPUTextureView;
 
@@ -18,43 +16,60 @@ export abstract class RenderPass {
 
     protected _flipY = false;
 
-    constructor() {}
+    constructor(size: Size = { width: 1, height: 1 }) {
+        this._size = size;
+    }
 
-    protected _setupColorBuffer(size: RendererSize, sampleCount: number, presentationFormat: GPUTextureFormat) {
+    public setSize(width: number, height: number) {
+        if (this._size.width !== width || this._size.height !== height) {
+            this._size.width = width;
+            this._size.height = height;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    protected _setupColorBuffer(presentationFormat: GPUTextureFormat) {
         const device = Context.activeDevice;
 
         if (device) {
-            if (this._colorBuffer) this._colorBuffer.destroy();
+            if (this._colorTexture) this._colorTexture.destroy();
 
-            this._colorBuffer = device.createTexture({
+            this._colorTexture = device.createTexture({
                 size: {
-                    width: Math.floor(size.width * Context.pixelRatio),
-                    height: Math.floor(size.height * Context.pixelRatio),
+                    width: Math.floor(this._size.width * Context.pixelRatio),
+                    height: Math.floor(this._size.height * Context.pixelRatio),
                     depthOrArrayLayers: 1,
                 },
-                sampleCount: sampleCount,
+                sampleCount: this._sampleCount,
                 format: presentationFormat,
                 usage: GPUTextureUsage.RENDER_ATTACHMENT,
             });
-            this._colorAttachmentView = this._colorBuffer.createView();
+            this._colorAttachmentView = this._colorTexture.createView();
         }
     }
 
-    protected _setupDepthBuffer(size: RendererSize, sampleCount: number) {
+    protected _setupDepthBuffer() {
         const device = Context.activeDevice;
-        if (this._depthBuffer) this._depthBuffer.destroy();
+        if (this._depthTexture) this._depthTexture.destroy();
 
-        this._depthBuffer = device.createTexture({
+        this._depthTexture = device.createTexture({
             label: "depthBuffer",
             size: {
-                width: Math.floor(size.width * Context.pixelRatio),
-                height: Math.floor(size.height * Context.pixelRatio),
+                width: Math.floor(this._size.width * Context.pixelRatio),
+                height: Math.floor(this._size.height * Context.pixelRatio),
                 depthOrArrayLayers: 1,
             },
-            sampleCount: sampleCount,
+            sampleCount: this._sampleCount,
             format: GPUTextureFormat.Depth24Plus,
             usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
         });
+    }
+
+    public get size() {
+        return this._size;
     }
 
     public get sampleCount() {

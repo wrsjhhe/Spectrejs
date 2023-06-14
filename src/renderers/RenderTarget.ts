@@ -1,10 +1,8 @@
-import { Vector4 } from "./../math/Vector4";
-import { Texture } from "./../textures/Texture";
-import { DepthTexture } from "./../textures/DepthTexture";
-import { GPUAddressMode, GPUFilterMode, GPUMipmapFilterMode, GPUTextureFormat } from "../Constants";
+import { DepthTexture } from "../textures/DepthTexture";
+import { GPUAddressMode, GPUFilterMode, GPUMipmapFilterMode } from "../Constants";
 import { RenderPass } from "./RenderPass";
+import { FrameBufferTexture } from "../textures/FrameBufferTexture";
 import { Context } from "../core/Context";
-
 export interface RenderTargetOptions {
     wrapU?: GPUAddressMode | undefined;
     wrapV?: GPUAddressMode | undefined;
@@ -23,17 +21,12 @@ export interface RenderTargetOptions {
 }
 
 export class RenderTarget extends RenderPass {
-    width: number;
-    height: number;
     depth: number;
 
-    scissor: Vector4;
-    scissorTest: boolean;
-    viewport: Vector4;
-    texture: Texture;
-    depthBuffer: boolean;
-    stencilBuffer: boolean;
-    depthTexture: DepthTexture;
+    texture: FrameBufferTexture;
+    // depthBuffer: boolean;
+    // stencilBuffer: boolean;
+    // depthTexture: DepthTexture;
 
     wrapU: GPUAddressMode = GPUAddressMode.ClampToEdge;
     wrapV: GPUAddressMode = GPUAddressMode.ClampToEdge;
@@ -41,33 +34,20 @@ export class RenderTarget extends RenderPass {
     magFilter: GPUFilterMode = GPUFilterMode.Linear;
     minFilter: GPUFilterMode = GPUFilterMode.Linear;
     mipmapFilter: GPUMipmapFilterMode = GPUMipmapFilterMode.Linear;
-    anisotropy = Texture.DEFAULT_ANISOTROPY;
+    anisotropy = 1;
 
     offset: any;
     repeat: any;
     type: any;
     mipmapSize: any;
 
-    constructor(width = 1, height = 1, options: RenderTargetOptions = {}) {
-        super();
+    constructor(width: number, height: number, options: RenderTargetOptions = {}) {
+        super({ width, height });
 
         this._flipY = true;
 
-        this.width = width;
-        this.height = height;
-        this.depth = 1;
-
-        this.scissor = new Vector4(0, 0, width, height);
-        this.scissorTest = false;
-
-        this.viewport = new Vector4(0, 0, width, height);
-
-        const image = document.createElement("img") as HTMLImageElement;
-        image.width = width * Context.pixelRatio;
-        image.height = height * Context.pixelRatio;
-
-        this.texture = new Texture(
-            image,
+        this.texture = new FrameBufferTexture(
+            { width: width * Context.pixelRatio, height: height * Context.pixelRatio },
             options.wrapU,
             options.wrapV,
             options.wrapW,
@@ -77,44 +57,30 @@ export class RenderTarget extends RenderPass {
             options.format,
             options.anisotropy
         );
-        this.texture.isRenderTargetTexture = true;
-
-        this.texture.flipY = true;
         this.texture.mipmapSize = options.mipmapSize !== undefined ? options.mipmapSize : 1;
-        this.texture.internalFormat = options.internalFormat !== undefined ? options.internalFormat : null;
-        this.texture.minFilter = options.minFilter !== undefined ? options.minFilter : GPUFilterMode.Linear;
 
-        this.depthBuffer = options.depthBuffer !== undefined ? options.depthBuffer : true;
-        this.stencilBuffer = options.stencilBuffer !== undefined ? options.stencilBuffer : false;
+        // this.depthBuffer = options.depthBuffer !== undefined ? options.depthBuffer : true;
+        // this.stencilBuffer = options.stencilBuffer !== undefined ? options.stencilBuffer : false;
 
-        this.depthTexture = options.depthTexture !== undefined ? options.depthTexture : null;
+        // this.depthTexture = options.depthTexture !== undefined ? options.depthTexture : null;
 
         this._sampleCount = options.sampleCount !== undefined ? options.sampleCount : 1;
 
-        super._setupColorBuffer({ width, height }, this._sampleCount, this.texture.format);
-        super._setupDepthBuffer({ width, height }, this._sampleCount);
+        super._setupColorBuffer(this.texture.format);
+        super._setupDepthBuffer();
     }
 
     public updated() {
         this.texture.needsUpdate = true;
     }
 
-    setSize(width: number, height: number, depth = 1) {
-        if (this.width !== width || this.height !== height || this.depth !== depth) {
-            this.width = width * Context.pixelRatio;
-            this.height = height * Context.pixelRatio;
-            this.depth = depth;
-
-            this.texture.image.width = width;
-            this.texture.image.height = height;
-            this.texture.image.depth = depth;
+    public override setSize(width: number, height: number) {
+        const res = super.setSize(width, height);
+        if (res) {
+            super._setupColorBuffer(this.texture.format);
+            super._setupDepthBuffer();
         }
-
-        this.viewport.set(0, 0, width, height);
-        this.scissor.set(0, 0, width, height);
-
-        super._setupColorBuffer({ width, height }, this._sampleCount, this.texture.format);
-        super._setupDepthBuffer({ width, height }, this._sampleCount);
+        return res;
     }
 
     public getDescriptor() {
@@ -139,7 +105,7 @@ export class RenderTarget extends RenderPass {
         const resolveTarget = this._sampleCount > 1 ? this.texture.targetTexture.gpuTexutureView : undefined;
         (descriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].view = view;
         (descriptor.colorAttachments as Array<GPURenderPassColorAttachment>)[0].resolveTarget = resolveTarget;
-        descriptor.depthStencilAttachment.view = this._depthBuffer.createView();
+        descriptor.depthStencilAttachment.view = this._depthTexture.createView();
 
         return descriptor;
     }
