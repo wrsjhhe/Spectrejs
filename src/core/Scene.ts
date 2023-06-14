@@ -52,7 +52,10 @@ export class Scene extends Object3D {
     }
 
     public update(camrea: Camera): boolean {
-        this._lastSetCamera = camrea;
+        if (this._lastSetCamera !== camrea) {
+            this._lastSetCamera = camrea;
+            this.needsRecreateBind = true;
+        }
 
         if (this.needsRecreateBind) {
             this._createLayout();

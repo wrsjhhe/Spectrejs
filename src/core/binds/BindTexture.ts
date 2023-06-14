@@ -14,8 +14,8 @@ export class BindTexture extends BindValue {
 
     constructor(texture: Texture, usage: number, mipmapSize: number) {
         super();
-        this._width = texture.width * Context.pixelRatio;
-        this._height = texture.height * Context.pixelRatio;
+        this._width = texture.width;
+        this._height = texture.height;
 
         this._texture = texture;
         this._gpuTexture = Context.activeDevice.createTexture({
