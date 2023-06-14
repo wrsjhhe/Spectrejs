@@ -83,4 +83,8 @@ export abstract class RenderPass {
     public get flipY() {
         return this._flipY;
     }
+
+    public get colorAttachmentView() {
+        return this._colorAttachmentView;
+    }
 }

@@ -83,7 +83,7 @@ export abstract class Material {
     }
 
     protected _setAttributeItem(name: string, itemType: string, format: GPUVertexFormat, itemSize: number) {
-        const values = this.shaderOptions.attributeValues;
+        const values = this._shaderOptions.attributeValues;
         values.set(name, {
             name: name,
             index: this._shaderOptions.bindValues.size,
@@ -98,7 +98,7 @@ export abstract class Material {
     }
 
     protected _setBindItem(name: string, itemType: string, bindType: BindType, visibility: GPUShaderStageFlags) {
-        const values = this.shaderOptions.bindValues;
+        const values = this._shaderOptions.bindValues;
         const item = {
             name: name,
             index: this._shaderOptions.bindValues.size,

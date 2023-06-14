@@ -6,9 +6,11 @@ import { Pipleline } from "../core/Pipeline";
 import { RenderableObject } from "../core/RenderableObject";
 import { PipelineCache } from "../core/ResourceManagers";
 import { Scene } from "../core/Scene";
+import { DepthMaterial } from "../materials/DepthMaterial";
 import { Material } from "../materials/Material";
 import { Color } from "../math/Color";
 import { OrthographicCamera } from "../spectre";
+import { DepthTarget } from "./DepthTarget";
 import { RenderPass } from "./RenderPass";
 import { RenderTarget } from "./RenderTarget";
 
@@ -18,7 +20,6 @@ interface WebGPURendererParameters {
     sampleCount?: number;
     antialias?: boolean;
 }
-
 export class Renderer extends RenderPass {
     private _parameters: WebGPURendererParameters;
     private _canvas: HTMLCanvasElement;
@@ -32,6 +33,8 @@ export class Renderer extends RenderPass {
 
     private _currentRenderTarget: RenderTarget = null;
 
+    private _depthMaterial = new DepthMaterial();
+    private _depthPass = new DepthTarget(1024, 1024);
     constructor(parameters: WebGPURendererParameters = {}) {
         super();
         this._parameters = parameters;
@@ -131,7 +134,12 @@ export class Renderer extends RenderPass {
             this._sizeChanged = false;
         }
         camera.update();
+
+        const commandEncoder = Context.beginCommandEncoder();
         const sceneUpdated = scene.update(camera);
+        this._renderShadow(scene, commandEncoder);
+
+        scene.update(camera, true);
 
         let pass = this as RenderPass;
         let descriptor = undefined;
@@ -157,7 +165,6 @@ export class Renderer extends RenderPass {
             };
         }
 
-        const commandEncoder = Context.beginCommandEncoder();
         const passEncoder = commandEncoder.beginRenderPass(descriptor);
 
         const materialObjects = scene.renderableObjs;
@@ -171,6 +178,33 @@ export class Renderer extends RenderPass {
             this._currentRenderTarget.updated();
         }
         Context.finishCommand();
+    }
+
+    private _renderShadow(scene: Scene, commandEncoder: GPUCommandEncoder) {
+        const directionalLights = scene.directionalLights;
+
+        const objects: Array<RenderableObject> = [];
+        for (const dirLight of directionalLights.values()) {
+            scene.update(dirLight.shadow.camera, true);
+            for (const objs of scene.renderableObjs.values()) {
+                objects.push(...objs);
+            }
+        }
+        const descriptor = this._depthPass.getDescriptor();
+        const passEncoder = commandEncoder.beginRenderPass(descriptor);
+
+        const pipeline = PipelineCache.get(this._depthPass, this._depthMaterial, scene, true);
+        for (const dirLight of directionalLights.values()) {
+            this._renderSamePipeline(
+                passEncoder,
+                this._depthMaterial,
+                objects,
+                scene,
+                dirLight.shadow.camera,
+                pipeline
+            );
+        }
+        passEncoder.end();
     }
 
     private _renderSamePipeline(

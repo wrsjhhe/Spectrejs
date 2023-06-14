@@ -50,6 +50,30 @@ export class Pipleline {
         this.material.shader.flipY = pass.flipY;
         this.material.shader.recreate(scene);
 
+        const fragment = pass.colorAttachmentView
+            ? {
+                  module: device.createShaderModule({
+                      code: this.material.shader.fragmentShaderCode,
+                  }),
+                  entryPoint: "main",
+                  targets: [
+                      {
+                          format: this._pass.presentationFormat,
+                          blend: {
+                              color: {
+                                  srcFactor: GPUBlendFactor.SrcAlpha,
+                                  dstFactor: GPUBlendFactor.OneMinusSrcAlpha,
+                              },
+                              alpha: {
+                                  srcFactor: GPUBlendFactor.One,
+                                  dstFactor: GPUBlendFactor.OneMinusSrcAlpha,
+                              },
+                          },
+                      },
+                  ],
+              }
+            : undefined;
+
         this._GPUPipeline = device.createRenderPipeline({
             layout: device.createPipelineLayout({
                 bindGroupLayouts: [...this._bindGroupLayouts],
@@ -61,27 +85,7 @@ export class Pipleline {
                 entryPoint: "main",
                 buffers: this._vertexBufferLayouts,
             },
-            fragment: {
-                module: device.createShaderModule({
-                    code: this.material.shader.fragmentShaderCode,
-                }),
-                entryPoint: "main",
-                targets: [
-                    {
-                        format: this._pass.presentationFormat,
-                        blend: {
-                            color: {
-                                srcFactor: GPUBlendFactor.SrcAlpha,
-                                dstFactor: GPUBlendFactor.OneMinusSrcAlpha,
-                            },
-                            alpha: {
-                                srcFactor: GPUBlendFactor.One,
-                                dstFactor: GPUBlendFactor.OneMinusSrcAlpha,
-                            },
-                        },
-                    },
-                ],
-            },
+            fragment: fragment,
             primitive: {
                 topology: GPUPrimitiveTopology.TriangleList,
                 cullMode: pass.flipY ? GPUCullMode.Front : GPUCullMode.Back,

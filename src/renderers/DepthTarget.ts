@@ -10,6 +10,8 @@ export class DepthTarget extends RenderPass {
         this._flipY = true;
 
         this.depthTexture = new DepthTexture({ width, height });
+
+        super._setupDepthBuffer();
     }
 
     public override setSize(width: number, height: number) {
@@ -22,6 +24,7 @@ export class DepthTarget extends RenderPass {
 
     public getDescriptor() {
         const descriptor = {
+            colorAttachments: [] as any,
             depthStencilAttachment: {
                 depthClearValue: 1.0,
                 depthLoadOp: "clear",

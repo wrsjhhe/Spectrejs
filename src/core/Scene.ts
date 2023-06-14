@@ -52,19 +52,22 @@ export class Scene extends Object3D {
         super();
     }
 
-    public update(camera: Camera): boolean {
+    public update(camera: Camera, onlyCamera = false): boolean {
         if (this._lastSetCamera !== camera) {
             this._lastSetCamera = camera;
             this.needsRecreateBind = true;
         }
 
         if (this.needsRecreateBind) {
-            this._createLayout();
+            this._createLayout(onlyCamera);
             this._createBindGroup();
             this.needsRecreateBind = false;
-            this._updateLightsUniform(camera.matrixWorldInverse);
+            if (!onlyCamera) this._updateLightsUniform(camera.matrixWorldInverse);
             return true;
         }
+
+        if (!onlyCamera) this._updateLightsUniform(camera.matrixWorldInverse);
+
         return false;
     }
 
@@ -147,7 +150,11 @@ export class Scene extends Object3D {
         }
     }
 
-    private _createLayout() {
+    private _createLayout(onlyCamera: boolean) {
+        if (onlyCamera) {
+            return;
+        }
+
         this._bindValues.clear();
         this._entriesLayout.length = 0;
         for (const cameraBind of t_cameraBindValue) {
