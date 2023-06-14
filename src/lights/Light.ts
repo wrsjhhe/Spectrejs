@@ -1,5 +1,6 @@
 import { Object3D } from "../core/Object3D";
 import { Color } from "../math/Color";
+import { Matrix4 } from "../math/Matrix4";
 
 export class Light extends Object3D {
     public get type() {
@@ -24,7 +25,7 @@ export class Light extends Object3D {
         this._intensity = intensity;
     }
 
-    public update() {}
+    public update(viewMatrix: Matrix4) {}
 
     public get color() {
         return this._color;

@@ -3,6 +3,7 @@ import { Color } from "../math/Color";
 import { Object3D } from "../core/Object3D";
 import { DirectionalLightShadow } from "./DirectionalLightShadow";
 import * as TempValues from "../utils/TempValues";
+import { Matrix4 } from "../math/Matrix4";
 import { Vector3 } from "../math/Vector3";
 
 export class DirectionalLight extends Light {
@@ -27,15 +28,16 @@ export class DirectionalLight extends Light {
         this.position.copy(Object3D.DEFAULT_UP);
         this.updateMatrix();
 
-        this.update();
+        this.update(TempValues.IdentifyMatrix4);
     }
 
-    public update() {
+    public update(viewMatrix: Matrix4) {
         if (this.needsUpdate) {
             this.updateMatrixWorld();
             TempValues.Vector0.setFromMatrixPosition(this._target.matrixWorld);
             TempValues.Vector1.setFromMatrixPosition(this.matrixWorld);
             this._direction.subVectors(TempValues.Vector1, TempValues.Vector0);
+            this._direction.transformDirection(viewMatrix);
         }
         this.needsUpdate = false;
     }
