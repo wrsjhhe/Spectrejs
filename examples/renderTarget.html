@@ -30,7 +30,7 @@
             let renderer;
             let scene;
             let mesh5;
-            let camera;
+            let camera, orthCamera;
             let directionalLight;
             let renderTarget;
             function init() {
@@ -48,6 +48,9 @@
                 camera.position.z = 500;
                 camera.lookAt(new Spectre.Vector3(0, 0, 0));
 
+                orthCamera = new Spectre.OrthographicCamera(-50, 50, 50, -50);
+                orthCamera.position.z = 500;
+
                 renderTarget = new Spectre.RenderTarget(512, 512, {
                     sampleCount: 4,
                     mipmapSize: 8,
@@ -59,28 +62,33 @@
                 const material1 = new Spectre.MeshBasicMaterial();
                 material1.color = new Spectre.Color(1, 0, 0);
                 const mesh1 = new Spectre.Mesh(geometry, material1);
+                mesh1.translateX(50);
+                mesh1.translateY(-50);
+                mesh1.updateMatrix();
                 scene.add(mesh1);
 
                 const material2 = new Spectre.MeshBasicMaterial();
                 material2.color = new Spectre.Color(0, 1, 0);
                 const mesh2 = new Spectre.Mesh(geometry, material2);
                 scene.add(mesh2);
-                mesh2.translateX(100);
+                mesh2.translateX(50);
+                mesh2.translateY(50);
                 mesh2.updateMatrix();
 
                 const material3 = new Spectre.MeshBasicMaterial();
                 material3.color = new Spectre.Color(1, 1, 0);
                 const mesh3 = new Spectre.Mesh(geometry, material3);
                 scene.add(mesh3);
-                mesh3.translateY(100);
+                mesh3.translateX(-50);
+                mesh3.translateY(50);
                 mesh3.updateMatrix();
 
                 const material4 = new Spectre.MeshBasicMaterial();
                 material4.color = new Spectre.Color(1, 1, 1);
                 const mesh4 = new Spectre.Mesh(geometry, material4);
                 scene.add(mesh4);
-                mesh4.translateX(100);
-                mesh4.translateY(100);
+                mesh4.translateX(-50);
+                mesh4.translateY(-50);
                 mesh4.updateMatrix();
 
                 const material5 = new Spectre.MeshBasicMaterial();
@@ -96,7 +104,7 @@
                 render();
                 mesh5.visible = false;
                 renderer.setRenderTarget(renderTarget);
-                renderer.render(scene, camera);
+                renderer.render(scene, orthCamera);
                 renderer.setRenderTarget(null);
                 mesh5.visible = true;
                 renderer.render(scene, camera);

@@ -2,6 +2,7 @@ import { DepthTexture } from "../textures/DepthTexture";
 import { GPUAddressMode, GPUFilterMode, GPUMipmapFilterMode } from "../Constants";
 import { RenderPass } from "./RenderPass";
 import { FrameBufferTexture } from "../textures/FrameBufferTexture";
+import { Context } from "../core/Context";
 export interface RenderTargetOptions {
     wrapU?: GPUAddressMode | undefined;
     wrapV?: GPUAddressMode | undefined;
@@ -46,7 +47,7 @@ export class RenderTarget extends RenderPass {
         this._flipY = true;
 
         this.texture = new FrameBufferTexture(
-            { width, height },
+            { width: width * Context.pixelRatio, height: height * Context.pixelRatio },
             options.wrapU,
             options.wrapV,
             options.wrapW,

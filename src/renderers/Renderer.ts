@@ -8,6 +8,7 @@ import { PipelineCache } from "../core/ResourceManagers";
 import { Scene } from "../core/Scene";
 import { Material } from "../materials/Material";
 import { Color } from "../math/Color";
+import { OrthographicCamera } from "../spectre";
 import { RenderPass } from "./RenderPass";
 import { RenderTarget } from "./RenderTarget";
 
@@ -122,6 +123,9 @@ export class Renderer extends RenderPass {
                 const perspectiveCamera = camera as PerspectiveCamera;
                 perspectiveCamera.aspect = this._canvas.width / this._canvas.height;
                 perspectiveCamera.updateProjectionMatrix();
+            } else if (OrthographicCamera.Is(camera)) {
+                const orthographicCamera = camera as OrthographicCamera;
+                orthographicCamera.updateProjectionMatrix();
             }
 
             this._sizeChanged = false;

@@ -901,8 +901,8 @@ export class Matrix4 {
 
         const a = (right + left) / (right - left);
         const b = (top + bottom) / (top - bottom);
-        const c = -(far + near) / (far - near);
-        const d = (-2 * far * near) / (far - near);
+        const c = -far / (far - near);
+        const d = (-far * near) / (far - near);
 
         te[0] = x;
         te[4] = 0;
@@ -932,7 +932,7 @@ export class Matrix4 {
 
         const x = (right + left) * w;
         const y = (top + bottom) * h;
-        const z = (far + near) * p;
+        const z = near * p;
 
         te[0] = 2 * w;
         te[4] = 0;
@@ -944,7 +944,7 @@ export class Matrix4 {
         te[13] = -y;
         te[2] = 0;
         te[6] = 0;
-        te[10] = -2 * p;
+        te[10] = -1 * p;
         te[14] = -z;
         te[3] = 0;
         te[7] = 0;
