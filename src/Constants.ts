@@ -296,3 +296,7 @@ export enum TOUCH {
     DOLLY_PAN = 2,
     DOLLY_ROTATE = 3,
 }
+
+export const TrianglesDrawMode = 0;
+export const TriangleStripDrawMode = 1;
+export const TriangleFanDrawMode = 2;

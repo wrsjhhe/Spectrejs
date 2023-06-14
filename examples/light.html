@@ -61,11 +61,18 @@
                 mesh2.matrixWorldAutoUpdate = false;
                 mesh2.matrixAutoUpdate = false;
                 mesh2.updateMatrix();
+                const geometry2 = geometry.clone();
+                const mesh3 = new Spectre.Mesh(geometry, pbrMaterial);
+                mesh3.position.x = -250;
+                mesh3.matrixWorldAutoUpdate = false;
+                mesh3.matrixAutoUpdate = false;
+                mesh3.updateMatrix();
                 directionalLight = new Spectre.DirectionalLight(new Spectre.Color(1, 1, 1));
                 scene.add(directionalLight);
 
                 scene.add(mesh);
                 scene.add(mesh2);
+                scene.add(mesh3);
             }
 
             let k = 0.01;

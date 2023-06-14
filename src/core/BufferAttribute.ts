@@ -41,6 +41,13 @@ export class BufferAttribute {
         }
     }
 
+    public clone() {
+        const buffer = new ArrayBuffer(this.array.byteLength);
+        const destArray = new (this.array as any).constructor(buffer);
+        destArray.set(this.array);
+        return new BufferAttribute(destArray, this._format, this._itemSize, this._normalized);
+    }
+
     public getX(index: number) {
         const x = this.array[index * this.itemSize];
 
