@@ -998,6 +998,10 @@ export class Matrix4 {
 
         return array;
     }
+
+    getNormalMatrix(matrix4: Matrix4) {
+        return this.copy(matrix4).invert().transpose();
+    }
 }
 
 const _v1 = /*@__PURE__*/ new Vector3();

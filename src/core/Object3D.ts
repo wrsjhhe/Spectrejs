@@ -50,6 +50,9 @@ export class Object3D {
     public matrix = new Matrix4();
     public matrixWorld = new Matrix4();
 
+    public modelViewMatrix = new Matrix4();
+    public normalMatrix = new Matrix4();
+
     public matrixAutoUpdate = Object3D.DEFAULT_MATRIX_AUTO_UPDATE;
     public matrixWorldNeedsUpdate = false;
 

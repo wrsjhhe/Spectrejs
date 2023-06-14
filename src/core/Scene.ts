@@ -1,6 +1,7 @@
 import { Camera } from "../cameras/Camera";
 import { DirectionalLight } from "../lights/DirectionalLight";
 import { Material } from "../materials/Material";
+import { Matrix4 } from "../math/Matrix4";
 import { CommonUtils } from "../utils/CommonUtils";
 import { BindShaderItem, BindType, getLayoutEntity } from "./Defines";
 import { Object3D } from "./Object3D";
@@ -51,9 +52,9 @@ export class Scene extends Object3D {
         super();
     }
 
-    public update(camrea: Camera): boolean {
-        if (this._lastSetCamera !== camrea) {
-            this._lastSetCamera = camrea;
+    public update(camera: Camera): boolean {
+        if (this._lastSetCamera !== camera) {
+            this._lastSetCamera = camera;
             this.needsRecreateBind = true;
         }
 
@@ -61,9 +62,8 @@ export class Scene extends Object3D {
             this._createLayout();
             this._createBindGroup();
             this.needsRecreateBind = false;
+            this._updateLightsUniform(camera.matrixWorldInverse);
             return true;
-        } else {
-            this._updateLightsUniform();
         }
         return false;
     }
@@ -121,14 +121,16 @@ export class Scene extends Object3D {
         }
     }
 
-    private _updateLightsUniform() {
+    private _updateLightsUniform(viewMatrix: Matrix4) {
         const dirLightsBuffer = new Float32Array(8 * this._directionalLights.size);
         let offset = 0;
         let needsUpdate = false;
         for (const dirLight of this._directionalLights.values()) {
+            // add camera changed tag
+            dirLight.needsUpdate = true;
             if (dirLight.needsUpdate) {
                 needsUpdate = true;
-                dirLight.update();
+                dirLight.update(viewMatrix);
             }
 
             dirLightsBuffer.set(dirLight.color.toArray(), offset);

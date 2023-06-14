@@ -14,17 +14,19 @@ export class MeshPhysicalShader extends Shader {
         const uvItem = shaderOptions.attributeValues.get("uv");
         const normalItem = shaderOptions.attributeValues.get("normal");
 
-        this._vertexShaderCode = `
+        this._vertexShaderCode = /* wgsl */ `
             ${basic.bind_value(0, scene.bindValues.get("projectionMatrix"))}
             ${basic.bind_value(0, scene.bindValues.get("matrixWorldInverse"))}
 
             @group(2) @binding(0) var<uniform> modelMatrix : mat4x4<f32>;
+            @group(2) @binding(1) var<uniform> normalMatrix : mat4x4<f32>;
 
             struct VertexOutput {
                 @builtin(position) Position : vec4<f32>,
                 ${basic.itemVary_value(uvItem, indexObj)}
                 ${basic.itemVary_value(normalItem, indexObj)}
                 ${basic.customVary_value("vViewPosition", "vec3<f32>", indexObj)}
+                ${basic.customVary_value("vNormal", "vec3<f32>", indexObj)}
             }
 
             @vertex
@@ -38,6 +40,7 @@ export class MeshPhysicalShader extends Shader {
                 ${basic.uv_vert(uvItem, this.flipY)}
                 output.vViewPosition = - mvPosition.xyz;
                 output.normal = normal;
+                output.vNormal = normalize((normalMatrix * vec4<f32>(normal,0.0)).xyz);
                 return output;
             }
         
@@ -50,7 +53,7 @@ export class MeshPhysicalShader extends Shader {
         const uvItem = shaderOptions.attributeValues.get("uv");
         const normalItem = shaderOptions.attributeValues.get("normal");
 
-        this._fragmentShaderCode = `
+        this._fragmentShaderCode = /* wgsl */ `
             const RECIPROCAL_PI = 0.3183098861837907;
             const EPSILON = 1e-6;
             struct IncidentLight {
@@ -304,6 +307,7 @@ export class MeshPhysicalShader extends Shader {
                 ${basic.itemVary_value(uvItem, indexObj)}
                 ${basic.itemVary_value(normalItem, indexObj)}
                 ${basic.customVary_value("vViewPosition", "vec3<f32>", indexObj)}
+                ${basic.customVary_value("vNormal", "vec3<f32>", indexObj)}
             ) -> @location(0) vec4<f32> {
                 var baseColor:vec4<f32>;
                 ${basic.getColor_frag(
@@ -328,7 +332,7 @@ export class MeshPhysicalShader extends Shader {
                 reflectedLight.indirectSpecular = vec3<f32>( 0.0 );
 
                 var totalEmissiveRadiance = emissive;
-                var geometryNormal = normal;
+                var geometryNormal = vNormal;
                 var roughnessFactor = roughness;
                 var metalnessFactor = metalness;
                 var material:PhysicalMaterial;
@@ -346,7 +350,7 @@ export class MeshPhysicalShader extends Shader {
                 var geometry:GeometricContext;
 
                 geometry.position = - vViewPosition;
-                geometry.normal = normal;
+                geometry.normal = vNormal;
                 //geometry.viewDir = ( isOrthographic ) ? vec3( 0, 0, 1 ) : normalize( vViewPosition );
                 geometry.viewDir = normalize( vViewPosition );
 

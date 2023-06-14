@@ -163,7 +163,7 @@ export class Renderer extends RenderPass {
         const materialObjects = scene.renderableObjs;
         for (const [material, objects] of materialObjects) {
             const pipeline = PipelineCache.get(pass, material, scene, sceneUpdated);
-            this._renderSamePipeline(passEncoder, material, objects, scene, pipeline);
+            this._renderSamePipeline(passEncoder, material, objects, scene, camera, pipeline);
         }
 
         passEncoder.end();
@@ -178,6 +178,7 @@ export class Renderer extends RenderPass {
         material: Material,
         objects: Array<RenderableObject>,
         scene: Scene,
+        camera: Camera,
         pipeline: Pipleline
     ) {
         material.updateBinds();
@@ -190,12 +191,13 @@ export class Renderer extends RenderPass {
         for (let i = 0; i < objects.length; ++i) {
             pipeline.createObjectBindGroup(objects[i]);
             pipeline.bindObjectUnform(passEncoder, objects[i]);
-            this._renderObject(passEncoder, objects[i]);
+            this._renderObject(passEncoder, objects[i], camera);
         }
     }
 
-    private _renderObject(passEncoder: GPURenderPassEncoder, object: RenderableObject) {
+    private _renderObject(passEncoder: GPURenderPassEncoder, object: RenderableObject, camera: Camera) {
         object.update();
+        object.updateNormalMatrix(camera);
 
         if (!object.visible) return;
 
