@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 export type NumberArrayType = Float32Array | Int32Array | Int8Array | Uint32Array | Uint16Array | Uint8Array;
+export type DataBufferSource = ArrayBuffer | String | BufferSource;
 
 export const GPUPrimitiveTopology = {
     PointList: "point-list" as GPUPrimitiveTopology,

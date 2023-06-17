@@ -7,4 +7,8 @@ export class MeshBasicMaterial extends Material {
 
         this._shader = new MeshBasicShader(this);
     }
+
+    clone() {
+        return new MeshBasicMaterial().copy(this);
+    }
 }

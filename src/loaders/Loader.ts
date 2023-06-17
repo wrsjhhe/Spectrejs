@@ -1,4 +1,5 @@
 import { DefaultLoadingManager, LoadingManager } from "./LoadingManager";
+import { DataBufferSource } from "../Constants";
 
 export abstract class Loader {
     public manager: LoadingManager;
@@ -22,7 +23,7 @@ export abstract class Loader {
         });
     }
 
-    parse(/* data */) {}
+    parse(buffer: DataBufferSource, path: string = "", onLoad: Function = null, onError: Function = null) {}
 
     setCrossOrigin(crossOrigin: string) {
         this.crossOrigin = crossOrigin;

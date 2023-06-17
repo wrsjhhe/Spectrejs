@@ -72,6 +72,26 @@ export class BufferAttribute {
         return w;
     }
 
+    public setX(index: number, value: number) {
+        this.array[index * this.itemSize] = value;
+        this.needsUpdate = true;
+    }
+
+    public setY(index: number, value: number) {
+        this.array[index * this.itemSize + 1] = value;
+        this.needsUpdate = true;
+    }
+
+    public setZ(index: number, value: number) {
+        this.array[index * this.itemSize + 2] = value;
+        this.needsUpdate = true;
+    }
+
+    public setW(index: number, value: number) {
+        this.array[index * this.itemSize + 3] = value;
+        this.needsUpdate = true;
+    }
+
     private _parseFormat() {
         this._itemSize = this._itemSize;
         this._byteLength = this._array.BYTES_PER_ELEMENT;
@@ -112,6 +132,14 @@ export class BufferAttribute {
 
     set name(v: string) {
         this._name = v;
+    }
+
+    get normalized(): boolean {
+        return this._normalized;
+    }
+
+    set normalized(v: boolean) {
+        this._normalized = v;
     }
 
     get needsUpdate(): boolean {

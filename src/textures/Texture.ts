@@ -34,6 +34,8 @@ export abstract class Texture {
     public matrixAutoUpdate = true;
     public matrix = new Matrix3();
 
+    public userData: any = {};
+
     protected _bind: BindTexture;
     protected _sampler: BindSampler;
 

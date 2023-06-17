@@ -202,11 +202,27 @@ export class BufferGeometry {
         return this._boundingBox;
     }
 
+    set boundingBox(box: Box3) {
+        if (this._boundingBox) {
+            this._boundingBox.copy(box);
+        } else {
+            this._boundingBox = new Box3().copy(box);
+        }
+    }
+
     get boundingSphere() {
         if (this._boundingSphere) {
             this.computeBoundingSphere();
         }
         return this._boundingSphere;
+    }
+
+    set boundingSphere(sphere: Sphere) {
+        if (this._boundingSphere) {
+            this._boundingSphere.copy(sphere);
+        } else {
+            this._boundingSphere = new Sphere().copy(sphere);
+        }
     }
 
     public clone() {

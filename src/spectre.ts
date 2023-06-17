@@ -42,6 +42,7 @@ export { OrbitControls } from "./controls/OrbitControls";
 export { FileLoader } from "./loaders/FileLoader";
 export { ImageLoader } from "./loaders/ImageLoader";
 export { TextureLoader } from "./loaders/ImageTextureLoader";
+export { GLTFLoader } from "./loaders/GLTFLoader";
 
 export * as ConstantsValues from "./utils/TempValues";
 
