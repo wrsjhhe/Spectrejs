@@ -93,8 +93,16 @@ export class RenderableObject extends Object3D {
         return this._geometry;
     }
 
+    set geometry(value: BufferGeometry) {
+        this._geometry = value;
+    }
+
     get material() {
         return this._material;
+    }
+
+    set material(value: Material) {
+        this._material = value;
     }
 
     get uniforms() {

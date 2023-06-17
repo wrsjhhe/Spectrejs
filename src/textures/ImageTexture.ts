@@ -67,4 +67,31 @@ export class ImageTexture extends Texture {
 
         return this._bind;
     }
+
+    public clone() {
+        return new ImageTexture().copy(this);
+    }
+
+    copy(source: ImageTexture) {
+        this.name = "";
+
+        this.mipmapSize = 1;
+
+        this.wrapU = source.wrapU;
+        this.wrapV = source.wrapV;
+        this.wrapW = source.wrapW;
+
+        this.magFilter = source.magFilter;
+        this.minFilter = source.minFilter;
+        this.mipmapFilter = source.mipmapFilter;
+
+        this.anisotropy = source.anisotropy;
+
+        this.format = source.format;
+        this.image = source.image;
+
+        this.userData = JSON.parse(JSON.stringify(source.userData));
+        return this;
+    }
+    // attributes
 }

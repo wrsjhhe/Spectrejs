@@ -205,7 +205,11 @@ export class Renderer extends RenderPass {
         geometry.update();
         geometry.setVertexBuffer(passEncoder, object.material.shaderOptions.attributeValues);
         if (geometry.indices) {
-            passEncoder.setIndexBuffer(geometry.indices.buffer.buffer, GPUIndexFormat.Uint32);
+            if (geometry.indices.format === GPUIndexFormat.Uint32) {
+                passEncoder.setIndexBuffer(geometry.indices.buffer.buffer, GPUIndexFormat.Uint32);
+            } else if (geometry.indices.format === GPUIndexFormat.Uint16) {
+                passEncoder.setIndexBuffer(geometry.indices.buffer.buffer, GPUIndexFormat.Uint16);
+            }
             passEncoder.drawIndexedIndirect(object.geometry.drawBuffer.buffer, 0);
         } else {
             passEncoder.drawIndirect(object.geometry.drawBuffer.buffer, 0);

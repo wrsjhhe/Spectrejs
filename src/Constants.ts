@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 export type NumberArrayType = Float32Array | Int32Array | Int8Array | Uint32Array | Uint16Array | Uint8Array;
+export type DataBufferSource = ArrayBuffer | String | BufferSource;
 
 export const GPUPrimitiveTopology = {
     PointList: "point-list" as GPUPrimitiveTopology,
@@ -296,3 +297,7 @@ export enum TOUCH {
     DOLLY_PAN = 2,
     DOLLY_ROTATE = 3,
 }
+
+export const TrianglesDrawMode = 0;
+export const TriangleStripDrawMode = 1;
+export const TriangleFanDrawMode = 2;

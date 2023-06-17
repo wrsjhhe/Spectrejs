@@ -202,10 +202,60 @@ export class BufferGeometry {
         return this._boundingBox;
     }
 
+    set boundingBox(box: Box3) {
+        if (this._boundingBox) {
+            this._boundingBox.copy(box);
+        } else {
+            this._boundingBox = new Box3().copy(box);
+        }
+    }
+
     get boundingSphere() {
         if (this._boundingSphere) {
             this.computeBoundingSphere();
         }
         return this._boundingSphere;
+    }
+
+    set boundingSphere(sphere: Sphere) {
+        if (this._boundingSphere) {
+            this._boundingSphere.copy(sphere);
+        } else {
+            this._boundingSphere = new Sphere().copy(sphere);
+        }
+    }
+
+    public clone() {
+        return new BufferGeometry().copy(this);
+    }
+
+    copy(source: BufferGeometry) {
+        const index = source.indices;
+        if (index !== null) {
+            this.setIndex(index.clone());
+        }
+        // attributes
+
+        const attributes = source.attributes;
+
+        for (const [name, attribute] of attributes) {
+            this.setAttribute(name, attribute.clone());
+        }
+        // bounding box
+
+        const boundingBox = source.boundingBox;
+        if (boundingBox) {
+            this._boundingBox = boundingBox.clone();
+        }
+
+        // bounding sphere
+        const boundingSphere = source.boundingSphere;
+
+        if (boundingSphere) {
+            this._boundingSphere = boundingSphere.clone();
+        }
+        // draw range
+        // user data
+        return this;
     }
 }

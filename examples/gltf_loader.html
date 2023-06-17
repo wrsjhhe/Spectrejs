@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>gltf_loader</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0;
+            background-color: rgb(255, 255, 255);
+            color: #fff;
+            font-family: Monospace;
+            overscroll-behavior: none;
+        }
+
+        #container {
+            height: 100%;
+            width: 100%;
+            overscroll-behavior: none;
+            position: absolute;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container"></div>
+    <!-- <script type="module" src="./cube.js"></script> -->
+    <script type="module">
+        import * as Spectre from "./build/js/spectre.js";
+        let container;
+        let renderer;
+        let scene;
+        let mesh;
+        let camera;
+        let directionalLight;
+        function init() {
+            container = document.getElementById("container");
+            renderer = new Spectre.Renderer({
+                powerPreference: "high-performance",
+                antialias: true,
+            });
+            container.appendChild(renderer.domElement);
+
+            scene = new Spectre.Scene();
+
+            camera = new Spectre.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10);
+            camera.position.set( - 1.8, 0.6, 2.7 );
+            camera.lookAt(new Spectre.Vector3(0, 0, 0));
+
+            const controls = new Spectre.OrbitControls(camera, renderer.domElement);
+
+            const loader = new Spectre.GLTFLoader().setPath('models/DamagedHelmet/glTF/');
+            loader.load('DamagedHelmet.gltf', function (gltf) {
+                scene.add(gltf.scene);
+                const geometry = new Spectre.SphereGeometry(0.1, 128, 128);
+            });
+
+            directionalLight = new Spectre.DirectionalLight(new Spectre.Color(1, 1, 1));
+            scene.add(directionalLight);
+
+        }
+
+        let k = 0.01;
+        function frame() {
+            renderer.render(scene, camera);
+            render();
+
+            // directionalLight.position.x += k;
+            // if (directionalLight.position.x >= 1 || directionalLight.position.x <= -1) {
+            //     k = -k;
+            // }
+            // directionalLight.needsUpdate = true;
+        }
+
+        function render() {
+            requestAnimationFrame(() => {
+                frame();
+            });
+        }
+
+        function resize() {
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        window.addEventListener("resize", function () {
+            resize();
+        });
+
+        Spectre.Init().then(() => {
+            init();
+            render();
+        });
+    </script>
+</body>
+
+</html>

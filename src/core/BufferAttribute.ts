@@ -41,6 +41,13 @@ export class BufferAttribute {
         }
     }
 
+    public clone() {
+        const buffer = new ArrayBuffer(this.array.byteLength);
+        const destArray = new (this.array as any).constructor(buffer);
+        destArray.set(this.array);
+        return new BufferAttribute(destArray, this._format, this._itemSize, this._normalized);
+    }
+
     public getX(index: number) {
         const x = this.array[index * this.itemSize];
 
@@ -63,6 +70,26 @@ export class BufferAttribute {
         const w = this.array[index * this.itemSize + 3];
 
         return w;
+    }
+
+    public setX(index: number, value: number) {
+        this.array[index * this.itemSize] = value;
+        this.needsUpdate = true;
+    }
+
+    public setY(index: number, value: number) {
+        this.array[index * this.itemSize + 1] = value;
+        this.needsUpdate = true;
+    }
+
+    public setZ(index: number, value: number) {
+        this.array[index * this.itemSize + 2] = value;
+        this.needsUpdate = true;
+    }
+
+    public setW(index: number, value: number) {
+        this.array[index * this.itemSize + 3] = value;
+        this.needsUpdate = true;
     }
 
     private _parseFormat() {
@@ -105,6 +132,14 @@ export class BufferAttribute {
 
     set name(v: string) {
         this._name = v;
+    }
+
+    get normalized(): boolean {
+        return this._normalized;
+    }
+
+    set normalized(v: boolean) {
+        this._normalized = v;
     }
 
     get needsUpdate(): boolean {

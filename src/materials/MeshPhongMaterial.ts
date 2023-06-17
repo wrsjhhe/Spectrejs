@@ -39,4 +39,16 @@ export class MeshPhongMaterial extends Material {
         this._shininess = v;
         (this._bindMap.get("specular") as BindBuffer).data = new Float32Array([v]);
     }
+
+    clone() {
+        return new MeshPhongMaterial().copy(this);
+    }
+
+    copy(source: MeshPhongMaterial) {
+        super.copy(source);
+        this.specular = source._specular;
+        this.shininess = source._shininess;
+        this.emissive = source._emissive;
+        return this;
+    }
 }

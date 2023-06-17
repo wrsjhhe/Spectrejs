@@ -215,4 +215,16 @@ export abstract class Material {
     public get shader() {
         return this._shader;
     }
+
+    copy(source: Material) {
+        this._setAttributeItem("position", "vec3<f32>", GPUVertexFormat.Float32x3, 4 * 3);
+
+        this._bindMap.set("parameters", new BindBuffer(source._parameters));
+        this._setBindItem("parameters", "vec4<u32>", BindType.buffer, GPUShaderStage.FRAGMENT);
+
+        this.color.copy(source.color);
+        this.map = source.map;
+        this._shader = source.shader;
+        return this;
+    }
 }

@@ -47,4 +47,17 @@ export class MeshPhysicalMaterial extends Material {
         this._metalness = v;
         (this._bindMap.get("metalness") as BindBuffer).data = new Float32Array([v]);
     }
+
+    clone() {
+        return new MeshPhysicalMaterial().copy(this);
+    }
+
+    copy(source: MeshPhysicalMaterial) {
+        super.copy(source);
+        this.specular = source._specular;
+        this.emissive = source._emissive;
+        this.metalness = source._metalness;
+        this.roughness = source._roughness;
+        return this;
+    }
 }
